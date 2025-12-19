@@ -5,6 +5,8 @@ import { connectDB } from "./src/config/database.js";
 import usersRoutes from "./src/routes/users.routes.js";
 import activityRoutes from "./src/routes/activity.routes.js";
 import participationRoutes from "./src/routes/participation.routes.js";
+import certificateRoutes from "./src/routes/certificate.routes.js";
+import dashboardRoutes from "./src/routes/dashboard.routes.js";
 
 dotenv.config();
 
@@ -15,6 +17,8 @@ app.use(express.json());
 app.use("/api/users", usersRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/participations", participationRoutes);
+app.use("/api/certificates", certificateRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Conectar ao banco
 connectDB();
