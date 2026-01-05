@@ -1,3 +1,5 @@
+
+
 import Certificate from "../models/Certificate.js";
 import Participation from "../models/Participation.js";
 import { generateVerificationCode } from "../utils/generateVerificationCode.js";
@@ -165,3 +167,7 @@ export const validateCertificatePage = async (req, res) => {
   </html>
 `);
 };
+
+
+
+
