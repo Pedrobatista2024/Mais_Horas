@@ -128,15 +128,40 @@ export const validateCertificatePage = async (req, res) => {
   }
 
   return res.send(`
-    <html>
-      <body style="font-family: Arial; text-align: center;">
-        <h1>✅ Certificado válido</h1>
+  <html>
+    <head>
+      <title>Validação de Certificado</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: #f4f6f8;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+        }
+        .card {
+          background: white;
+          padding: 30px;
+          border-radius: 10px;
+          width: 100%;
+          max-width: 420px;
+          text-align: center;
+          box-shadow: 0 4px 10px rgba(0,0,0,.1);
+        }
+        h1 { color: #2e7d32; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <h1>✅ Certificado Válido</h1>
         <p><strong>Aluno:</strong> ${certificate.user.name}</p>
         <p><strong>Atividade:</strong> ${certificate.activity.title}</p>
-        <p><strong>Horas:</strong> ${certificate.hours}</p>
-        <p><strong>ONG:</strong> ${certificate.activity.createdBy?.name || "Organização"}</p>
+        <p><strong>Horas:</strong> ${certificate.hours}h</p>
+        <p><strong>ONG:</strong> ${certificate.activity.createdBy?.name}</p>
         <p><strong>Emitido em:</strong> ${new Date(certificate.createdAt).toLocaleDateString()}</p>
-      </body>
-    </html>
-  `);
+      </div>
+    </body>
+  </html>
+`);
 };
