@@ -41,7 +41,7 @@ export const generateCertificatePDF = async (certificate) => {
       doc.moveDown(3);
 
       // QR Code
-      const validationUrl = `${process.env.APP_URL}/api/certificates/validate/${certificate.verificationCode}`;
+      const validationUrl = `${process.env.APP_URL}/api/certificates/verify/${certificate.verificationCode}`;
       const qrImage = await QRCode.toDataURL(validationUrl);
 
       doc.image(qrImage, {

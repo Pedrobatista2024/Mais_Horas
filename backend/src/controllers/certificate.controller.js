@@ -105,3 +105,38 @@ res.send(pdfBuffer);
     return res.status(500).json({ error: "Erro ao gerar PDF" });
   }
 };
+
+export const validateCertificatePage = async (req, res) => {
+  const { code } = req.params;
+
+  const certificate = await Certificate.findOne({ verificationCode: code })
+    .populate("user", "name")
+    .populate({
+      path: "activity",
+      populate: { path: "createdBy", select: "name" }
+    });
+
+  if (!certificate) {
+    return res.send(`
+      <html>
+        <body style="font-family: Arial; text-align: center;">
+          <h2>❌ Certificado inválido</h2>
+          <p>Este certificado não foi encontrado.</p>
+        </body>
+      </html>
+    `);
+  }
+
+  return res.send(`
+    <html>
+      <body style="font-family: Arial; text-align: center;">
+        <h1>✅ Certificado válido</h1>
+        <p><strong>Aluno:</strong> ${certificate.user.name}</p>
+        <p><strong>Atividade:</strong> ${certificate.activity.title}</p>
+        <p><strong>Horas:</strong> ${certificate.hours}</p>
+        <p><strong>ONG:</strong> ${certificate.activity.createdBy?.name || "Organização"}</p>
+        <p><strong>Emitido em:</strong> ${new Date(certificate.createdAt).toLocaleDateString()}</p>
+      </body>
+    </html>
+  `);
+};
