@@ -1,6 +1,7 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { validatePresence, getUserParticipations, getActivityParticipations } from "../controllers/participation.controller.js";
+import { createParticipation } from "../controllers/participation.controller.js";
 
 const router = express.Router();
 
@@ -12,5 +13,8 @@ router.get("/my", authMiddleware, getUserParticipations);
 
 // Listar presenças de uma atividade
 router.get("/activity/:activityId", authMiddleware, getActivityParticipations);
+
+// Aluno se Inscreve
+router.post("/", authMiddleware, createParticipation);
 
 export default router;

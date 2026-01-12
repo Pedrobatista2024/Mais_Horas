@@ -1,7 +1,48 @@
 import Participation from "../models/Participation.js";
 import Activity from "../models/Activity.js";
 
-// ONG valida presença
+// =======================
+// 1. Criar Participação
+// =======================
+export const createParticipation = async (req, res) => {
+  try {
+    const { activityId } = req.body;
+
+    if (!activityId) {
+      return res.status(400).json({ message: "activityId é obrigatório" });
+    }
+
+    // evita duplicidade
+    const existing = await Participation.findOne({
+      activity: activityId,
+      user: req.user._id
+    });
+
+    if (existing) {
+      return res.status(409).json({ message: "Você já está inscrito nesta atividade" });
+    }
+
+    const participation = await Participation.create({
+      activity: activityId,
+      user: req.user._id,
+      status: "pending",
+      workloadHours: 0
+    });
+
+    return res.status(201).json({
+      message: "Participação registrada",
+      participation
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao registrar participação" });
+  }
+};
+
+// =======================
+// 2. Validar Presença (ONG)
+// =======================
 export const validatePresence = async (req, res) => {
   try {
     const { participationId } = req.params;
@@ -16,10 +57,8 @@ export const validatePresence = async (req, res) => {
       return res.status(404).json({ message: "Participação não encontrada" });
     }
 
-    // Atualizar status explicitamente
     participation.status = status;
 
-    // Se presença confirmada, aplicar carga horária
     if (status === "present") {
       const activity = await Activity.findById(participation.activity);
 
@@ -46,7 +85,9 @@ export const validatePresence = async (req, res) => {
   }
 };
 
-// Participações do usuário
+// =======================
+// 3. Participações do usuário logado
+// =======================
 export const getUserParticipations = async (req, res) => {
   const userId = req.user._id;
 
@@ -56,7 +97,9 @@ export const getUserParticipations = async (req, res) => {
   return res.json(participations);
 };
 
-// Participações de uma atividade
+// =======================
+// 4. Participações de uma atividade
+// =======================
 export const getActivityParticipations = async (req, res) => {
   const { activityId } = req.params;
 
