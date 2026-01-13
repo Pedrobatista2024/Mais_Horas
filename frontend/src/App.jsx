@@ -4,17 +4,23 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Activities from "./pages/Activities";
+import OrgDashboard from "./pages/OrgDashboard";
+
 import PrivateRoute from "./routes/PrivateRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+
+        {/* Redireciona "/" para login */}
         <Route path="/" element={<Navigate to="/login" />} />
 
+        {/* Acesso público */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Acesso aluno */}
         <Route
           path="/dashboard"
           element={
@@ -32,6 +38,17 @@ function App() {
             </PrivateRoute>
           }
         />
+
+        {/* Acesso ONG */}
+        <Route
+          path="/org"
+          element={
+            <PrivateRoute>
+              <OrgDashboard />
+            </PrivateRoute>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );

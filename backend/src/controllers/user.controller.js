@@ -4,7 +4,7 @@ import { generateToken } from "../utils/generateToken.js";
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -17,10 +17,16 @@ export const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      role: role || "student" // padrão se não enviar
     });
 
     return res.status(201).json({
       message: "Usuário criado com sucesso",
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
       token: generateToken(user._id),
     });
 
@@ -45,6 +51,11 @@ export const login = async (req, res) => {
 
     return res.status(200).json({
       message: "Login realizado",
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
       token: generateToken(user._id),
     });
 
