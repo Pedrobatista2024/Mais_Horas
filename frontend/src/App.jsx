@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Activities from "./pages/Activities";
 import OrgDashboard from "./pages/OrgDashboard";
+import CreateActivity from "./pages/CreateActivity";
 
 import PrivateRoute from "./routes/PrivateRoute";
 
@@ -48,7 +49,16 @@ function App() {
             </PrivateRoute>
           }
         />
+          <Route
+            path="/org/create-activity"
+            element={
+              <PrivateRoute role="organization">
+                <CreateActivity />
+              </PrivateRoute>
+            }
+          />
 
+          
       </Routes>
     </BrowserRouter>
   );
