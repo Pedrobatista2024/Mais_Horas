@@ -6,6 +6,8 @@ import Dashboard from "./pages/Dashboard";
 import Activities from "./pages/Activities";
 import OrgDashboard from "./pages/OrgDashboard";
 import CreateActivity from "./pages/CreateActivity";
+import OrgActivityDetails from "./pages/OrgActivityDetails";       // ⬅ adicionado
+import ActivityParticipants from "./pages/ActivityParticipants";   // ⬅ adicionado
 
 import PrivateRoute from "./routes/PrivateRoute";
 
@@ -49,16 +51,35 @@ function App() {
             </PrivateRoute>
           }
         />
-          <Route
-            path="/org/create-activity"
-            element={
-              <PrivateRoute role="organization">
-                <CreateActivity />
-              </PrivateRoute>
-            }
-          />
 
-          
+        <Route
+          path="/org/create-activity"
+          element={
+            <PrivateRoute role="organization">
+              <CreateActivity />
+            </PrivateRoute>
+          }
+        />
+
+        {/* NOVAS ROTAS */}
+        <Route
+          path="/org/activity/:id"
+          element={
+            <PrivateRoute role="organization">
+              <OrgActivityDetails />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/org/activity/:id/participants"
+          element={
+            <PrivateRoute role="organization">
+              <ActivityParticipants />
+            </PrivateRoute>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );

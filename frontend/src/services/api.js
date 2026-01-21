@@ -1,12 +1,13 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://mais-horas.onrender.com/api",
+  baseURL: "http://localhost:3000/api",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
+//"http://localhost:3000/api"
 // Interceptor: adiciona token automaticamente se existir
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");

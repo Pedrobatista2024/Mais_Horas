@@ -1,23 +1,23 @@
-import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 export default function OrgDashboard() {
-  const navigate = useNavigate();
   const [activities, setActivities] = useState([]);
+  const navigate = useNavigate();
 
-  async function loadMyActivities() {
+  async function loadActivities() {
     try {
       const response = await api.get("/activities/my");
       setActivities(response.data);
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao carregar suas atividades");
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao carregar atividades da ONG");
     }
   }
 
   useEffect(() => {
-    loadMyActivities();
+    loadActivities();
   }, []);
 
   return (
@@ -28,14 +28,21 @@ export default function OrgDashboard() {
         Criar atividade
       </button>
 
-      <h2>Minhas Atividades</h2>
-      {activities.length === 0 ? (
-        <p>Você ainda não criou atividades</p>
-      ) : (
-        activities.map((a) => (
-          <p key={a._id}>{a.title}</p>
-        ))
-      )}
+      <h3>Minhas Atividades</h3>
+
+      {activities.length === 0 && <p>Nenhuma atividade cadastrada.</p>}
+
+      <ul>
+        {activities.map((activity) => (
+          <li
+            key={activity._id}
+            style={{ cursor: "pointer", marginBottom: "10px" }}
+            onClick={() => navigate(`/org/activity/${activity._id}`)}
+          >
+            {activity.title}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

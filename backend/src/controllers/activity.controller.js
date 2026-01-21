@@ -5,33 +5,31 @@ import Participation from "../models/Participation.js";
 export const createActivity = async (req, res) => {
   try {
     const {
-  title,
-  description,
-  date,
-  location,
-  workloadHours,
-  startTime,
-  endTime,
-  minParticipants,
-  maxParticipants
-} = req.body;
-
+      title,
+      description,
+      date,
+      location,
+      workloadHours,
+      startTime,
+      endTime,
+      minParticipants,
+      maxParticipants
+    } = req.body;
 
     const createdBy = req.user._id;
 
     const activity = await Activity.create({
-  title,
-  description,
-  date,
-  location,
-  workloadHours,
-  startTime,
-  endTime,
-  minParticipants,
-  maxParticipants,
-  createdBy
-});
-
+      title,
+      description,
+      date,
+      location,
+      workloadHours,
+      startTime,
+      endTime,
+      minParticipants,
+      maxParticipants,
+      createdBy
+    });
 
     return res.status(201).json({
       message: "Atividade criada com sucesso!",
@@ -53,7 +51,7 @@ export const getAllActivities = async (req, res) => {
   }
 };
 
-// **🔥 Listar atividades da ONG logada**
+// Listar atividades da ONG logada
 export const getMyActivities = async (req, res) => {
   try {
     const orgId = req.user._id;
@@ -66,7 +64,24 @@ export const getMyActivities = async (req, res) => {
   }
 };
 
-// Inscrição de aluno em uma atividade
+// NOVO → Buscar detalhes da atividade
+export const getActivityDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const activity = await Activity.findById(id).populate("createdBy", "name email");
+
+    if (!activity) {
+      return res.status(404).json({ message: "Atividade não encontrada" });
+    }
+
+    return res.json(activity);
+
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao buscar detalhes da atividade" });
+  }
+};
+
 // Inscrição de aluno em uma atividade
 export const joinActivity = async (req, res) => {
   try {
@@ -78,12 +93,10 @@ export const joinActivity = async (req, res) => {
       return res.status(404).json({ message: "Atividade não encontrada" });
     }
 
-    // Verifica lotação
     if (activity.participants.length >= activity.maxParticipants) {
       return res.status(400).json({ message: "Atividade já atingiu o número máximo de participantes" });
     }
 
-    // Verificar duplicidade
     if (activity.participants.includes(userId)) {
       return res.status(400).json({ message: "Você já está inscrito nesta atividade" });
     }
@@ -103,4 +116,3 @@ export const joinActivity = async (req, res) => {
     return res.status(500).json({ error: "Erro ao se inscrever" });
   }
 };
-
