@@ -6,8 +6,9 @@ import Dashboard from "./pages/Dashboard";
 import Activities from "./pages/Activities";
 import OrgDashboard from "./pages/OrgDashboard";
 import CreateActivity from "./pages/CreateActivity";
-import OrgActivityDetails from "./pages/OrgActivityDetails";       // ⬅ adicionado
-import ActivityParticipants from "./pages/ActivityParticipants";   // ⬅ adicionado
+import OrgActivityDetails from "./pages/OrgActivityDetails";       
+import ActivityParticipants from "./pages/ActivityParticipants";   
+import EditActivity from "./pages/EditActivity";  // ⬅ NOVO
 
 import PrivateRoute from "./routes/PrivateRoute";
 
@@ -46,7 +47,7 @@ function App() {
         <Route
           path="/org"
           element={
-            <PrivateRoute>
+            <PrivateRoute role="organization">
               <OrgDashboard />
             </PrivateRoute>
           }
@@ -76,6 +77,16 @@ function App() {
           element={
             <PrivateRoute role="organization">
               <ActivityParticipants />
+            </PrivateRoute>
+          }
+        />
+
+        {/* ⬅ AQUI ESTÁ A ROTA QUE FALTAVA */}
+        <Route
+          path="/org/activity/:id/edit"
+          element={
+            <PrivateRoute role="organization">
+              <EditActivity />
             </PrivateRoute>
           }
         />

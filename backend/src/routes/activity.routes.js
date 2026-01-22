@@ -5,7 +5,9 @@ import {
   getAllActivities,
   joinActivity,
   getMyActivities,
-  getActivityDetails
+  getActivityDetails,
+  updateActivity,
+  deleteActivity
 } from "../controllers/activity.controller.js";
 
 const router = express.Router();
@@ -25,4 +27,6 @@ router.get("/:id", authMiddleware, getActivityDetails);
 // Inscrever aluno
 router.post("/:id/join", authMiddleware, joinActivity);
 
+router.put("/:id", authMiddleware, updateActivity);
+router.delete("/:id", authMiddleware, deleteActivity);
 export default router;

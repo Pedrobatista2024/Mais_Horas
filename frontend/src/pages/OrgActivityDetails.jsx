@@ -21,6 +21,20 @@ export default function OrgActivityDetails() {
     }
   }
 
+  async function handleDelete() {
+    const confirma = confirm("Tem certeza que deseja excluir esta atividade?");
+    if (!confirma) return;
+
+    try {
+      await api.delete(`/activities/${id}`);
+      alert("Atividade excluída com sucesso!");
+      navigate("/org");
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao excluir atividade");
+    }
+  }
+
   useEffect(() => {
     loadActivity();
   }, []);
@@ -50,11 +64,28 @@ export default function OrgActivityDetails() {
 
       <br />
 
+      {/* Botão ver participantes */}
       <button
         onClick={() => navigate(`/org/activity/${id}/participants`)}
         style={{ marginRight: "10px" }}
       >
         Ver participantes
+      </button>
+
+      {/* Botão editar */}
+      <button
+        onClick={() => navigate(`/org/activity/${id}/edit`)}
+        style={{ marginRight: "10px" }}
+      >
+        Editar atividade
+      </button>
+
+      {/* Botão excluir */}
+      <button
+        onClick={handleDelete}
+        style={{ marginRight: "10px", color: "white", backgroundColor: "red" }}
+      >
+        Excluir atividade
       </button>
 
       <button onClick={() => navigate("/org")}>
