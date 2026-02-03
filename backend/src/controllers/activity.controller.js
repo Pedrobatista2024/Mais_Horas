@@ -1,6 +1,9 @@
 import Activity from "../models/Activity.js";
 import Participation from "../models/Participation.js";
 
+// 👇 LOG GLOBAL: Se isso não aparecer, o servidor não reiniciou direito
+console.log("📂 [CARREGAMENTO] O arquivo activity.controller.js foi lido pelo servidor!");
+
 // Criar uma atividade (somente ONGs)
 export const createActivity = async (req, res) => {
   try {
@@ -64,7 +67,7 @@ export const getMyActivities = async (req, res) => {
   }
 };
 
-// NOVO → Buscar detalhes da atividade
+// Buscar detalhes da atividade
 export const getActivityDetails = async (req, res) => {
   try {
     const { id } = req.params;
@@ -76,7 +79,7 @@ export const getActivityDetails = async (req, res) => {
       return res.status(404).json({ message: "Atividade não encontrada" });
     }
 
-    // 2. CORREÇÃO: Busca os participantes na tabela de Participações (onde está salvo corretamente)
+    // 2. Busca os participantes na tabela de Participações (onde está salvo corretamente)
     const realParticipations = await Participation.find({ activity: id }).populate("user", "name email");
 
     // 3. Converte para objeto editável e substitui a lista de participantes
@@ -91,27 +94,43 @@ export const getActivityDetails = async (req, res) => {
   }
 };
 
-// Inscrição de aluno em uma atividade
+// =======================================================
+// Inscrição de aluno (COM LOGS FOFOQUEIROS 🕵️‍♂️)
+// =======================================================
 export const joinActivity = async (req, res) => {
   try {
     const activityId = req.params.id;
     const userId = req.user._id;
 
-    const activity = await Activity.findById(activityId);
-    if (!activity) {
-      return res.status(404).json({ message: "Atividade não encontrada" });
+    // 1️⃣ Verifica se já existe inscrição na tabela de Participações
+    const alreadyJoined = await Participation.findOne({
+      activity: activityId,
+      user: userId
+    });
+
+    if (alreadyJoined) {
+      return res.status(400).json({ message: "Você já está inscrito nesta atividade" });
     }
 
-    // Verifica se já está inscrito (Checagem dupla por segurança)
-    if (activity.participants.includes(userId)) {
-      return res.status(400).json({ message: "Você já está inscrito" });
+    // 2️⃣ TENTA OCUPAR A VAGA (OPERAÇÃO ATÔMICA)
+    // Isso impede que dois alunos entrem na última vaga ao mesmo tempo
+    const updatedActivity = await Activity.findOneAndUpdate(
+      {
+        _id: activityId,
+        $expr: { $lt: [{ $size: "$participants" }, "$maxParticipants"] } // Só atualiza se Tamanho < Máximo
+      },
+      { $push: { participants: userId } },
+      { new: true }
+    );
+
+    // Se updatedActivity vier vazio, significa que a condição ($lt) falhou (Lotação atingida)
+    if (!updatedActivity) {
+      return res.status(400).json({ 
+        message: "Atividade já atingiu o número máximo de participantes" 
+      });
     }
 
-    // Atualiza na Atividade
-    activity.participants.push(userId);
-    await activity.save();
-
-    // Cria a participação na tabela de Participations
+    // 3️⃣ Cria o comprovante na tabela Participation
     await Participation.create({
       activity: activityId,
       user: userId,
@@ -121,14 +140,14 @@ export const joinActivity = async (req, res) => {
     return res.json({ message: "Inscrição realizada com sucesso!" });
 
   } catch (error) {
-    console.error("ERRO AO INSCREVER:", error);
+    console.error("Erro ao inscrever:", error);
     return res.status(500).json({ error: "Erro ao se inscrever" });
   }
 };
 
-// ===========================
-// Atualizar Atividade (ONG)
-// ===========================
+// =======================================================
+// Atualizar Atividade (COM CONTAGEM PELO ARRAY)
+// =======================================================
 export const updateActivity = async (req, res) => {
   try {
     const { id } = req.params;
@@ -138,8 +157,10 @@ export const updateActivity = async (req, res) => {
       return res.status(404).json({ message: "Atividade não encontrada" });
     }
 
-    // CORREÇÃO: Conta quantos alunos existem na tabela de Participações (Fonte da verdade)
-    const inscritos = await Participation.countDocuments({ activity: id });
+    // 👇 MUDANÇA: Conta quantos alunos existem direto no array (Igual ao Frontend)
+    const inscritos = activity.participants.length;
+    
+    console.log(`--- [UPDATE] Editando atividade. Inscritos atuais no Array: ${inscritos}`);
     
     let updates = req.body;
 

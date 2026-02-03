@@ -23,16 +23,20 @@ export default function Activities() {
 
   async function handleParticipate(activityId) {
     try {
-      await api.post("/participations", {
-        activityId,
-      });
+      // 👇 MUDANÇA AQUI: Agora chamamos a rota segura ("blindada")
+      // Ela vai ativar os Logs Fofoqueiros no seu terminal!
+      await api.post(`/activities/${activityId}/join`);
 
-      alert("Participação registrada com sucesso!");
+      alert("Inscrição realizada com sucesso!");
+      
+      // Opcional: Recarregar a lista para atualizar contadores se tiver
+      // window.location.reload(); 
+
     } catch (error) {
       console.error(error);
       alert(
         error.response?.data?.message ||
-          "Erro ao registrar participação"
+          "Erro ao realizar inscrição"
       );
     }
   }
