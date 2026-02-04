@@ -5,24 +5,32 @@ import {
   validateCertificate,
   validateCertificatePage,
   getMyCertificates,
-  downloadCertificatePDF
+  downloadCertificatePDF,
+  downloadCertificatePDFPublic
 } from "../controllers/certificate.controller.js";
 
 const router = express.Router();
 
-// ONG emite certificado
+// ================= PRIVADAS =================
+
+// Emitir certificado (ONG)
 router.post("/:participationId", authMiddleware, generateCertificate);
 
-// Aluno vê seus certificados
+// Meus certificados (Aluno)
 router.get("/my", authMiddleware, getMyCertificates);
 
-// Validação pública
-router.get("/validate/:code", validateCertificate);
-
-// rota do pdf
+// PDF privado (logado)
 router.get("/:id/pdf", authMiddleware, downloadCertificatePDF);
 
-// HTML (para pessoas / QR Code)
+// ================= PÚBLICAS =================
+
+// Validação JSON
+router.get("/validate/:code", validateCertificate);
+
+// Página HTML
 router.get("/verify/:code", validateCertificatePage);
+
+// PDF público (QR Code)
+router.get("/public/:code/pdf", downloadCertificatePDFPublic);
 
 export default router;
