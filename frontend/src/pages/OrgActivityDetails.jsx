@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 
 export default function OrgActivityDetails() {
-  const { id } = useParams(); // ID da atividade
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [activity, setActivity] = useState(null);
@@ -35,17 +35,31 @@ export default function OrgActivityDetails() {
     }
   }
 
+  async function handleFinishActivity() {
+    const confirma = confirm(
+      "Ao finalizar a atividade, ela será encerrada e os certificados serão gerados para os alunos presentes. Deseja continuar?"
+    );
+    if (!confirma) return;
+
+    try {
+      await api.post(`/activities/${id}/finish`);
+      alert("Atividade finalizada com sucesso!");
+      loadActivity(); // recarrega para atualizar status
+    } catch (error) {
+      console.error(error);
+      alert(
+        error.response?.data?.message ||
+        "Erro ao finalizar atividade"
+      );
+    }
+  }
+
   useEffect(() => {
     loadActivity();
   }, []);
 
-  if (loading) {
-    return <p>Carregando dados...</p>;
-  }
-
-  if (!activity) {
-    return <p>Atividade não encontrada.</p>;
-  }
+  if (loading) return <p>Carregando dados...</p>;
+  if (!activity) return <p>Atividade não encontrada.</p>;
 
   return (
     <div style={{ padding: "20px" }}>
@@ -53,18 +67,19 @@ export default function OrgActivityDetails() {
 
       <p><strong>Local:</strong> {activity.location}</p>
       <p><strong>Data:</strong> {new Date(activity.date).toLocaleDateString()}</p>
+      <p><strong>Status:</strong> {activity.status}</p>
 
-      {/* informações adicionais */}
       <div style={{ marginTop: "10px" }}>
         <p><strong>Descrição:</strong> {activity.description}</p>
         <p><strong>Horário:</strong> {activity.startTime} — {activity.endTime}</p>
-        <p><strong>Vagas:</strong> mín {activity.minParticipants} / máx {activity.maxParticipants}</p>
+        <p>
+          <strong>Vagas:</strong> mín {activity.minParticipants} / máx {activity.maxParticipants}
+        </p>
         <p><strong>Carga horária:</strong> {activity.workloadHours} horas</p>
       </div>
 
       <br />
 
-      {/* Botão ver participantes */}
       <button
         onClick={() => navigate(`/org/activity/${id}/participants`)}
         style={{ marginRight: "10px" }}
@@ -72,7 +87,6 @@ export default function OrgActivityDetails() {
         Ver participantes
       </button>
 
-      {/* Botão editar */}
       <button
         onClick={() => navigate(`/org/activity/${id}/edit`)}
         style={{ marginRight: "10px" }}
@@ -80,13 +94,30 @@ export default function OrgActivityDetails() {
         Editar atividade
       </button>
 
-      {/* Botão excluir */}
       <button
         onClick={handleDelete}
-        style={{ marginRight: "10px", color: "white", backgroundColor: "red" }}
+        style={{
+          marginRight: "10px",
+          color: "white",
+          backgroundColor: "red"
+        }}
       >
         Excluir atividade
       </button>
+
+      {/* 🔥 FINALIZAR ATIVIDADE */}
+      {activity.status !== "finished" && (
+        <button
+          onClick={handleFinishActivity}
+          style={{
+            marginRight: "10px",
+            backgroundColor: "#2e7d32",
+            color: "white"
+          }}
+        >
+          Finalizar atividade
+        </button>
+      )}
 
       <button onClick={() => navigate("/org")}>
         Voltar

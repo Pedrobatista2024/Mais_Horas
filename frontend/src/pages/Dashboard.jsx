@@ -19,7 +19,16 @@ export default function Dashboard() {
 
       <br /><br />
 
-      <button onClick={logout}>Sair</button>
+      {/* 🔥 NOVO BOTÃO */}
+      <button onClick={() => navigate("/my-certificates")}>
+        Meus certificados
+      </button>
+
+      <br /><br />
+
+      <button onClick={logout}>
+        Sair
+      </button>
     </div>
   );
 }

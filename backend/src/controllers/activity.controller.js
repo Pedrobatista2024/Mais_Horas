@@ -1,10 +1,14 @@
 import Activity from "../models/Activity.js";
 import Participation from "../models/Participation.js";
+import Certificate from "../models/Certificate.js";
+import { generateVerificationCode } from "../utils/generateVerificationCode.js";
 
-// 👇 LOG GLOBAL: Se isso não aparecer, o servidor não reiniciou direito
-console.log("📂 [CARREGAMENTO] O arquivo activity.controller.js foi lido pelo servidor!");
+// 👇 LOG GLOBAL
+console.log("📂 [CARREGAMENTO] activity.controller.js carregado");
 
-// Criar uma atividade (somente ONGs)
+// ===========================
+// Criar atividade (ONG)
+// ===========================
 export const createActivity = async (req, res) => {
   try {
     const {
@@ -31,106 +35,105 @@ export const createActivity = async (req, res) => {
       endTime,
       minParticipants,
       maxParticipants,
-      createdBy
+      createdBy,
+      status: "active"
     });
 
     return res.status(201).json({
       message: "Atividade criada com sucesso!",
       activity
     });
-
   } catch (error) {
     return res.status(500).json({ error: "Erro ao criar atividade" });
   }
 };
 
-// Listar todas atividades (visível para alunos)
+// ===========================
+// Listar todas (alunos)
+// ===========================
 export const getAllActivities = async (req, res) => {
   try {
-    const activities = await Activity.find().populate("createdBy", "name email");
+    const activities = await Activity.find()
+      .populate("createdBy", "name email");
+
     return res.json(activities);
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: "Erro ao buscar atividades" });
   }
 };
 
-// Listar atividades da ONG logada
+// ===========================
+// Listar atividades da ONG
+// ===========================
 export const getMyActivities = async (req, res) => {
   try {
     const orgId = req.user._id;
-
     const activities = await Activity.find({ createdBy: orgId });
-
     return res.json(activities);
-  } catch (error) {
-    return res.status(500).json({ error: "Erro ao buscar atividades da organização" });
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar atividades da ONG" });
   }
 };
 
-// Buscar detalhes da atividade
+// ===========================
+// Detalhes da atividade
+// ===========================
 export const getActivityDetails = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1. Busca a atividade básica
-    const activity = await Activity.findById(id).populate("createdBy", "name email");
+    const activity = await Activity.findById(id)
+      .populate("createdBy", "name email");
 
     if (!activity) {
       return res.status(404).json({ message: "Atividade não encontrada" });
     }
 
-    // 2. Busca os participantes na tabela de Participações (onde está salvo corretamente)
-    const realParticipations = await Participation.find({ activity: id }).populate("user", "name email");
+    const participations = await Participation.find({ activity: id })
+      .populate("user", "name email");
 
-    // 3. Converte para objeto editável e substitui a lista de participantes
     const activityData = activity.toObject();
-    activityData.participants = realParticipations.map(p => p.user);
+    activityData.participants = participations.map(p => p.user);
 
     return res.json(activityData);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao buscar detalhes da atividade" });
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar detalhes" });
   }
 };
 
-// =======================================================
-// Inscrição de aluno (COM LOGS FOFOQUEIROS 🕵️‍♂️)
-// =======================================================
+// ===========================
+// Inscrição (ATÔMICA)
+// ===========================
 export const joinActivity = async (req, res) => {
   try {
     const activityId = req.params.id;
     const userId = req.user._id;
 
-    // 1️⃣ Verifica se já existe inscrição na tabela de Participações
     const alreadyJoined = await Participation.findOne({
       activity: activityId,
       user: userId
     });
 
     if (alreadyJoined) {
-      return res.status(400).json({ message: "Você já está inscrito nesta atividade" });
+      return res.status(400).json({ message: "Você já está inscrito" });
     }
 
-    // 2️⃣ TENTA OCUPAR A VAGA (OPERAÇÃO ATÔMICA)
-    // Isso impede que dois alunos entrem na última vaga ao mesmo tempo
     const updatedActivity = await Activity.findOneAndUpdate(
       {
         _id: activityId,
-        $expr: { $lt: [{ $size: "$participants" }, "$maxParticipants"] } // Só atualiza se Tamanho < Máximo
+        status: "active",
+        $expr: { $lt: [{ $size: "$participants" }, "$maxParticipants"] }
       },
       { $push: { participants: userId } },
       { new: true }
     );
 
-    // Se updatedActivity vier vazio, significa que a condição ($lt) falhou (Lotação atingida)
     if (!updatedActivity) {
-      return res.status(400).json({ 
-        message: "Atividade já atingiu o número máximo de participantes" 
+      return res.status(400).json({
+        message: "Atividade lotada ou encerrada"
       });
     }
 
-    // 3️⃣ Cria o comprovante na tabela Participation
     await Participation.create({
       activity: activityId,
       user: userId,
@@ -138,16 +141,15 @@ export const joinActivity = async (req, res) => {
     });
 
     return res.json({ message: "Inscrição realizada com sucesso!" });
-
   } catch (error) {
-    console.error("Erro ao inscrever:", error);
+    console.error(error);
     return res.status(500).json({ error: "Erro ao se inscrever" });
   }
 };
 
-// =======================================================
-// Atualizar Atividade (COM CONTAGEM PELO ARRAY)
-// =======================================================
+// ===========================
+// Atualizar atividade
+// ===========================
 export const updateActivity = async (req, res) => {
   try {
     const { id } = req.params;
@@ -157,14 +159,13 @@ export const updateActivity = async (req, res) => {
       return res.status(404).json({ message: "Atividade não encontrada" });
     }
 
-    // 👇 MUDANÇA: Conta quantos alunos existem direto no array (Igual ao Frontend)
+    if (!activity.createdBy.equals(req.user._id)) {
+      return res.status(403).json({ message: "Acesso negado" });
+    }
+
     const inscritos = activity.participants.length;
-    
-    console.log(`--- [UPDATE] Editando atividade. Inscritos atuais no Array: ${inscritos}`);
-    
     let updates = req.body;
 
-    // 🔒 SE TEM INSCRITOS → SÓ MIN/MAX
     if (inscritos > 0) {
       updates = {
         minParticipants: req.body.minParticipants,
@@ -185,17 +186,81 @@ export const updateActivity = async (req, res) => {
     await activity.save();
 
     return res.json({
-      message: "Atividade atualizada com sucesso!",
+      message: "Atividade atualizada",
       activity
+    });
+  } catch {
+    return res.status(500).json({ error: "Erro ao atualizar" });
+  }
+};
+
+// =======================================================
+// 🆕 FINALIZAR ATIVIDADE + GERAR CERTIFICADOS
+// =======================================================
+export const finishActivity = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const activity = await Activity.findById(id);
+    if (!activity) {
+      return res.status(404).json({ message: "Atividade não encontrada" });
+    }
+
+    // 🔒 Apenas ONG criadora
+    if (!activity.createdBy.equals(req.user._id)) {
+      return res.status(403).json({
+        message: "Apenas a ONG criadora pode finalizar"
+      });
+    }
+
+    if (activity.status !== "active") {
+      return res.status(400).json({
+        message: "Atividade já finalizada ou cancelada"
+      });
+    }
+
+    const participations = await Participation.find({
+      activity: id,
+      status: "present"
+    });
+
+    let certificadosGerados = 0;
+
+    for (const participation of participations) {
+      const exists = await Certificate.findOne({
+        participation: participation._id
+      });
+
+      if (!exists) {
+        await Certificate.create({
+          user: participation.user,
+          activity: activity._id,
+          participation: participation._id,
+          hours: participation.workloadHours,
+          verificationCode: generateVerificationCode()
+        });
+
+        certificadosGerados++;
+      }
+    }
+
+    activity.status = "finished";
+    await activity.save();
+
+    return res.json({
+      message: "Atividade finalizada com sucesso",
+      certificadosGerados
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Erro ao atualizar atividade" });
+    return res.status(500).json({
+      error: "Erro ao finalizar atividade"
+    });
   }
 };
 
 // ===========================
-// Excluir Atividade
+// Excluir atividade
 // ===========================
 export const deleteActivity = async (req, res) => {
   try {
@@ -206,12 +271,15 @@ export const deleteActivity = async (req, res) => {
       return res.status(404).json({ message: "Atividade não encontrada" });
     }
 
+    if (!activity.createdBy.equals(req.user._id)) {
+      return res.status(403).json({ message: "Acesso negado" });
+    }
+
     await Participation.deleteMany({ activity: id });
     await Activity.findByIdAndDelete(id);
 
-    return res.json({ message: "Atividade excluída com sucesso!" });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao excluir atividade" });
+    return res.json({ message: "Atividade excluída" });
+  } catch {
+    return res.status(500).json({ error: "Erro ao excluir" });
   }
 };

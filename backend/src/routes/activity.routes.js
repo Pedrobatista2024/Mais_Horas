@@ -7,7 +7,8 @@ import {
   getMyActivities,
   getActivityDetails,
   updateActivity,
-  deleteActivity
+  deleteActivity,
+  finishActivity // ✅ NOVO IMPORT
 } from "../controllers/activity.controller.js";
 
 const router = express.Router();
@@ -21,12 +22,19 @@ router.get("/", getAllActivities);
 // Listar atividades da ONG
 router.get("/my", authMiddleware, getMyActivities);
 
-// NOVO → detalhes da atividade
+// Detalhes da atividade
 router.get("/:id", authMiddleware, getActivityDetails);
 
 // Inscrever aluno
 router.post("/:id/join", authMiddleware, joinActivity);
 
+// Atualizar atividade
 router.put("/:id", authMiddleware, updateActivity);
+
+// 🆕 FINALIZAR ATIVIDADE
+router.post("/:id/finish", authMiddleware, finishActivity);
+
+// Excluir atividade
 router.delete("/:id", authMiddleware, deleteActivity);
+
 export default router;

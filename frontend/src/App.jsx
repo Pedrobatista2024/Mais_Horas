@@ -6,9 +6,10 @@ import Dashboard from "./pages/Dashboard";
 import Activities from "./pages/Activities";
 import OrgDashboard from "./pages/OrgDashboard";
 import CreateActivity from "./pages/CreateActivity";
-import OrgActivityDetails from "./pages/OrgActivityDetails";       
-import ActivityParticipants from "./pages/ActivityParticipants";   
-import EditActivity from "./pages/EditActivity";  // ⬅ NOVO
+import OrgActivityDetails from "./pages/OrgActivityDetails";
+import ActivityParticipants from "./pages/ActivityParticipants";
+import EditActivity from "./pages/EditActivity";
+import MyCertificates from "./pages/MyCertificates"; // ⬅ NOVO
 
 import PrivateRoute from "./routes/PrivateRoute";
 
@@ -24,7 +25,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Acesso aluno */}
+        {/* ======================
+            Acesso ALUNO
+        ====================== */}
         <Route
           path="/dashboard"
           element={
@@ -43,7 +46,19 @@ function App() {
           }
         />
 
-        {/* Acesso ONG */}
+        {/* 🔥 NOVA ROTA – CERTIFICADOS DO ALUNO */}
+        <Route
+          path="/my-certificates"
+          element={
+            <PrivateRoute>
+              <MyCertificates />
+            </PrivateRoute>
+          }
+        />
+
+        {/* ======================
+            Acesso ONG
+        ====================== */}
         <Route
           path="/org"
           element={
@@ -62,7 +77,6 @@ function App() {
           }
         />
 
-        {/* NOVAS ROTAS */}
         <Route
           path="/org/activity/:id"
           element={
@@ -81,7 +95,6 @@ function App() {
           }
         />
 
-        {/* ⬅ AQUI ESTÁ A ROTA QUE FALTAVA */}
         <Route
           path="/org/activity/:id/edit"
           element={

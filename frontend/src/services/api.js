@@ -1,14 +1,15 @@
 import axios from "axios";
 
+const API_BASE_URL = "http://localhost:3000/api";
+
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-//"http://localhost:3000/api"
-// Interceptor: adiciona token automaticamente se existir
+// Interceptor: adiciona token automaticamente
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -17,4 +18,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// 👉 exporta também a baseURL para uso fora do axios (PDF, imagens, etc)
+export const API_URL = API_BASE_URL;
 export { api };
