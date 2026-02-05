@@ -10,6 +10,7 @@ import OrgActivityDetails from "./pages/OrgActivityDetails";
 import ActivityParticipants from "./pages/ActivityParticipants";
 import EditActivity from "./pages/EditActivity";
 import MyCertificates from "./pages/MyCertificates"; // ⬅ NOVO
+import MyOrgActivities from "./pages/MyOrgActivities";
 
 import PrivateRoute from "./routes/PrivateRoute";
 
@@ -103,6 +104,15 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+  path="/org/my-activities"
+  element={
+    <PrivateRoute role="organization">
+      <MyOrgActivities />
+    </PrivateRoute>
+  }
+/>
+
 
       </Routes>
     </BrowserRouter>

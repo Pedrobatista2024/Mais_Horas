@@ -1,48 +1,35 @@
-import { useEffect, useState } from "react";
-import { api } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 export default function OrgDashboard() {
-  const [activities, setActivities] = useState([]);
   const navigate = useNavigate();
 
-  async function loadActivities() {
-    try {
-      const response = await api.get("/activities/my");
-      setActivities(response.data);
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao carregar atividades da ONG");
-    }
+  function logout() {
+    localStorage.removeItem("token");
+    navigate("/login");
   }
 
-  useEffect(() => {
-    loadActivities();
-  }, []);
-
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       <h1>Painel da Organização</h1>
 
-      <button onClick={() => navigate("/org/create-activity")}>
+      <br />
+
+      <button
+        onClick={() => navigate("/org/create-activity")}
+        style={{ marginRight: "10px" }}
+      >
         Criar atividade
       </button>
 
-      <h3>Minhas Atividades</h3>
+      <button
+        onClick={() => navigate("/org/my-activities")}
+      >
+        Minhas atividades
+      </button>
 
-      {activities.length === 0 && <p>Nenhuma atividade cadastrada.</p>}
+      <br /><br />
 
-      <ul>
-        {activities.map((activity) => (
-          <li
-            key={activity._id}
-            style={{ cursor: "pointer", marginBottom: "10px" }}
-            onClick={() => navigate(`/org/activity/${activity._id}`)}
-          >
-            {activity.title}
-          </li>
-        ))}
-      </ul>
+      <button onClick={logout}>Sair</button>
     </div>
   );
 }
