@@ -24,6 +24,44 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "organization"],
       default: "student",
     },
+
+    // ===============================
+    // 🔹 PERFIL DA ORGANIZAÇÃO (ONG)
+    // ===============================
+    organizationProfile: {
+      organizationName: {
+        type: String,
+      },
+
+      cnpj: {
+        type: String,
+      },
+
+      description: {
+        type: String,
+      },
+
+      phone: {
+        type: String,
+      },
+
+      address: {
+        type: String,
+      },
+
+      website: {
+        type: String,
+      },
+
+      instagram: {
+        type: String,
+      },
+
+      // ✅ FOTO / LOGO DA ONG (CAMPO CORRETO)
+      photo: {
+        type: String,
+      },
+    },
   },
   { timestamps: true }
 );

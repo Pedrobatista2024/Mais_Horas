@@ -7,6 +7,7 @@ import activityRoutes from "./src/routes/activity.routes.js";
 import participationRoutes from "./src/routes/participation.routes.js";
 import certificateRoutes from "./src/routes/certificate.routes.js";
 import dashboardRoutes from "./src/routes/dashboard.routes.js";
+import path from "path";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use("/api/activities", activityRoutes);
 app.use("/api/participations", participationRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/uploads", express.static(path.resolve("uploads")));
 
 // Conectar ao banco
 connectDB();

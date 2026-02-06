@@ -4,12 +4,16 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Activities from "./pages/Activities";
+import MyCertificates from "./pages/MyCertificates"; // ✅ IMPORTA A PÁGINA
+
 import OrgDashboard from "./pages/OrgDashboard";
+import OrgProfile from "./pages/OrgProfile";
+import OrgEditProfile from "./pages/OrgEditProfile";
+
 import CreateActivity from "./pages/CreateActivity";
 import OrgActivityDetails from "./pages/OrgActivityDetails";
 import ActivityParticipants from "./pages/ActivityParticipants";
 import EditActivity from "./pages/EditActivity";
-import MyCertificates from "./pages/MyCertificates"; // ⬅ NOVO
 import MyOrgActivities from "./pages/MyOrgActivities";
 
 import PrivateRoute from "./routes/PrivateRoute";
@@ -18,21 +22,21 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* Redireciona "/" para login */}
         <Route path="/" element={<Navigate to="/login" />} />
 
-        {/* Acesso público */}
+        {/* =====================
+            PÚBLICO
+        ===================== */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* ======================
-            Acesso ALUNO
-        ====================== */}
+        {/* =====================
+            ALUNO
+        ===================== */}
         <Route
           path="/dashboard"
           element={
-            <PrivateRoute>
+            <PrivateRoute role="student">
               <Dashboard />
             </PrivateRoute>
           }
@@ -41,30 +45,48 @@ function App() {
         <Route
           path="/activities"
           element={
-            <PrivateRoute>
+            <PrivateRoute role="student">
               <Activities />
             </PrivateRoute>
           }
         />
 
-        {/* 🔥 NOVA ROTA – CERTIFICADOS DO ALUNO */}
+        {/* ✅ ROTA QUE ESTAVA FALTANDO */}
         <Route
           path="/my-certificates"
           element={
-            <PrivateRoute>
+            <PrivateRoute role="student">
               <MyCertificates />
             </PrivateRoute>
           }
         />
 
-        {/* ======================
-            Acesso ONG
-        ====================== */}
+        {/* =====================
+            ONG
+        ===================== */}
         <Route
           path="/org"
           element={
             <PrivateRoute role="organization">
               <OrgDashboard />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/org/profile"
+          element={
+            <PrivateRoute role="organization">
+              <OrgProfile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/org/profile/edit"
+          element={
+            <PrivateRoute role="organization">
+              <OrgEditProfile />
             </PrivateRoute>
           }
         />
@@ -79,19 +101,19 @@ function App() {
         />
 
         <Route
-          path="/org/activity/:id"
+          path="/org/my-activities"
           element={
             <PrivateRoute role="organization">
-              <OrgActivityDetails />
+              <MyOrgActivities />
             </PrivateRoute>
           }
         />
 
         <Route
-          path="/org/activity/:id/participants"
+          path="/org/activity/:id"
           element={
             <PrivateRoute role="organization">
-              <ActivityParticipants />
+              <OrgActivityDetails />
             </PrivateRoute>
           }
         />
@@ -104,16 +126,15 @@ function App() {
             </PrivateRoute>
           }
         />
+
         <Route
-  path="/org/my-activities"
-  element={
-    <PrivateRoute role="organization">
-      <MyOrgActivities />
-    </PrivateRoute>
-  }
-/>
-
-
+          path="/org/activity/:id/participants"
+          element={
+            <PrivateRoute role="organization">
+              <ActivityParticipants />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
