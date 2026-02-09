@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
+import API_BASE_URL from "../config/api";
 
 export default function OrgProfile() {
   const [user, setUser] = useState(null);
@@ -68,7 +69,8 @@ export default function OrgProfile() {
         >
           {photoUrl ? (
             <img
-              src={photoUrl}
+              // 2. AJUSTE AQUI: Adicione o API_BASE_URL antes do caminho da foto
+              src={`${API_BASE_URL}/${photoUrl}`} 
               alt="Foto da ONG"
               style={{
                 width: "100%",

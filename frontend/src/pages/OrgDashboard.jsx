@@ -102,14 +102,15 @@ export default function OrgDashboard() {
           }}
         >
           {photo ? (
-            <img
-              src={`${API_BASE_URL}/${profile.photo}`}
-              alt="Foto da ONG"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+  <img
+    /* AQUI ESTAVA O ERRO: mudei de profile.photo para orgProfile.photo (ou apenas photo) */
+    src={`${API_BASE_URL}/${photo}`} 
+    alt="Foto da ONG"
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+    }}
             />
           ) : (
             <span style={{ fontSize: "12px", color: "#aaa", textAlign: "center" }}>

@@ -1,6 +1,8 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
+import fs from "fs";
+import path from "path";
 
 // ============================
 // REGISTER
@@ -97,6 +99,7 @@ export const getProfile = async (req, res) => {
 // ============================
 // UPDATE PROFILE (ONG + FOTO) COM LOGS
 // ============================
+
 export const updateProfile = async (req, res) => {
   try {
     console.log("📥 PUT /profile chamado");
@@ -138,37 +141,45 @@ export const updateProfile = async (req, res) => {
         user.organizationProfile = {};
       }
 
-      if (organizationName !== undefined) {
+      if (organizationName !== undefined)
         user.organizationProfile.organizationName = organizationName;
-      }
 
-      if (description !== undefined) {
+      if (description !== undefined)
         user.organizationProfile.description = description;
-      }
 
-      if (phone !== undefined) {
+      if (phone !== undefined)
         user.organizationProfile.phone = phone;
-      }
 
-      if (website !== undefined) {
+      if (website !== undefined)
         user.organizationProfile.website = website;
-      }
 
-      if (address !== undefined) {
+      if (address !== undefined)
         user.organizationProfile.address = address;
-      }
 
       // ======================
-      // FOTO (NORMALIZANDO CAMINHO)
+      // FOTO (SUBSTITUI E REMOVE A ANTIGA)
       // ======================
       if (req.file) {
-        const normalizedPath = req.file.path.replace(/\\/g, "/");
+        const newPhotoPath = req.file.path.replace(/\\/g, "/");
+        console.log("🆕 Nova foto:", newPhotoPath);
 
-        console.log("✅ FOTO SALVA EM:", normalizedPath);
+        // Remove foto antiga do disco (se existir)
+        if (user.organizationProfile.photo) {
+          const oldPhotoAbsolutePath = path.resolve(
+            process.cwd(),
+            user.organizationProfile.photo
+          );
 
-        user.organizationProfile.photo = normalizedPath;
-      } else {
-        console.log("⚠️ NENHUMA FOTO RECEBIDA");
+          if (fs.existsSync(oldPhotoAbsolutePath)) {
+            fs.unlinkSync(oldPhotoAbsolutePath);
+            console.log("🗑️ Foto antiga removida:", oldPhotoAbsolutePath);
+          } else {
+            console.log("⚠️ Foto antiga não encontrada no disco");
+          }
+        }
+
+        // Salva nova foto no banco
+        user.organizationProfile.photo = newPhotoPath;
       }
     }
 
