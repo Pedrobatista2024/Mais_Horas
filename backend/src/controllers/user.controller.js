@@ -158,12 +158,14 @@ export const updateProfile = async (req, res) => {
 
       // ======================
       // FOTO (SUBSTITUI E REMOVE A ANTIGA)
+      // Corrigido: A lógica agora está protegida pelo "if (req.file)"
       // ======================
       if (req.file) {
+        // Normaliza o caminho apenas se o arquivo existir
         const newPhotoPath = req.file.path.replace(/\\/g, "/");
-        console.log("🆕 Nova foto:", newPhotoPath);
+        console.log("🆕 Nova foto detectada:", newPhotoPath);
 
-        // Remove foto antiga do disco (se existir)
+        // Remove foto antiga do disco (se ela existir no banco de dados)
         if (user.organizationProfile.photo) {
           const oldPhotoAbsolutePath = path.resolve(
             process.cwd(),
@@ -172,17 +174,22 @@ export const updateProfile = async (req, res) => {
 
           if (fs.existsSync(oldPhotoAbsolutePath)) {
             fs.unlinkSync(oldPhotoAbsolutePath);
-            console.log("🗑️ Foto antiga removida:", oldPhotoAbsolutePath);
+            console.log("🗑️ Foto antiga removida com sucesso:", oldPhotoAbsolutePath);
           } else {
-            console.log("⚠️ Foto antiga não encontrada no disco");
+            console.log("⚠️ Foto antiga constava no banco, mas não foi achada no disco");
           }
         }
 
-        // Salva nova foto no banco
+        // Salva o caminho da nova foto no objeto do usuário
         user.organizationProfile.photo = newPhotoPath;
+      } else {
+        // Se cair aqui, significa que o usuário não enviou arquivo novo.
+        // O campo user.organizationProfile.photo permanece com o valor antigo (Cenários 1 e 2).
+        console.log("ℹ️ Nenhuma foto enviada. Mantendo a foto atual ou estado vazio.");
       }
     }
 
+    // Salva todas as alterações (texto e foto) de uma vez
     await user.save();
 
     console.log("💾 USUÁRIO SALVO NO BANCO:");
