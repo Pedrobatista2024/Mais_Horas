@@ -8,6 +8,7 @@ import participationRoutes from "./src/routes/participation.routes.js";
 import certificateRoutes from "./src/routes/certificate.routes.js";
 import dashboardRoutes from "./src/routes/dashboard.routes.js";
 import path from "path";
+import fs from 'fs';
 
 dotenv.config();
 
@@ -31,3 +32,11 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+const uploadDir = path.join(process.cwd(), 'backend/uploads');
+
+// Cria a pasta de uploads automaticamente se ela não existir
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('📁 Pasta de uploads criada com sucesso!');
+}
