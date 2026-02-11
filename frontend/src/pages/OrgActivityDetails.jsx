@@ -40,7 +40,6 @@ export default function OrgActivityDetails() {
 
   // 🔥 FINALIZAR ATIVIDADE (com regra de presença)
   async function handleFinishActivity() {
-    // limpa erro anterior
     setErrorMessage("");
 
     const confirma = confirm(
@@ -55,7 +54,6 @@ export default function OrgActivityDetails() {
     } catch (error) {
       console.error(error);
 
-      // 🧠 Mensagem vinda do backend (presenças pendentes)
       const message =
         error.response?.data?.message ||
         "Erro ao finalizar atividade";
@@ -70,6 +68,8 @@ export default function OrgActivityDetails() {
 
   if (loading) return <p>Carregando dados...</p>;
   if (!activity) return <p>Atividade não encontrada.</p>;
+
+  const isFinished = activity.status === "finished";
 
   return (
     <div style={{ padding: "20px" }}>
@@ -106,6 +106,7 @@ export default function OrgActivityDetails() {
 
       <br />
 
+      {/* ✅ Sempre disponível */}
       <button
         onClick={() => navigate(`/org/activity/${id}/participants`)}
         style={{ marginRight: "10px" }}
@@ -113,26 +114,31 @@ export default function OrgActivityDetails() {
         Ver participantes
       </button>
 
-      <button
-        onClick={() => navigate(`/org/activity/${id}/edit`)}
-        style={{ marginRight: "10px" }}
-      >
-        Editar atividade
-      </button>
+      {/* ✏️ Editar e 🗑️ Excluir SOMENTE se não estiver finalizada */}
+      {!isFinished && (
+        <>
+          <button
+            onClick={() => navigate(`/org/activity/${id}/edit`)}
+            style={{ marginRight: "10px" }}
+          >
+            Editar atividade
+          </button>
 
-      <button
-        onClick={handleDelete}
-        style={{
-          marginRight: "10px",
-          color: "white",
-          backgroundColor: "red"
-        }}
-      >
-        Excluir atividade
-      </button>
+          <button
+            onClick={handleDelete}
+            style={{
+              marginRight: "10px",
+              color: "white",
+              backgroundColor: "red"
+            }}
+          >
+            Excluir atividade
+          </button>
+        </>
+      )}
 
-      {/* 🔥 BOTÃO CONTINUA VISÍVEL */}
-      {activity.status !== "finished" && (
+      {/* 🔥 Finalizar só aparece se ainda estiver ativa */}
+      {!isFinished && (
         <button
           onClick={handleFinishActivity}
           style={{
@@ -145,7 +151,7 @@ export default function OrgActivityDetails() {
         </button>
       )}
 
-      <button onClick={() => navigate("/org")}>
+      <button onClick={() => navigate(-1)}>
         Voltar
       </button>
     </div>

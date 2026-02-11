@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 
 export default function ActivityParticipants() {
   const { id } = useParams(); // id da atividade
+  const navigate = useNavigate();
+
   const [participants, setParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,9 +58,25 @@ export default function ActivityParticipants() {
 
   return (
     <div style={{ padding: "20px" }}>
+      
+      {/* 🔙 BOTÃO VOLTAR */}
+      <button
+        onClick={() => navigate(-1)}
+        style={{
+          marginBottom: "16px",
+          padding: "8px 16px",
+          backgroundColor: "#090101",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer"
+        }}
+      >
+        ⬅ Voltar
+      </button>
+
       <h1>Participantes</h1>
 
-      {/* 📊 RESUMO CLARO */}
+      {/* 📊 RESUMO */}
       <div
         style={{
           marginBottom: "15px",
@@ -97,7 +115,6 @@ export default function ActivityParticipants() {
               <strong>{p.user.name}</strong> — {p.user.email}
               <br />
 
-              {/* 🟡 PENDENTE */}
               {p.status === "pending" && (
                 <>
                   <span style={{ color: "#b26a00" }}>🟡 Pendente</span>
@@ -117,12 +134,10 @@ export default function ActivityParticipants() {
                 </>
               )}
 
-              {/* 🟢 PRESENTE */}
               {p.status === "present" && (
                 <span style={{ color: "#2e7d32" }}>🟢 Presente</span>
               )}
 
-              {/* 🔴 AUSENTE */}
               {p.status === "absent" && (
                 <span style={{ color: "#c62828" }}>🔴 Ausente</span>
               )}
