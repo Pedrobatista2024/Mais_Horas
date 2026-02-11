@@ -9,6 +9,9 @@ export default function OrgActivityDetails() {
   const [activity, setActivity] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🆕 estado para mensagens de erro (regra de presença)
+  const [errorMessage, setErrorMessage] = useState("");
+
   async function loadActivity() {
     try {
       const response = await api.get(`/activities/${id}`);
@@ -35,7 +38,11 @@ export default function OrgActivityDetails() {
     }
   }
 
+  // 🔥 FINALIZAR ATIVIDADE (com regra de presença)
   async function handleFinishActivity() {
+    // limpa erro anterior
+    setErrorMessage("");
+
     const confirma = confirm(
       "Ao finalizar a atividade, ela será encerrada e os certificados serão gerados para os alunos presentes. Deseja continuar?"
     );
@@ -44,13 +51,16 @@ export default function OrgActivityDetails() {
     try {
       await api.post(`/activities/${id}/finish`);
       alert("Atividade finalizada com sucesso!");
-      loadActivity(); // recarrega para atualizar status
+      loadActivity(); // atualiza status
     } catch (error) {
       console.error(error);
-      alert(
+
+      // 🧠 Mensagem vinda do backend (presenças pendentes)
+      const message =
         error.response?.data?.message ||
-        "Erro ao finalizar atividade"
-      );
+        "Erro ao finalizar atividade";
+
+      setErrorMessage(message);
     }
   }
 
@@ -77,6 +87,22 @@ export default function OrgActivityDetails() {
         </p>
         <p><strong>Carga horária:</strong> {activity.workloadHours} horas</p>
       </div>
+
+      {/* 🆕 Mensagem clara de erro (regra de presença) */}
+      {errorMessage && (
+        <div
+          style={{
+            marginTop: "15px",
+            padding: "10px",
+            backgroundColor: "#fdecea",
+            color: "#b71c1c",
+            border: "1px solid #f5c6cb",
+            borderRadius: "4px"
+          }}
+        >
+          ⚠️ {errorMessage}
+        </div>
+      )}
 
       <br />
 
@@ -105,7 +131,7 @@ export default function OrgActivityDetails() {
         Excluir atividade
       </button>
 
-      {/* 🔥 FINALIZAR ATIVIDADE */}
+      {/* 🔥 BOTÃO CONTINUA VISÍVEL */}
       {activity.status !== "finished" && (
         <button
           onClick={handleFinishActivity}

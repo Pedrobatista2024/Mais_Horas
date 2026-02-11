@@ -30,8 +30,8 @@ export default function ActivityParticipants() {
       await api.put(`/participations/${participationId}/validate`, { status });
 
       // atualiza a UI sem reload
-      setParticipants(prev =>
-        prev.map(p =>
+      setParticipants((prev) =>
+        prev.map((p) =>
           p._id === participationId ? { ...p, status } : p
         )
       );
@@ -49,36 +49,83 @@ export default function ActivityParticipants() {
     return <p>Carregando participantes...</p>;
   }
 
+  const total = participants.length;
+  const pendingCount = participants.filter(p => p.status === "pending").length;
+  const presentCount = participants.filter(p => p.status === "present").length;
+  const absentCount = participants.filter(p => p.status === "absent").length;
+
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       <h1>Participantes</h1>
-      <p>Total: {participants.length}</p>
+
+      {/* 📊 RESUMO CLARO */}
+      <div
+        style={{
+          marginBottom: "15px",
+          padding: "10px",
+          backgroundColor: "#1a0202",
+          borderRadius: "6px"
+        }}
+      >
+        <p><strong>Total:</strong> {total}</p>
+        <p>🟡 Pendentes: {pendingCount}</p>
+        <p>🟢 Presentes: {presentCount}</p>
+        <p>🔴 Ausentes: {absentCount}</p>
+
+        {pendingCount > 0 && (
+          <p style={{ color: "#b26a00", marginTop: "8px" }}>
+            ⚠️ É necessário responder a presença de todos os participantes
+            antes de finalizar a atividade.
+          </p>
+        )}
+      </div>
 
       {participants.length === 0 ? (
         <p>Nenhum participante inscrito ainda.</p>
       ) : (
-        <ul>
+        <ul style={{ listStyle: "none", padding: 0 }}>
           {participants.map((p) => (
-            <li key={p._id} style={{ marginBottom: "10px" }}>
+            <li
+              key={p._id}
+              style={{
+                marginBottom: "12px",
+                padding: "10px",
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+              }}
+            >
               <strong>{p.user.name}</strong> — {p.user.email}
               <br />
 
+              {/* 🟡 PENDENTE */}
               {p.status === "pending" && (
                 <>
+                  <span style={{ color: "#b26a00" }}>🟡 Pendente</span>
+                  <br />
                   <button
                     onClick={() => handleValidate(p._id, "present")}
-                    style={{ marginRight: "8px" }}
+                    style={{ marginRight: "8px", marginTop: "6px" }}
                   >
-                    Confirmar
+                    Confirmar presença
                   </button>
-                  <button onClick={() => handleValidate(p._id, "absent")}>
-                    Ausente
+                  <button
+                    onClick={() => handleValidate(p._id, "absent")}
+                    style={{ marginTop: "6px" }}
+                  >
+                    Marcar ausente
                   </button>
                 </>
               )}
 
-              {p.status === "present" && <span>✔ Presente</span>}
-              {p.status === "absent" && <span>✖ Ausente</span>}
+              {/* 🟢 PRESENTE */}
+              {p.status === "present" && (
+                <span style={{ color: "#2e7d32" }}>🟢 Presente</span>
+              )}
+
+              {/* 🔴 AUSENTE */}
+              {p.status === "absent" && (
+                <span style={{ color: "#c62828" }}>🔴 Ausente</span>
+              )}
             </li>
           ))}
         </ul>
