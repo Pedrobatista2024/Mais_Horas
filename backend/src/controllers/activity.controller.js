@@ -11,7 +11,7 @@ console.log("📂 [CARREGAMENTO] activity.controller.js carregado");
 // ===========================
 export const createActivity = async (req, res) => {
   try {
-    const {
+    let {
       title,
       description,
       date,
@@ -25,10 +25,53 @@ export const createActivity = async (req, res) => {
 
     const createdBy = req.user._id;
 
+    // 🔹 Normalização básica
+    title = title?.trim();
+    description = description?.trim();
+    location = location?.trim();
+
+    // 🔹 Data não pode ser no passado
+    const activityDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (activityDate < today) {
+      return res.status(400).json({
+        message: "A data da atividade não pode ser no passado"
+      });
+    }
+
+    // 🔹 Horário
+    if (startTime >= endTime) {
+      return res.status(400).json({
+        message: "O horário inicial deve ser menor que o horário final"
+      });
+    }
+
+    // 🔹 Participantes
+    if (minParticipants < 1) {
+      return res.status(400).json({
+        message: "O mínimo de participantes deve ser pelo menos 1"
+      });
+    }
+
+    if (maxParticipants < minParticipants) {
+      return res.status(400).json({
+        message: "O máximo de participantes não pode ser menor que o mínimo"
+      });
+    }
+
+    // 🔹 Carga horária
+    if (!workloadHours || workloadHours <= 0) {
+      return res.status(400).json({
+        message: "Carga horária deve ser maior que 0"
+      });
+    }
+
     const activity = await Activity.create({
       title,
       description,
-      date,
+      date: activityDate,
       location,
       workloadHours,
       startTime,
@@ -43,8 +86,11 @@ export const createActivity = async (req, res) => {
       message: "Atividade criada com sucesso!",
       activity
     });
-  } catch {
-    return res.status(500).json({ error: "Erro ao criar atividade" });
+  } catch (error) {
+    console.error("❌ Erro ao criar atividade:", error);
+    return res.status(400).json({
+      message: error.message || "Erro ao criar atividade"
+    });
   }
 };
 

@@ -177,3 +177,6 @@ export default function CreateActivity() {
     </div>
   );
 }
+
+
+
