@@ -1,16 +1,46 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../services/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+
+  const [certificates, setCertificates] = useState([]);
+  const [loadingCerts, setLoadingCerts] = useState(true);
 
   function logout() {
     localStorage.removeItem("token");
     navigate("/login");
   }
 
+  async function loadCertificates() {
+    try {
+      const response = await api.get("/certificates/my");
+      setCertificates(response.data || []);
+    } catch (error) {
+      console.error(error);
+      setCertificates([]);
+    } finally {
+      setLoadingCerts(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCertificates();
+  }, []);
+
+  const lastThreeCertificates = useMemo(() => {
+    const sorted = [...(certificates || [])].sort((a, b) => {
+      const da = a?.activity?.date ? new Date(a.activity.date).getTime() : 0;
+      const db = b?.activity?.date ? new Date(b.activity.date).getTime() : 0;
+      return db - da; // mais recente primeiro
+    });
+
+    return sorted.slice(0, 3);
+  }, [certificates]);
+
   return (
     <div style={{ backgroundColor: "#081b3a", minHeight: "100vh" }}>
-
       {/* ================= NAVBAR ================= */}
       <div
         style={{
@@ -92,7 +122,6 @@ export default function Dashboard() {
             boxShadow: "0 6px 18px rgba(31, 60, 136, 0.08)"
           }}
         >
-
           {/* ===== TOPO PERFIL ===== */}
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             <div
@@ -141,40 +170,83 @@ export default function Dashboard() {
             </div>
 
             <div style={{ flex: 1 }}>
-              <h3 style={{ color: "#1F3C88", margin: 0 }}>0</h3>
+              <h3 style={{ color: "#1F3C88", margin: 0 }}>
+                {certificates?.length || 0}
+              </h3>
               <p style={{ color: "#2C3E50" }}>Certificados Obtidos</p>
             </div>
           </div>
 
           {/* ===== CONTEÚDO INFERIOR ===== */}
           <div style={{ display: "flex", gap: 30, marginTop: 30 }}>
-
             {/* SOBRE MIM */}
             <div style={{ flex: 1 }}>
               <h3 style={{ color: "#1F3C88" }}>Sobre Mim</h3>
-              <p style={{ color: "#4F5D75" }}>
-                —
-              </p>
+              <p style={{ color: "#4F5D75" }}>—</p>
             </div>
 
             {/* CERTIFICADOS */}
             <div style={{ flex: 1 }}>
-              <h3 style={{ color: "#1F3C88" }}>Certificados Obtidos</h3>
-
               <div
                 style={{
-                  backgroundColor: "#F7F9FC",
-                  padding: 15,
-                  borderRadius: 8,
-                  marginBottom: 10,
-                  border: "1px solid #E0E6F1"
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
                 }}
               >
-                <span style={{ color: "#F2C94C" }}>🏅</span> Nome da atividade
-                <br />
-                <small style={{ color: "#6C757D" }}>Data</small>
+                <h3 style={{ color: "#1F3C88", margin: 0 }}>
+                  Certificados Obtidos
+                </h3>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/my-certificates")}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#2E5AAC",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    fontWeight: 700
+                  }}
+                >
+                  Ver todos
+                </button>
               </div>
 
+              <div style={{ marginTop: 10 }}>
+                {loadingCerts ? (
+                  <p style={{ color: "#4F5D75" }}>Carregando...</p>
+                ) : lastThreeCertificates.length === 0 ? (
+                  <p style={{ color: "#4F5D75" }}>
+                    Você ainda não possui certificados.
+                  </p>
+                ) : (
+                  lastThreeCertificates.map((cert) => (
+                    <div
+                      key={cert._id}
+                      style={{
+                        backgroundColor: "#F7F9FC",
+                        padding: 15,
+                        borderRadius: 8,
+                        marginBottom: 10,
+                        border: "1px solid #E0E6F1"
+                      }}
+                    >
+                      <span style={{ color: "#F2C94C" }}>🏅</span>{" "}
+                      <span style={{ color: "#2C3E50", fontWeight: 800 }}>
+                        {cert?.activity?.title || "Atividade"}
+                      </span>
+                      <br />
+                      <small style={{ color: "#6C757D" }}>
+                        {cert?.activity?.date
+                          ? new Date(cert.activity.date).toLocaleDateString()
+                          : "Data"}
+                      </small>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 

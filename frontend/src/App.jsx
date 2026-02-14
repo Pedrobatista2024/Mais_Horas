@@ -9,13 +9,13 @@ import MyCertificates from "./pages/MyCertificates"; // ✅ IMPORTA A PÁGINA
 import OrgDashboard from "./pages/OrgDashboard";
 import OrgProfile from "./pages/OrgProfile";
 import OrgEditProfile from "./pages/OrgEditProfile";
-
+import StudentActivityDetails from "./pages/StudentActivityDetails";
 import CreateActivity from "./pages/CreateActivity";
 import OrgActivityDetails from "./pages/OrgActivityDetails";
 import ActivityParticipants from "./pages/ActivityParticipants";
 import EditActivity from "./pages/EditActivity";
 import MyOrgActivities from "./pages/MyOrgActivities";
-
+import MyActivities from "./pages/MyActivities";
 import PrivateRoute from "./routes/PrivateRoute";
 
 function App() {
@@ -135,6 +135,11 @@ function App() {
             </PrivateRoute>
           }
         />
+
+        <Route path="/my-activities" element={<MyActivities />} />
+        
+        <Route path="/student/activity/:id" element={<StudentActivityDetails />} />
+
       </Routes>
     </BrowserRouter>
   );

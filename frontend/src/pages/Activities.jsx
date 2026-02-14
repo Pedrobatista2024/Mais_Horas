@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Activities() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // ✅ Inicializado aqui corretamente
 
   useEffect(() => {
     async function loadActivities() {
@@ -59,7 +62,22 @@ export default function Activities() {
   return (
     <div style={{ backgroundColor: "#F2F5FA", minHeight: "100vh", padding: 30 }}>
       <h1 style={{ marginTop: 0, color: "#1F3C88" }}>Buscar Atividades</h1>
-
+      
+      <button
+          onClick={() => navigate(-1)}
+          style={{
+            backgroundColor: "#2E5AAC",
+            border: "none",
+            padding: "8px 14px",
+            color: "#FFFFFF",
+            cursor: "pointer",
+            borderRadius: 10,
+            fontWeight: 700,
+            marginBottom: 20, // Adicionado um pequeno espaçamento para não colar no grid
+          }}
+        >
+          Voltar
+        </button>
       {visibleActivities.length === 0 ? (
         <p style={{ color: "#2C3E50" }}>Nenhuma atividade cadastrada</p>
       ) : (
