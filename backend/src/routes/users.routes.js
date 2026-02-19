@@ -23,7 +23,7 @@ router.post("/login", login);
 // Buscar perfil do usuário (SEMPRE DO BANCO)
 router.get("/profile", authMiddleware, getProfile);
 
-// Atualizar perfil da ONG (COM FOTO)
+// Atualizar perfil (ALUNO ou ONG) (COM FOTO)
 router.put(
   "/profile",
   authMiddleware,

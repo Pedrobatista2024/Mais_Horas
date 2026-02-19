@@ -73,9 +73,6 @@ export const login = async (req, res) => {
 };
 
 // ============================
-// GET PROFILE (COM LOG)
-// ============================
-// ============================
 // GET PROFILE (ATUALIZADO)
 // ============================
 export const getProfile = async (req, res) => {
@@ -95,11 +92,9 @@ export const getProfile = async (req, res) => {
   }
 };
 
-
 // ============================
-// UPDATE PROFILE (ONG + FOTO) COM LOGS
+// UPDATE PROFILE (ALUNO + ONG + FOTO) COM LOGS
 // ============================
-
 export const updateProfile = async (req, res) => {
   try {
     console.log("📥 PUT /profile chamado");
@@ -112,15 +107,6 @@ export const updateProfile = async (req, res) => {
 
     const userId = req.user._id;
 
-    const {
-      name,
-      organizationName,
-      description,
-      phone,
-      website,
-      address,
-    } = req.body;
-
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "Usuário não encontrado" });
@@ -129,14 +115,94 @@ export const updateProfile = async (req, res) => {
     // ======================
     // DADOS BÁSICOS
     // ======================
-    if (name !== undefined) {
-      user.name = name;
+    if (req.body.name !== undefined) {
+      user.name = req.body.name;
+    }
+
+    // ======================
+    // PERFIL DO ALUNO
+    // ======================
+    if (user.role === "student") {
+      if (!user.studentProfile) user.studentProfile = {};
+
+      const sp = user.studentProfile;
+
+      const {
+        fullName,
+        sex,
+        birthDate,
+        phone,
+        city,
+        state,
+        neighborhood,
+        institution,
+        courseName,
+        aboutMe,
+        linkedin,
+        photoUrl,
+      } = req.body;
+
+      if (fullName !== undefined) sp.fullName = fullName;
+      if (sex !== undefined) sp.sex = sex;
+
+      if (birthDate !== undefined) {
+        if (birthDate === "" || birthDate === null) {
+          sp.birthDate = undefined;
+        } else {
+          const d = new Date(birthDate);
+          if (!Number.isNaN(d.getTime())) sp.birthDate = d;
+        }
+      }
+
+      if (phone !== undefined) sp.phone = phone;
+      if (city !== undefined) sp.city = city;
+      if (state !== undefined) sp.state = state;
+      if (neighborhood !== undefined) sp.neighborhood = neighborhood;
+
+      if (institution !== undefined) sp.institution = institution;
+      if (courseName !== undefined) sp.courseName = courseName;
+
+      if (aboutMe !== undefined) sp.aboutMe = aboutMe;
+      if (linkedin !== undefined) sp.linkedin = linkedin;
+
+      if (photoUrl !== undefined) sp.photoUrl = photoUrl;
+
+      // FOTO DO ALUNO (UPLOAD + REMOVE ANTIGA)
+      if (req.file) {
+        const newPhotoPath = req.file.path.replace(/\\/g, "/");
+        console.log("🆕 Nova foto do aluno detectada:", newPhotoPath);
+
+        if (sp.photo) {
+          const oldPhotoAbsolutePath = path.resolve(process.cwd(), sp.photo);
+
+          if (fs.existsSync(oldPhotoAbsolutePath)) {
+            fs.unlinkSync(oldPhotoAbsolutePath);
+            console.log("🗑️ Foto antiga do aluno removida:", oldPhotoAbsolutePath);
+          } else {
+            console.log("⚠️ Foto antiga do aluno constava no banco, mas não foi achada no disco");
+          }
+        }
+
+        sp.photo = newPhotoPath;
+      } else {
+        console.log("ℹ️ Nenhuma foto nova do aluno enviada. Mantendo a foto atual ou estado vazio.");
+      }
+
+      user.studentProfile = sp;
     }
 
     // ======================
     // PERFIL DA ONG
     // ======================
     if (user.role === "organization") {
+      const {
+        organizationName,
+        description,
+        phone,
+        website,
+        address,
+      } = req.body;
+
       if (!user.organizationProfile) {
         user.organizationProfile = {};
       }
@@ -156,16 +222,11 @@ export const updateProfile = async (req, res) => {
       if (address !== undefined)
         user.organizationProfile.address = address;
 
-      // ======================
       // FOTO (SUBSTITUI E REMOVE A ANTIGA)
-      // Corrigido: A lógica agora está protegida pelo "if (req.file)"
-      // ======================
       if (req.file) {
-        // Normaliza o caminho apenas se o arquivo existir
         const newPhotoPath = req.file.path.replace(/\\/g, "/");
-        console.log("🆕 Nova foto detectada:", newPhotoPath);
+        console.log("🆕 Nova foto da ONG detectada:", newPhotoPath);
 
-        // Remove foto antiga do disco (se ela existir no banco de dados)
         if (user.organizationProfile.photo) {
           const oldPhotoAbsolutePath = path.resolve(
             process.cwd(),
@@ -180,16 +241,13 @@ export const updateProfile = async (req, res) => {
           }
         }
 
-        // Salva o caminho da nova foto no objeto do usuário
         user.organizationProfile.photo = newPhotoPath;
       } else {
-        // Se cair aqui, significa que o usuário não enviou arquivo novo.
-        // O campo user.organizationProfile.photo permanece com o valor antigo (Cenários 1 e 2).
         console.log("ℹ️ Nenhuma foto enviada. Mantendo a foto atual ou estado vazio.");
       }
     }
 
-    // Salva todas as alterações (texto e foto) de uma vez
+    // Salva tudo
     await user.save();
 
     console.log("💾 USUÁRIO SALVO NO BANCO:");

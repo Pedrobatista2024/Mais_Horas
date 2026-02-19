@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 
 export default function MyCertificates() {
+  const navigate = useNavigate();
+
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +40,12 @@ export default function MyCertificates() {
     loadCertificates();
   }, []);
 
-  if (loading) return <p style={{ padding: 20, color: "#FFFFFF" }}>Carregando certificados...</p>;
+  if (loading)
+    return (
+      <p style={{ padding: 20, color: "#FFFFFF" }}>
+        Carregando certificados...
+      </p>
+    );
 
   return (
     <div style={{ backgroundColor: "#081b3a", minHeight: "100vh", padding: 30 }}>
@@ -65,18 +73,36 @@ export default function MyCertificates() {
             </p>
           </div>
 
-          <div
-            style={{
-              backgroundColor: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.18)",
-              padding: "8px 12px",
-              borderRadius: 999,
-              fontWeight: 800,
-              fontSize: 13,
-              whiteSpace: "nowrap",
-            }}
-          >
-            Total: {certificates.length}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* 🔹 BOTÃO VOLTAR */}
+            <button
+              onClick={() => navigate("/dashboard")}
+              style={{
+                backgroundColor: "transparent",
+                border: "1px solid rgba(255,255,255,0.4)",
+                color: "#FFFFFF",
+                padding: "6px 12px",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 700,
+              }}
+            >
+              ← Voltar
+            </button>
+
+            <div
+              style={{
+                backgroundColor: "rgba(255,255,255,0.12)",
+                border: "1px solid rgba(255,255,255,0.18)",
+                padding: "8px 12px",
+                borderRadius: 999,
+                fontWeight: 800,
+                fontSize: 13,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Total: {certificates.length}
+            </div>
           </div>
         </div>
 
@@ -102,14 +128,17 @@ export default function MyCertificates() {
             >
               <strong>Você ainda não possui certificados.</strong>
               <div style={{ marginTop: 6, color: "#4F5D75", fontSize: 13 }}>
-                Complete atividades como <span style={{ fontWeight: 800 }}>Presente</span> para gerar certificados.
+                Complete atividades como{" "}
+                <span style={{ fontWeight: 800 }}>Presente</span> para gerar
+                certificados.
               </div>
             </div>
           ) : (
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(320px, 1fr))",
                 gap: 12,
               }}
             >
@@ -127,10 +156,26 @@ export default function MyCertificates() {
                     gap: 10,
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                    }}
+                  >
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ color: "#F2C94C", fontSize: 18 }}>🏅</span>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <span
+                          style={{ color: "#F2C94C", fontSize: 18 }}
+                        >
+                          🏅
+                        </span>
                         <div
                           style={{
                             fontWeight: 900,
@@ -145,13 +190,26 @@ export default function MyCertificates() {
                         </div>
                       </div>
 
-                      <div style={{ marginTop: 6, color: "#4F5D75", fontSize: 13 }}>
-                        <span style={{ fontWeight: 800, color: "#1F3C88" }}>
+                      <div
+                        style={{
+                          marginTop: 6,
+                          color: "#4F5D75",
+                          fontSize: 13,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            color: "#1F3C88",
+                          }}
+                        >
                           {cert?.hours ?? 0}h
                         </span>{" "}
                         •{" "}
                         {cert?.activity?.date
-                          ? new Date(cert.activity.date).toLocaleDateString()
+                          ? new Date(
+                              cert.activity.date
+                            ).toLocaleDateString()
                           : "Data"}
                       </div>
                     </div>

@@ -1,12 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
+import API_BASE_URL from "../config/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const [certificates, setCertificates] = useState([]);
   const [loadingCerts, setLoadingCerts] = useState(true);
+
+  // ✅ métricas reais (baseadas em participations)
+  const [volunteerActivities, setVolunteerActivities] = useState(0);
+  const [hoursContributed, setHoursContributed] = useState(0);
+
+  // ✅ dados do perfil do aluno
+  const [profile, setProfile] = useState({
+    name: "Nome do Aluno",
+    aboutMe: "—",
+    city: "",
+    state: "",
+    photoSrc: "",
+  });
 
   function logout() {
     localStorage.removeItem("token");
@@ -25,8 +39,90 @@ export default function Dashboard() {
     }
   }
 
+  // ✅ carrega participações e calcula métricas
+  async function loadStatsFromMyActivities() {
+    try {
+      const response = await api.get("/participations/my");
+      const items = response.data || [];
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const finishedAndPresent = items.filter((p) => {
+        const statusOk = p?.status === "present";
+
+        const a = p?.activity;
+        if (!a?._id) return false;
+
+        const finishedByStatus = a.status === "finished";
+
+        let finishedByDate = false;
+        if (a.date) {
+          const d = new Date(a.date);
+          if (!Number.isNaN(d.getTime())) {
+            d.setHours(0, 0, 0, 0);
+            finishedByDate = d < today;
+          }
+        }
+
+        const finishedOk = finishedByStatus || finishedByDate;
+        return statusOk && finishedOk;
+      });
+
+      const totalActivities = finishedAndPresent.length;
+
+      const totalHours = finishedAndPresent.reduce((sum, p) => {
+        const h = Number(p?.activity?.workloadHours || 0);
+        return sum + (Number.isFinite(h) ? h : 0);
+      }, 0);
+
+      setVolunteerActivities(totalActivities);
+      setHoursContributed(totalHours);
+    } catch (error) {
+      console.error(error);
+      setVolunteerActivities(0);
+      setHoursContributed(0);
+    }
+  }
+
+  // ✅ carrega dados do perfil do aluno (nome, sobre mim, cidade/estado e foto)
+  async function loadStudentProfile() {
+    try {
+      const response = await api.get("/users/profile");
+      const user = response.data?.user || {};
+      const sp = user.studentProfile || {};
+
+      const displayName = sp.fullName || user.name || "Nome do Aluno";
+      const aboutMe = sp.aboutMe && String(sp.aboutMe).trim() ? sp.aboutMe : "—";
+      const city = sp.city || "";
+      const state = sp.state || "";
+
+      // prioridade: upload (photo) -> url (photoUrl) -> vazio
+      let photoSrc = "";
+      if (sp.photo) {
+        // backend salva path tipo "uploads/xxx.jpg"
+        photoSrc = `${API_BASE_URL}/${String(sp.photo).replace(/\\/g, "/")}`;
+      } else if (sp.photoUrl) {
+        photoSrc = sp.photoUrl;
+      }
+
+      setProfile({
+        name: displayName,
+        aboutMe,
+        city,
+        state,
+        photoSrc,
+      });
+    } catch (error) {
+      console.error(error);
+      // não trava a página
+    }
+  }
+
   useEffect(() => {
     loadCertificates();
+    loadStatsFromMyActivities();
+    loadStudentProfile();
   }, []);
 
   const lastThreeCertificates = useMemo(() => {
@@ -39,6 +135,11 @@ export default function Dashboard() {
     return sorted.slice(0, 3);
   }, [certificates]);
 
+  const locationText =
+    profile.city && profile.state
+      ? `${profile.city} - ${profile.state}`
+      : profile.city || profile.state || "";
+
   return (
     <div style={{ backgroundColor: "#081b3a", minHeight: "100vh" }}>
       {/* ================= NAVBAR ================= */}
@@ -49,7 +150,7 @@ export default function Dashboard() {
           padding: "15px 40px",
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center"
+          alignItems: "center",
         }}
       >
         <h2 style={{ margin: 0 }}>
@@ -63,7 +164,7 @@ export default function Dashboard() {
               border: "none",
               padding: "8px 14px",
               color: "#FFFFFF",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
             onClick={() => navigate("/activities")}
           >
@@ -76,7 +177,7 @@ export default function Dashboard() {
               border: "none",
               padding: "8px 14px",
               color: "#FFFFFF",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
             onClick={() => navigate("/my-activities")}
           >
@@ -89,9 +190,9 @@ export default function Dashboard() {
               border: "none",
               padding: "8px 14px",
               color: "#FFFFFF",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
-            onClick={() => navigate("/edit-profile")}
+            onClick={() => navigate("/edit-student-profile")}
           >
             Editar Perfil
           </button>
@@ -102,7 +203,7 @@ export default function Dashboard() {
               border: "none",
               padding: "8px 14px",
               color: "#FFFFFF",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
             onClick={logout}
           >
@@ -119,7 +220,7 @@ export default function Dashboard() {
             width: "900px",
             borderRadius: "10px",
             padding: "30px",
-            boxShadow: "0 6px 18px rgba(31, 60, 136, 0.08)"
+            boxShadow: "0 6px 18px rgba(31, 60, 136, 0.08)",
           }}
         >
           {/* ===== TOPO PERFIL ===== */}
@@ -131,13 +232,35 @@ export default function Dashboard() {
                 borderRadius: "50%",
                 backgroundColor: "#c8d5ed",
                 border: "5px solid #ffff",
-                marginTop: -70
+                marginTop: -70,
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
-            />
+              title="Foto do aluno"
+            >
+              {profile.photoSrc ? (
+                <img
+                  src={profile.photoSrc}
+                  alt="Foto do aluno"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <span style={{ color: "#1F3C88", fontWeight: 900 }}>Foto</span>
+              )}
+            </div>
+
             <div>
               <h2 style={{ margin: 0, color: "#2C3E50" }}>
-                Nome do Aluno <span style={{ color: "#27AE60" }}>✔</span>
+                {profile.name} <span style={{ color: "#27AE60" }}>✔</span>
               </h2>
+
+              {locationText && (
+                <p style={{ margin: "6px 0 0", color: "#4F5D75", fontWeight: 700 }}>
+                  {locationText}
+                </p>
+              )}
             </div>
           </div>
 
@@ -150,11 +273,11 @@ export default function Dashboard() {
               textAlign: "center",
               borderTop: "1px solid #E0E6F1",
               borderBottom: "1px solid #E0E6F1",
-              padding: "20px 0"
+              padding: "20px 0",
             }}
           >
             <div style={{ flex: 1 }}>
-              <h3 style={{ color: "#1F3C88", margin: 0 }}>0</h3>
+              <h3 style={{ color: "#1F3C88", margin: 0 }}>{volunteerActivities}</h3>
               <p style={{ color: "#2C3E50" }}>Atividades Voluntárias</p>
             </div>
 
@@ -162,17 +285,15 @@ export default function Dashboard() {
               style={{
                 flex: 1,
                 borderLeft: "1px solid #E0E6F1",
-                borderRight: "1px solid #E0E6F1"
+                borderRight: "1px solid #E0E6F1",
               }}
             >
-              <h3 style={{ color: "#1F3C88", margin: 0 }}>0</h3>
+              <h3 style={{ color: "#1F3C88", margin: 0 }}>{hoursContributed}</h3>
               <p style={{ color: "#2C3E50" }}>Horas Contribuídas</p>
             </div>
 
             <div style={{ flex: 1 }}>
-              <h3 style={{ color: "#1F3C88", margin: 0 }}>
-                {certificates?.length || 0}
-              </h3>
+              <h3 style={{ color: "#1F3C88", margin: 0 }}>{certificates?.length || 0}</h3>
               <p style={{ color: "#2C3E50" }}>Certificados Obtidos</p>
             </div>
           </div>
@@ -182,7 +303,9 @@ export default function Dashboard() {
             {/* SOBRE MIM */}
             <div style={{ flex: 1 }}>
               <h3 style={{ color: "#1F3C88" }}>Sobre Mim</h3>
-              <p style={{ color: "#4F5D75" }}>—</p>
+              <p style={{ color: "#4F5D75", whiteSpace: "pre-wrap" }}>
+                {profile.aboutMe || "—"}
+              </p>
             </div>
 
             {/* CERTIFICADOS */}
@@ -191,12 +314,10 @@ export default function Dashboard() {
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "center"
+                  alignItems: "center",
                 }}
               >
-                <h3 style={{ color: "#1F3C88", margin: 0 }}>
-                  Certificados Obtidos
-                </h3>
+                <h3 style={{ color: "#1F3C88", margin: 0 }}>Certificados Obtidos</h3>
 
                 <button
                   type="button"
@@ -207,7 +328,7 @@ export default function Dashboard() {
                     color: "#2E5AAC",
                     cursor: "pointer",
                     textDecoration: "underline",
-                    fontWeight: 700
+                    fontWeight: 700,
                   }}
                 >
                   Ver todos
@@ -218,9 +339,7 @@ export default function Dashboard() {
                 {loadingCerts ? (
                   <p style={{ color: "#4F5D75" }}>Carregando...</p>
                 ) : lastThreeCertificates.length === 0 ? (
-                  <p style={{ color: "#4F5D75" }}>
-                    Você ainda não possui certificados.
-                  </p>
+                  <p style={{ color: "#4F5D75" }}>Você ainda não possui certificados.</p>
                 ) : (
                   lastThreeCertificates.map((cert) => (
                     <div
@@ -230,7 +349,7 @@ export default function Dashboard() {
                         padding: 15,
                         borderRadius: 8,
                         marginBottom: 10,
-                        border: "1px solid #E0E6F1"
+                        border: "1px solid #E0E6F1",
                       }}
                     >
                       <span style={{ color: "#F2C94C" }}>🏅</span>{" "}
@@ -249,7 +368,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
