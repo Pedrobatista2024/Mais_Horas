@@ -100,7 +100,6 @@ export default function Dashboard() {
       // prioridade: upload (photo) -> url (photoUrl) -> vazio
       let photoSrc = "";
       if (sp.photo) {
-        // backend salva path tipo "uploads/xxx.jpg"
         photoSrc = `${API_BASE_URL}/${String(sp.photo).replace(/\\/g, "/")}`;
       } else if (sp.photoUrl) {
         photoSrc = sp.photoUrl;
@@ -116,6 +115,41 @@ export default function Dashboard() {
     } catch (error) {
       console.error(error);
       // não trava a página
+    }
+  }
+
+  // ✅ BLOQUEIO simples no clique do botão "Buscar Atividades"
+  async function handleGoToActivities() {
+    try {
+      const response = await api.get("/users/profile");
+      const user = response.data?.user || {};
+      const sp = user.studentProfile || {};
+
+      const requiredFields = [
+        sp.fullName || user.name, // nome
+        sp.sex,
+        sp.birthDate,
+        user.email,
+        sp.phone,
+        sp.city,
+        sp.state,
+        sp.institution,
+        sp.courseName,
+        sp.aboutMe,
+      ];
+
+      const allFilled = requiredFields.every((field) => String(field ?? "").trim() !== "");
+      const hasUploadPhoto = !!sp.photo; // foto (upload) obrigatória
+
+      if (!allFilled || !hasUploadPhoto) {
+        alert("⚠️ Você precisa completar seu perfil (incluindo foto) antes de buscar atividades.");
+        return;
+      }
+
+      navigate("/activities");
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao verificar perfil.");
     }
   }
 
@@ -136,9 +170,7 @@ export default function Dashboard() {
   }, [certificates]);
 
   const locationText =
-    profile.city && profile.state
-      ? `${profile.city} - ${profile.state}`
-      : profile.city || profile.state || "";
+    profile.city && profile.state ? `${profile.city} - ${profile.state}` : profile.city || profile.state || "";
 
   return (
     <div style={{ backgroundColor: "#081b3a", minHeight: "100vh" }}>
@@ -166,7 +198,7 @@ export default function Dashboard() {
               color: "#FFFFFF",
               cursor: "pointer",
             }}
-            onClick={() => navigate("/activities")}
+            onClick={handleGoToActivities}
           >
             Buscar Atividades
           </button>
@@ -257,9 +289,7 @@ export default function Dashboard() {
               </h2>
 
               {locationText && (
-                <p style={{ margin: "6px 0 0", color: "#4F5D75", fontWeight: 700 }}>
-                  {locationText}
-                </p>
+                <p style={{ margin: "6px 0 0", color: "#4F5D75", fontWeight: 700 }}>{locationText}</p>
               )}
             </div>
           </div>
@@ -281,13 +311,7 @@ export default function Dashboard() {
               <p style={{ color: "#2C3E50" }}>Atividades Voluntárias</p>
             </div>
 
-            <div
-              style={{
-                flex: 1,
-                borderLeft: "1px solid #E0E6F1",
-                borderRight: "1px solid #E0E6F1",
-              }}
-            >
+            <div style={{ flex: 1, borderLeft: "1px solid #E0E6F1", borderRight: "1px solid #E0E6F1" }}>
               <h3 style={{ color: "#1F3C88", margin: 0 }}>{hoursContributed}</h3>
               <p style={{ color: "#2C3E50" }}>Horas Contribuídas</p>
             </div>
@@ -303,20 +327,12 @@ export default function Dashboard() {
             {/* SOBRE MIM */}
             <div style={{ flex: 1 }}>
               <h3 style={{ color: "#1F3C88" }}>Sobre Mim</h3>
-              <p style={{ color: "#4F5D75", whiteSpace: "pre-wrap" }}>
-                {profile.aboutMe || "—"}
-              </p>
+              <p style={{ color: "#4F5D75", whiteSpace: "pre-wrap" }}>{profile.aboutMe || "—"}</p>
             </div>
 
             {/* CERTIFICADOS */}
             <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <h3 style={{ color: "#1F3C88", margin: 0 }}>Certificados Obtidos</h3>
 
                 <button
@@ -358,9 +374,7 @@ export default function Dashboard() {
                       </span>
                       <br />
                       <small style={{ color: "#6C757D" }}>
-                        {cert?.activity?.date
-                          ? new Date(cert.activity.date).toLocaleDateString()
-                          : "Data"}
+                        {cert?.activity?.date ? new Date(cert.activity.date).toLocaleDateString() : "Data"}
                       </small>
                     </div>
                   ))

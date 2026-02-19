@@ -444,13 +444,13 @@ function inputStyle(readOnly) {
     width: "100%",
     padding: 10,
     borderRadius: 10,
-    border: "1px solid #0b0b0b",
+    border: "1px solid #f6f5f5",
     outline: "none",
     boxSizing: "border-box",
-    backgroundColor: readOnly ? "#0d0d0d" : "#0b0b0b",
+    backgroundColor: readOnly ? "#102486" : "#102486",
 
     // ✅ texto e cursor visíveis
-    color: "#FFFFFF",
+    color: "#ffffff",
     caretColor: "#FFFFFF",
 
     cursor: readOnly ? "not-allowed" : "text",
