@@ -277,21 +277,7 @@ export default function OrgDashboard() {
                       Ver Perfil Publico
                     </button>
 
-                    <button
-                      onClick={() => navigate("/org/profile/edit")}
-                      style={{
-                        backgroundColor: "#5C677D",
-                        border: "none",
-                        padding: "10px 14px",
-                        color: "#FFFFFF",
-                        cursor: "pointer",
-                        borderRadius: 10,
-                        fontWeight: 900,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      Editar Perfil
-                    </button>
+                    
                   </div>
                 </div>
               </div>

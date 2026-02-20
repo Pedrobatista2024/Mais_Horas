@@ -197,7 +197,7 @@ export default function OrgProfile() {
                 fontWeight: 900,
               }}
             >
-              Salvar/Editar informações
+              Editar informações
             </button>
 
             <button
