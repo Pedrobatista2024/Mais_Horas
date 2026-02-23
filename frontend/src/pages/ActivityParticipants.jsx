@@ -179,6 +179,7 @@ export default function ActivityParticipants() {
                 {participants.map((p) => {
                   const name = p?.user?.name || "Aluno";
                   const email = p?.user?.email || "-";
+                  const studentId = p?.user?._id;
 
                   return (
                     <div
@@ -197,7 +198,27 @@ export default function ActivityParticipants() {
                       }}
                     >
                       <div style={{ minWidth: 240 }}>
-                        <div style={{ fontWeight: 900, color: "#2C3E50" }}>{name}</div>
+                        {/* ✅ NOME CLICÁVEL */}
+                        <button
+                          type="button"
+                          onClick={() => studentId && navigate(`/student/${studentId}/public`)}
+                          disabled={!studentId}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            margin: 0,
+                            fontWeight: 900,
+                            color: "#2E5AAC",
+                            cursor: studentId ? "pointer" : "not-allowed",
+                            textDecoration: studentId ? "underline" : "none",
+                            textAlign: "left",
+                          }}
+                          title={studentId ? "Ver perfil público" : "ID do aluno não encontrado"}
+                        >
+                          {name}
+                        </button>
+
                         <div style={{ marginTop: 4, color: "#4F5D75", fontSize: 13 }}>{email}</div>
 
                         <div style={{ marginTop: 10 }}>

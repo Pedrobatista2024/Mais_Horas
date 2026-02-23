@@ -4,8 +4,11 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Activities from "./pages/Activities";
-import MyCertificates from "./pages/MyCertificates"; 
+import MyCertificates from "./pages/MyCertificates";
 import EditStudentProfile from "./pages/EditStudentProfile";
+
+import OrgPublicProfile from "./pages/OrgPublicProfile";
+import StudentPublicProfile from "./pages/StudentPublicProfile";
 
 import OrgDashboard from "./pages/OrgDashboard";
 import OrgProfile from "./pages/OrgProfile";
@@ -137,12 +140,12 @@ function App() {
           }
         />
 
+        <Route path="/org/:id/public" element={<OrgPublicProfile />} />
+        <Route path="/student/:id/public" element={<StudentPublicProfile />} />
+
         <Route path="/my-activities" element={<MyActivities />} />
-        
         <Route path="/edit-student-profile" element={<EditStudentProfile />} />
-
         <Route path="/student/activity/:id" element={<StudentActivityDetails />} />
-
       </Routes>
     </BrowserRouter>
   );

@@ -28,6 +28,7 @@ export default function StudentActivityDetails() {
   if (!activity) return <p>Atividade não encontrada.</p>;
 
   const orgName = activity?.createdBy?.name || "ONG";
+  const orgId = activity?.createdBy?._id || activity?.createdBy; // ✅ suporta populate OU string
   const dateStr = activity?.date ? new Date(activity.date).toLocaleDateString() : "-";
 
   return (
@@ -64,7 +65,23 @@ export default function StudentActivityDetails() {
 
         <div style={{ color: "#4F5D75", marginTop: 6 }}>
           <strong>ONG:</strong>{" "}
-          <span style={{ color: "#2E5AAC", fontWeight: 700 }}>{orgName}</span>
+          <button
+            type="button"
+            onClick={() => navigate(`/org/${orgId}/public`)}
+            disabled={!orgId}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: "#2E5AAC",
+              fontWeight: 700,
+              cursor: orgId ? "pointer" : "not-allowed",
+              textDecoration: orgId ? "underline" : "none",
+            }}
+            title={orgId ? "Ver perfil público da ONG" : "ID da ONG não encontrado"}
+          >
+            {orgName}
+          </button>
           <span style={{ color: "#6C757D" }}> (clicável depois)</span>
         </div>
 

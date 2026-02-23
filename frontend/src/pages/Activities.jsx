@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
-
 export default function Activities() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,9 +32,10 @@ export default function Activities() {
     }
   }
 
-  // 🔹 Placeholder (futuro: navegar para perfil da ONG)
+  // ✅ Agora abre o perfil público da ONG
   function handleOpenOrgProfile(orgId) {
-    alert("Em breve: perfil da ONG");
+    if (!orgId) return;
+    navigate(`/org/${orgId}/public`);
   }
 
   if (loading) return <p>Carregando atividades...</p>;
@@ -62,22 +62,23 @@ export default function Activities() {
   return (
     <div style={{ backgroundColor: "#F2F5FA", minHeight: "100vh", padding: 30 }}>
       <h1 style={{ marginTop: 0, color: "#1F3C88" }}>Buscar Atividades</h1>
-      
+
       <button
-          onClick={() => navigate(-1)}
-          style={{
-            backgroundColor: "#2E5AAC",
-            border: "none",
-            padding: "8px 14px",
-            color: "#FFFFFF",
-            cursor: "pointer",
-            borderRadius: 10,
-            fontWeight: 700,
-            marginBottom: 20, // Adicionado um pequeno espaçamento para não colar no grid
-          }}
-        >
-          Voltar
-        </button>
+        onClick={() => navigate(-1)}
+        style={{
+          backgroundColor: "#2E5AAC",
+          border: "none",
+          padding: "8px 14px",
+          color: "#FFFFFF",
+          cursor: "pointer",
+          borderRadius: 10,
+          fontWeight: 700,
+          marginBottom: 20, // Adicionado um pequeno espaçamento para não colar no grid
+        }}
+      >
+        Voltar
+      </button>
+
       {visibleActivities.length === 0 ? (
         <p style={{ color: "#2C3E50" }}>Nenhuma atividade cadastrada</p>
       ) : (
@@ -90,7 +91,7 @@ export default function Activities() {
         >
           {visibleActivities.map((activity) => {
             const orgName = activity?.createdBy?.name || "ONG";
-            const orgId = activity?.createdBy?._id;
+            const orgId = activity?.createdBy?._id || activity?.createdBy; // ✅ suporta populate OU string
 
             const dateStr = activity?.date
               ? new Date(activity.date).toLocaleDateString()
@@ -125,15 +126,17 @@ export default function Activities() {
                       <button
                         type="button"
                         onClick={() => handleOpenOrgProfile(orgId)}
+                        disabled={!orgId}
                         style={{
                           background: "transparent",
                           border: "none",
                           padding: 0,
                           color: "#2E5AAC",
-                          cursor: "pointer",
-                          textDecoration: "underline",
+                          cursor: orgId ? "pointer" : "not-allowed",
+                          textDecoration: orgId ? "underline" : "none",
                           fontWeight: 600,
                         }}
+                        title={orgId ? "Ver perfil público da ONG" : "ID da ONG não encontrado"}
                       >
                         {orgName}
                       </button>

@@ -9,7 +9,7 @@ export default function Dashboard() {
   const [certificates, setCertificates] = useState([]);
   const [loadingCerts, setLoadingCerts] = useState(true);
 
-  // ✅ métricas reais (baseadas em participations)
+  // ✅ métricas reais (AGORA baseadas em CERTIFICADOS)
   const [volunteerActivities, setVolunteerActivities] = useState(0);
   const [hoursContributed, setHoursContributed] = useState(0);
 
@@ -27,61 +27,50 @@ export default function Dashboard() {
     navigate("/login");
   }
 
+  // ✅ helper: pega horas do certificado (várias possibilidades)
+  function getHoursFromCertificate(cert) {
+    const candidates = [
+      cert?.activity?.workloadHours, // mais comum (activity populada)
+      cert?.activity?.hours, // fallback
+      cert?.workloadHours, // caso venha no próprio certificado
+      cert?.hoursContributed, // caso backend use outro nome
+      cert?.hours, // fallback genérico
+    ];
+
+    for (const v of candidates) {
+      const n = Number(v);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return 0;
+  }
+
   async function loadCertificates() {
     try {
       const response = await api.get("/certificates/my");
-      setCertificates(response.data || []);
-    } catch (error) {
-      console.error(error);
-      setCertificates([]);
-    } finally {
-      setLoadingCerts(false);
-    }
-  }
 
-  // ✅ carrega participações e calcula métricas
-  async function loadStatsFromMyActivities() {
-    try {
-      const response = await api.get("/participations/my");
-      const items = response.data || [];
+      // ✅ suporta resposta como array direto OU { certificates: [] }
+      const certs = Array.isArray(response.data)
+        ? response.data
+        : response.data?.certificates || [];
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      setCertificates(certs);
 
-      const finishedAndPresent = items.filter((p) => {
-        const statusOk = p?.status === "present";
+      // ✅ STATS sempre atualizam junto com os certificados (fonte confiável)
+      const totalActivities = certs.length;
 
-        const a = p?.activity;
-        if (!a?._id) return false;
-
-        const finishedByStatus = a.status === "finished";
-
-        let finishedByDate = false;
-        if (a.date) {
-          const d = new Date(a.date);
-          if (!Number.isNaN(d.getTime())) {
-            d.setHours(0, 0, 0, 0);
-            finishedByDate = d < today;
-          }
-        }
-
-        const finishedOk = finishedByStatus || finishedByDate;
-        return statusOk && finishedOk;
-      });
-
-      const totalActivities = finishedAndPresent.length;
-
-      const totalHours = finishedAndPresent.reduce((sum, p) => {
-        const h = Number(p?.activity?.workloadHours || 0);
-        return sum + (Number.isFinite(h) ? h : 0);
+      const totalHours = certs.reduce((sum, cert) => {
+        return sum + getHoursFromCertificate(cert);
       }, 0);
 
       setVolunteerActivities(totalActivities);
       setHoursContributed(totalHours);
     } catch (error) {
       console.error(error);
+      setCertificates([]);
       setVolunteerActivities(0);
       setHoursContributed(0);
+    } finally {
+      setLoadingCerts(false);
     }
   }
 
@@ -93,7 +82,8 @@ export default function Dashboard() {
       const sp = user.studentProfile || {};
 
       const displayName = sp.fullName || user.name || "Nome do Aluno";
-      const aboutMe = sp.aboutMe && String(sp.aboutMe).trim() ? sp.aboutMe : "—";
+      const aboutMe =
+        sp.aboutMe && String(sp.aboutMe).trim() ? sp.aboutMe : "—";
       const city = sp.city || "";
       const state = sp.state || "";
 
@@ -118,6 +108,12 @@ export default function Dashboard() {
     }
   }
 
+  // ✅ Atualiza TUDO (certificados+stats + perfil)
+  async function refreshDashboard() {
+    setLoadingCerts(true);
+    await Promise.all([loadCertificates(), loadStudentProfile()]);
+  }
+
   // ✅ BLOQUEIO simples no clique do botão "Buscar Atividades"
   async function handleGoToActivities() {
     try {
@@ -138,11 +134,15 @@ export default function Dashboard() {
         sp.aboutMe,
       ];
 
-      const allFilled = requiredFields.every((field) => String(field ?? "").trim() !== "");
+      const allFilled = requiredFields.every(
+        (field) => String(field ?? "").trim() !== ""
+      );
       const hasUploadPhoto = !!sp.photo; // foto (upload) obrigatória
 
       if (!allFilled || !hasUploadPhoto) {
-        alert("⚠️ Você precisa completar seu perfil (incluindo foto) antes de buscar atividades.");
+        alert(
+          "⚠️ Você precisa completar seu perfil (incluindo foto) antes de buscar atividades."
+        );
         return;
       }
 
@@ -154,9 +154,28 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    loadCertificates();
-    loadStatsFromMyActivities();
-    loadStudentProfile();
+    // primeira carga
+    refreshDashboard();
+
+    // 🔥 garante atualização sempre que o aluno voltar pro Dashboard
+    function onFocus() {
+      refreshDashboard();
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        refreshDashboard();
+      }
+    }
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const lastThreeCertificates = useMemo(() => {
@@ -170,7 +189,9 @@ export default function Dashboard() {
   }, [certificates]);
 
   const locationText =
-    profile.city && profile.state ? `${profile.city} - ${profile.state}` : profile.city || profile.state || "";
+    profile.city && profile.state
+      ? `${profile.city} - ${profile.state}`
+      : profile.city || profile.state || "";
 
   return (
     <div style={{ backgroundColor: "#081b3a", minHeight: "100vh" }}>
@@ -289,7 +310,15 @@ export default function Dashboard() {
               </h2>
 
               {locationText && (
-                <p style={{ margin: "6px 0 0", color: "#4F5D75", fontWeight: 700 }}>{locationText}</p>
+                <p
+                  style={{
+                    margin: "6px 0 0",
+                    color: "#4F5D75",
+                    fontWeight: 700,
+                  }}
+                >
+                  {locationText}
+                </p>
               )}
             </div>
           </div>
@@ -307,17 +336,29 @@ export default function Dashboard() {
             }}
           >
             <div style={{ flex: 1 }}>
-              <h3 style={{ color: "#1F3C88", margin: 0 }}>{volunteerActivities}</h3>
+              <h3 style={{ color: "#1F3C88", margin: 0 }}>
+                {volunteerActivities}
+              </h3>
               <p style={{ color: "#2C3E50" }}>Atividades Voluntárias</p>
             </div>
 
-            <div style={{ flex: 1, borderLeft: "1px solid #E0E6F1", borderRight: "1px solid #E0E6F1" }}>
-              <h3 style={{ color: "#1F3C88", margin: 0 }}>{hoursContributed}</h3>
+            <div
+              style={{
+                flex: 1,
+                borderLeft: "1px solid #E0E6F1",
+                borderRight: "1px solid #E0E6F1",
+              }}
+            >
+              <h3 style={{ color: "#1F3C88", margin: 0 }}>
+                {hoursContributed}
+              </h3>
               <p style={{ color: "#2C3E50" }}>Horas Contribuídas</p>
             </div>
 
             <div style={{ flex: 1 }}>
-              <h3 style={{ color: "#1F3C88", margin: 0 }}>{certificates?.length || 0}</h3>
+              <h3 style={{ color: "#1F3C88", margin: 0 }}>
+                {certificates?.length || 0}
+              </h3>
               <p style={{ color: "#2C3E50" }}>Certificados Obtidos</p>
             </div>
           </div>
@@ -327,13 +368,23 @@ export default function Dashboard() {
             {/* SOBRE MIM */}
             <div style={{ flex: 1 }}>
               <h3 style={{ color: "#1F3C88" }}>Sobre Mim</h3>
-              <p style={{ color: "#4F5D75", whiteSpace: "pre-wrap" }}>{profile.aboutMe || "—"}</p>
+              <p style={{ color: "#4F5D75", whiteSpace: "pre-wrap" }}>
+                {profile.aboutMe || "—"}
+              </p>
             </div>
 
             {/* CERTIFICADOS */}
             <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h3 style={{ color: "#1F3C88", margin: 0 }}>Certificados Obtidos</h3>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <h3 style={{ color: "#1F3C88", margin: 0 }}>
+                  Certificados Obtidos
+                </h3>
 
                 <button
                   type="button"
@@ -355,7 +406,9 @@ export default function Dashboard() {
                 {loadingCerts ? (
                   <p style={{ color: "#4F5D75" }}>Carregando...</p>
                 ) : lastThreeCertificates.length === 0 ? (
-                  <p style={{ color: "#4F5D75" }}>Você ainda não possui certificados.</p>
+                  <p style={{ color: "#4F5D75" }}>
+                    Você ainda não possui certificados.
+                  </p>
                 ) : (
                   lastThreeCertificates.map((cert) => (
                     <div
@@ -369,12 +422,16 @@ export default function Dashboard() {
                       }}
                     >
                       <span style={{ color: "#F2C94C" }}>🏅</span>{" "}
-                      <span style={{ color: "#2C3E50", fontWeight: 800 }}>
+                      <span
+                        style={{ color: "#2C3E50", fontWeight: 800 }}
+                      >
                         {cert?.activity?.title || "Atividade"}
                       </span>
                       <br />
                       <small style={{ color: "#6C757D" }}>
-                        {cert?.activity?.date ? new Date(cert.activity.date).toLocaleDateString() : "Data"}
+                        {cert?.activity?.date
+                          ? new Date(cert.activity.date).toLocaleDateString()
+                          : "Data"}
                       </small>
                     </div>
                   ))

@@ -195,32 +195,17 @@ export const updateProfile = async (req, res) => {
     // PERFIL DA ONG
     // ======================
     if (user.role === "organization") {
-      const {
-        organizationName,
-        description,
-        phone,
-        website,
-        address,
-      } = req.body;
+      const { organizationName, description, phone, website, address } = req.body;
 
       if (!user.organizationProfile) {
         user.organizationProfile = {};
       }
 
-      if (organizationName !== undefined)
-        user.organizationProfile.organizationName = organizationName;
-
-      if (description !== undefined)
-        user.organizationProfile.description = description;
-
-      if (phone !== undefined)
-        user.organizationProfile.phone = phone;
-
-      if (website !== undefined)
-        user.organizationProfile.website = website;
-
-      if (address !== undefined)
-        user.organizationProfile.address = address;
+      if (organizationName !== undefined) user.organizationProfile.organizationName = organizationName;
+      if (description !== undefined) user.organizationProfile.description = description;
+      if (phone !== undefined) user.organizationProfile.phone = phone;
+      if (website !== undefined) user.organizationProfile.website = website;
+      if (address !== undefined) user.organizationProfile.address = address;
 
       // FOTO (SUBSTITUI E REMOVE A ANTIGA)
       if (req.file) {
@@ -228,10 +213,7 @@ export const updateProfile = async (req, res) => {
         console.log("🆕 Nova foto da ONG detectada:", newPhotoPath);
 
         if (user.organizationProfile.photo) {
-          const oldPhotoAbsolutePath = path.resolve(
-            process.cwd(),
-            user.organizationProfile.photo
-          );
+          const oldPhotoAbsolutePath = path.resolve(process.cwd(), user.organizationProfile.photo);
 
           if (fs.existsSync(oldPhotoAbsolutePath)) {
             fs.unlinkSync(oldPhotoAbsolutePath);
@@ -260,5 +242,93 @@ export const updateProfile = async (req, res) => {
   } catch (error) {
     console.error("❌ ERRO AO ATUALIZAR PERFIL:", error);
     return res.status(500).json({ error: "Erro ao atualizar perfil" });
+  }
+};
+
+// ============================
+// PERFIL PÚBLICO DA ONG (PARA ALUNO VER)
+// GET /users/org/:orgId/public
+// ============================
+export const getOrgPublicProfile = async (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    const user = await User.findById(orgId);
+    if (!user) return res.status(404).json({ message: "ONG não encontrada" });
+
+    if (user.role !== "organization") {
+      return res.status(400).json({ message: "Usuário informado não é uma ONG" });
+    }
+
+    const op = user.organizationProfile || {};
+
+    return res.json({
+      message: "Perfil público da ONG carregado com sucesso",
+      user: {
+        _id: user._id,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+        organizationProfile: {
+          organizationName: op.organizationName || "",
+          description: op.description || "",
+          phone: op.phone || "",
+          address: op.address || "",
+          website: op.website || "",
+          instagram: op.instagram || "",
+          photo: op.photo || "",
+        },
+      },
+    });
+  } catch (error) {
+    console.error("❌ Erro ao buscar perfil público da ONG:", error);
+    return res.status(500).json({ error: "Erro ao buscar perfil público da ONG" });
+  }
+};
+
+// ============================
+// PERFIL PÚBLICO DO ALUNO (PARA ONG VER)
+// GET /users/student/:studentId/public
+// ============================
+export const getStudentPublicProfile = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    const user = await User.findById(studentId);
+    if (!user) return res.status(404).json({ message: "Aluno não encontrado" });
+
+    if (user.role !== "student") {
+      return res.status(400).json({ message: "Usuário informado não é um aluno" });
+    }
+
+    const sp = user.studentProfile || {};
+
+    return res.json({
+      message: "Perfil público do aluno carregado com sucesso",
+      user: {
+        _id: user._id,
+        role: user.role,
+        name: sp.fullName || user.name || "",
+        email: user.email, // ✅ AGORA ENVIA EMAIL
+        studentProfile: {
+          fullName: sp.fullName || "",
+          sex: sp.sex || "",
+          birthDate: sp.birthDate || null,
+          city: sp.city || "",
+          state: sp.state || "",
+          neighborhood: sp.neighborhood || "",
+          institution: sp.institution || "",
+          courseName: sp.courseName || "",
+          aboutMe: sp.aboutMe || "",
+          linkedin: sp.linkedin || "",
+          photoUrl: sp.photoUrl || "",
+          photo: sp.photo || "",
+          // phone: sp.phone || "",
+        },
+      },
+    });
+  } catch (error) {
+    console.error("❌ Erro ao buscar perfil público do aluno:", error);
+    return res.status(500).json({ error: "Erro ao buscar perfil público do aluno" });
   }
 };
