@@ -6,6 +6,24 @@ import { generateVerificationCode } from "../utils/generateVerificationCode.js";
 // 👇 LOG GLOBAL
 console.log("📂 [CARREGAMENTO] activity.controller.js carregado");
 
+// ✅ Helper: converte "YYYY-MM-DD" para Date em UTC (12:00) pra evitar -1 dia no fuso
+function parseDateOnlyToUTCNoon(dateStr) {
+  if (!dateStr || typeof dateStr !== "string") return null;
+
+  // aceita "YYYY-MM-DD" (do input type="date")
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return null;
+
+  const [y, m, d] = parts.map((p) => Number(p));
+  if (!y || !m || !d) return null;
+
+  // 12:00 UTC evita cair no dia anterior em fusos negativos
+  const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0, 0));
+  if (Number.isNaN(dt.getTime())) return null;
+
+  return dt;
+}
+
 // ===========================
 // Criar atividade (ONG)
 // ===========================
@@ -30,12 +48,21 @@ export const createActivity = async (req, res) => {
     description = description?.trim();
     location = location?.trim();
 
+    // ✅ Converte data "YYYY-MM-DD" para UTC 12:00 (corrige -1 dia)
+    const activityDate = parseDateOnlyToUTCNoon(date);
+    if (!activityDate) {
+      return res.status(400).json({ message: "Data inválida" });
+    }
+
     // 🔹 Data não pode ser no passado
-    const activityDate = new Date(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (activityDate < today) {
+    // compara apenas pelo dia (ajustando activityDate para 00:00 local antes de comparar)
+    const compareActivity = new Date(activityDate);
+    compareActivity.setHours(0, 0, 0, 0);
+
+    if (compareActivity < today) {
       return res.status(400).json({
         message: "A data da atividade não pode ser no passado"
       });
@@ -71,7 +98,7 @@ export const createActivity = async (req, res) => {
     const activity = await Activity.create({
       title,
       description,
-      date: activityDate,
+      date: activityDate, // ✅ corrigido aqui
       location,
       workloadHours,
       startTime,
@@ -99,8 +126,7 @@ export const createActivity = async (req, res) => {
 // ===========================
 export const getAllActivities = async (req, res) => {
   try {
-    const activities = await Activity.find()
-      .populate("createdBy", "name email");
+    const activities = await Activity.find().populate("createdBy", "name email");
 
     return res.json(activities);
   } catch {
@@ -128,15 +154,13 @@ export const getActivityDetails = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const activity = await Activity.findById(id)
-      .populate("createdBy", "name email");
+    const activity = await Activity.findById(id).populate("createdBy", "name email");
 
     if (!activity) {
       return res.status(404).json({ message: "Atividade não encontrada" });
     }
 
-    const participations = await Participation.find({ activity: id })
-      .populate("user", "name email");
+    const participations = await Participation.find({ activity: id }).populate("user", "name email");
 
     const activityData = activity.toObject();
     activityData.participants = participations;
@@ -226,31 +250,72 @@ export const updateActivity = async (req, res) => {
       console.log("📝 Atualizando apenas limites (Atividade com inscritos)");
     } else {
       // REGRA: Sem inscritos? Pode editar tudo.
-      const { title, description, date, location, workloadHours, startTime, endTime, minParticipants, maxParticipants } = req.body;
-      
+      const {
+        title,
+        description,
+        date,
+        location,
+        workloadHours,
+        startTime,
+        endTime,
+        minParticipants,
+        maxParticipants
+      } = req.body;
+
       camposParaAtualizar = {
-        title, description, date, location, workloadHours, startTime, endTime, minParticipants, maxParticipants
+        title,
+        description,
+        location,
+        workloadHours,
+        startTime,
+        endTime,
+        minParticipants,
+        maxParticipants
       };
+
+      // ✅ Corrige data no UPDATE também
+      if (date !== undefined) {
+        const parsed = parseDateOnlyToUTCNoon(date);
+        if (!parsed) {
+          return res.status(400).json({ message: "Data inválida" });
+        }
+
+        // opcional: impedir atualizar para data passada
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const compareActivity = new Date(parsed);
+        compareActivity.setHours(0, 0, 0, 0);
+
+        if (compareActivity < today) {
+          return res.status(400).json({
+            message: "A data da atividade não pode ser no passado"
+          });
+        }
+
+        camposParaAtualizar.date = parsed;
+      }
+
       console.log("📝 Atualizando todos os campos (Atividade sem inscritos)");
     }
 
-    // 3. ATUALIZAÇÃO SEGURA: findByIdAndUpdate evita validar campos não enviados
+    // 3. ATUALIZAÇÃO SEGURA
     const activityAtualizada = await Activity.findByIdAndUpdate(
       id,
       { $set: camposParaAtualizar },
-      { new: true, runValidators: true } // runValidators aqui validará apenas o que está sendo SETADO
+      { new: true, runValidators: true }
     );
 
     return res.json({
       message: "Atividade atualizada com sucesso",
       activity: activityAtualizada
     });
-
   } catch (error) {
     console.error("❌ Erro detalhado no terminal:", error);
     return res.status(500).json({ error: "Erro interno ao atualizar atividade" });
   }
 };
+
 // =======================================================
 // 🆕 ATUALIZAR PRESENÇA DO PARTICIPANTE
 // =======================================================
@@ -340,8 +405,7 @@ export const finishActivity = async (req, res) => {
 
     if (pendentes > 0) {
       return res.status(400).json({
-        message:
-          "Finalize a presença de todos os participantes antes de encerrar a atividade"
+        message: "Finalize a presença de todos os participantes antes de encerrar a atividade"
       });
     }
 
@@ -372,16 +436,12 @@ export const finishActivity = async (req, res) => {
     }
 
     // ✅ ATUALIZA SEM VALIDAR participants
-    await Activity.updateOne(
-      { _id: id },
-      { $set: { status: "finished" } }
-    );
+    await Activity.updateOne({ _id: id }, { $set: { status: "finished" } });
 
     return res.json({
       message: "Atividade finalizada com sucesso",
       certificadosGerados
     });
-
   } catch (error) {
     console.error("❌ Erro ao finalizar atividade:", error);
     return res.status(500).json({
@@ -389,7 +449,6 @@ export const finishActivity = async (req, res) => {
     });
   }
 };
-
 
 // ===========================
 // Excluir atividade

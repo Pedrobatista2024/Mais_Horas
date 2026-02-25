@@ -90,9 +90,7 @@ const activitySchema = new mongoose.Schema(
 //
 activitySchema.pre("save", function (next) {
   if (this.maxParticipants < this.minParticipants) {
-    return next(
-      new Error("Máximo de participantes não pode ser menor que o mínimo")
-    );
+    return next(new Error("Máximo de participantes não pode ser menor que o mínimo"));
   }
 
   // valida obrigatórios APENAS na criação
