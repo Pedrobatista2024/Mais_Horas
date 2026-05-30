@@ -1,6 +1,7 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-
+import { requireRole } from "../middlewares/role.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
 import {
   createActivity,
   getAllActivities,
@@ -10,54 +11,70 @@ import {
   updateActivity,
   deleteActivity,
   finishActivity,
-  updateAttendance // 🆕 NOVO IMPORT
+  updateAttendance,
 } from "../controllers/activity.controller.js";
+import {
+  createActivitySchema,
+  updateActivitySchema,
+  attendanceSchema,
+} from "../validators/activity.validators.js";
+import { idParam } from "../validators/common.validators.js";
 
 const router = express.Router();
 
-// ===========================
-// Criar atividade (ONG)
-// ===========================
-router.post("/", authMiddleware, createActivity);
-
-// ===========================
-// Listar todas (alunos)
-// ===========================
+// Pública
 router.get("/", getAllActivities);
 
-// ===========================
-// Listar atividades da ONG
-// ===========================
-router.get("/my", authMiddleware, getMyActivities);
+// ONG
+router.post(
+  "/",
+  authMiddleware,
+  requireRole("organization"),
+  validate({ body: createActivitySchema }),
+  createActivity
+);
+router.get("/my", authMiddleware, requireRole("organization"), getMyActivities);
 
-// ===========================
-// Detalhes da atividade
-// ===========================
-router.get("/:id", authMiddleware, getActivityDetails);
+// Detalhes (qualquer logado)
+router.get("/:id", authMiddleware, validate({ params: idParam }), getActivityDetails);
 
-// ===========================
-// Inscrição do aluno
-// ===========================
-router.post("/:id/join", authMiddleware, joinActivity);
+// Aluno
+router.post(
+  "/:id/join",
+  authMiddleware,
+  requireRole("student"),
+  validate({ params: idParam }),
+  joinActivity
+);
 
-// ===========================
-// Atualizar atividade
-// ===========================
-router.put("/:id", authMiddleware, updateActivity);
-
-// ===========================
-// 🆕 Atualizar presença dos participantes (ONG)
-// ===========================
-router.patch("/:id/attendance", authMiddleware, updateAttendance);
-
-// ===========================
-// Finalizar atividade (com regra de presença)
-// ===========================
-router.post("/:id/finish", authMiddleware, finishActivity);
-
-// ===========================
-// Excluir atividade
-// ===========================
-router.delete("/:id", authMiddleware, deleteActivity);
+// ONG — gestão da própria atividade
+router.put(
+  "/:id",
+  authMiddleware,
+  requireRole("organization"),
+  validate({ params: idParam, body: updateActivitySchema }),
+  updateActivity
+);
+router.patch(
+  "/:id/attendance",
+  authMiddleware,
+  requireRole("organization"),
+  validate({ params: idParam, body: attendanceSchema }),
+  updateAttendance
+);
+router.post(
+  "/:id/finish",
+  authMiddleware,
+  requireRole("organization"),
+  validate({ params: idParam }),
+  finishActivity
+);
+router.delete(
+  "/:id",
+  authMiddleware,
+  requireRole("organization"),
+  validate({ params: idParam }),
+  deleteActivity
+);
 
 export default router;

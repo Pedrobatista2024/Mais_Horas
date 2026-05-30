@@ -8,36 +8,39 @@ import {
   getStudentPublicProfile,
 } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
 import { upload } from "../config/upload.js";
+import {
+  registerSchema,
+  loginSchema,
+  updateProfileSchema,
+  orgIdParam,
+  studentIdParam,
+} from "../validators/user.validators.js";
+import { authLimiter } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
 
-// ============================
-// ROTAS PÚBLICAS
-// ============================
-router.post("/register", register);
-router.post("/login", login);
+// Públicas (com rate limit anti força-bruta)
+router.post("/register", authLimiter, validate({ body: registerSchema }), register);
+router.post("/login", authLimiter, validate({ body: loginSchema }), login);
 
-// ============================
-// PERFIS PÚBLICOS (VISUALIZAÇÃO)
-// ✅ Recomendado manter protegido (authMiddleware) pra evitar scraping.
-// Se quiser público total, é só remover o authMiddleware.
-// ============================
-router.get("/org/:orgId/public", authMiddleware, getOrgPublicProfile);
-router.get("/student/:studentId/public", authMiddleware, getStudentPublicProfile);
+// Perfis públicos (logado, evita scraping)
+router.get("/org/:orgId/public", authMiddleware, validate({ params: orgIdParam }), getOrgPublicProfile);
+router.get(
+  "/student/:studentId/public",
+  authMiddleware,
+  validate({ params: studentIdParam }),
+  getStudentPublicProfile
+);
 
-// ============================
-// ROTAS PROTEGIDAS
-// ============================
-
-// Buscar perfil do usuário (SEMPRE DO BANCO)
+// Perfil do próprio usuário
 router.get("/profile", authMiddleware, getProfile);
-
-// Atualizar perfil (ALUNO ou ONG) (COM FOTO)
 router.put(
   "/profile",
   authMiddleware,
-  upload.single("photo"), // 🔥 MESMO NOME DO FRONTEND
+  upload.single("photo"),
+  validate({ body: updateProfileSchema }),
   updateProfile
 );
 

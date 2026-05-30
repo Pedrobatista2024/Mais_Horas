@@ -1,97 +1,75 @@
-import mongoose from "mongoose";
+import { query } from "../config/database.js";
 
-const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-    },
+const SELECT_FULL = `
+  SELECT
+    id AS "_id",
+    name,
+    email,
+    password,
+    role,
+    student_profile AS "studentProfile",
+    organization_profile AS "organizationProfile",
+    created_at AS "createdAt",
+    updated_at AS "updatedAt"
+  FROM users
+`;
 
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-    },
+const stripPassword = (user) => {
+  if (!user) return user;
+  const { password, ...rest } = user;
+  return rest;
+};
 
-    password: {
-      type: String,
-      required: true,
-    },
-
-    role: {
-      type: String,
-      enum: ["student", "organization"],
-      default: "student",
-    },
-
-    // ===============================
-    // 🔹 PERFIL DO ALUNO
-    // ===============================
-    studentProfile: {
-      fullName: { type: String, default: "" },
-      sex: { type: String, default: "" }, // male | female | other | prefer_not_say
-      birthDate: { type: Date },
-
-      phone: { type: String, default: "" },
-
-      city: { type: String, default: "" },
-      state: { type: String, default: "" },
-      neighborhood: { type: String, default: "" },
-
-      institution: { type: String, default: "" },
-      courseName: { type: String, default: "" },
-
-      aboutMe: { type: String, default: "" },
-
-      linkedin: { type: String, default: "" },
-
-      // foto via upload (caminho salvo)
-      photo: { type: String, default: "" },
-
-      // foto via URL (opcional)
-      photoUrl: { type: String, default: "" },
-    },
-
-    // ===============================
-    // 🔹 PERFIL DA ORGANIZAÇÃO (ONG)
-    // ===============================
-    organizationProfile: {
-      organizationName: {
-        type: String,
-      },
-
-      cnpj: {
-        type: String,
-      },
-
-      description: {
-        type: String,
-      },
-
-      phone: {
-        type: String,
-      },
-
-      address: {
-        type: String,
-      },
-
-      website: {
-        type: String,
-      },
-
-      instagram: {
-        type: String,
-      },
-
-      // ✅ FOTO / LOGO DA ONG (CAMPO CORRETO)
-      photo: {
-        type: String,
-      },
-    },
+export const User = {
+  async findByEmail(email) {
+    const { rows } = await query(`${SELECT_FULL} WHERE email = $1`, [email?.toLowerCase()]);
+    return rows[0] || null;
   },
-  { timestamps: true }
-);
 
-export default mongoose.model("User", userSchema);
+  async findById(id, { includePassword = false } = {}) {
+    if (!id) return null;
+    const { rows } = await query(`${SELECT_FULL} WHERE id = $1`, [id]);
+    const user = rows[0] || null;
+    return includePassword ? user : stripPassword(user);
+  },
+
+  async create({ name, email, password, role = "student" }) {
+    const { rows } = await query(
+      `INSERT INTO users (name, email, password, role)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id AS "_id", name, email, role,
+                 student_profile AS "studentProfile",
+                 organization_profile AS "organizationProfile",
+                 created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [name, email?.toLowerCase(), password, role]
+    );
+    return rows[0];
+  },
+
+  async updateBasics(id, { name }) {
+    if (name === undefined) return;
+    await query(`UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2`, [name, id]);
+  },
+
+  async updateStudentProfile(id, patch) {
+    await query(
+      `UPDATE users
+         SET student_profile = student_profile || $1::jsonb,
+             updated_at = NOW()
+       WHERE id = $2`,
+      [JSON.stringify(patch), id]
+    );
+  },
+
+  async updateOrganizationProfile(id, patch) {
+    await query(
+      `UPDATE users
+         SET organization_profile = organization_profile || $1::jsonb,
+             updated_at = NOW()
+       WHERE id = $2`,
+      [JSON.stringify(patch), id]
+    );
+  },
+};
+
+export default User;

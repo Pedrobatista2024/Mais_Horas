@@ -1,154 +1,88 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Activities from "./pages/Activities";
-import MyCertificates from "./pages/MyCertificates";
-import EditStudentProfile from "./pages/EditStudentProfile";
-
-import OrgPublicProfile from "./pages/OrgPublicProfile";
-import StudentPublicProfile from "./pages/StudentPublicProfile";
-
-import OrgDashboard from "./pages/OrgDashboard";
-import OrgProfile from "./pages/OrgProfile";
-import OrgEditProfile from "./pages/OrgEditProfile";
-import StudentActivityDetails from "./pages/StudentActivityDetails";
-import CreateActivity from "./pages/CreateActivity";
-import OrgActivityDetails from "./pages/OrgActivityDetails";
-import ActivityParticipants from "./pages/ActivityParticipants";
-import EditActivity from "./pages/EditActivity";
-import MyOrgActivities from "./pages/MyOrgActivities";
-import MyActivities from "./pages/MyActivities";
 import PrivateRoute from "./routes/PrivateRoute";
+import AppLayout from "./components/layout/AppLayout";
 
-function App() {
+// Auth
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+
+// Aluno
+import StudentDashboard from "./pages/student/Dashboard";
+import Activities from "./pages/student/Activities";
+import StudentActivityDetails from "./pages/student/ActivityDetails";
+import MyActivities from "./pages/student/MyActivities";
+import MyCertificates from "./pages/student/MyCertificates";
+import EditStudentProfile from "./pages/student/EditProfile";
+
+// ONG
+import OrgDashboard from "./pages/org/Dashboard";
+import OrgMyActivities from "./pages/org/MyActivities";
+import CreateActivity from "./pages/org/CreateActivity";
+import EditActivity from "./pages/org/EditActivity";
+import OrgActivityDetails from "./pages/org/ActivityDetails";
+import ActivityParticipants from "./pages/org/Participants";
+import OrgProfile from "./pages/org/Profile";
+import OrgEditProfile from "./pages/org/EditProfile";
+
+// Público
+import OrgPublicProfile from "./pages/public/OrgPublicProfile";
+import StudentPublicProfile from "./pages/public/StudentPublicProfile";
+import VerifyCertificate from "./pages/public/VerifyCertificate";
+
+function Protected({ role, children }) {
+  return <PrivateRoute role={role}>{children}</PrivateRoute>;
+}
+
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-
-        {/* =====================
-            PÚBLICO
-        ===================== */}
+        {/* Público */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        {/* =====================
-            ALUNO
-        ===================== */}
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute role="student">
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/activities"
-          element={
-            <PrivateRoute role="student">
-              <Activities />
-            </PrivateRoute>
-          }
-        />
-
-        {/* ✅ ROTA QUE ESTAVA FALTANDO */}
-        <Route
-          path="/my-certificates"
-          element={
-            <PrivateRoute role="student">
-              <MyCertificates />
-            </PrivateRoute>
-          }
-        />
-
-        {/* =====================
-            ONG
-        ===================== */}
-        <Route
-          path="/org"
-          element={
-            <PrivateRoute role="organization">
-              <OrgDashboard />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/org/profile"
-          element={
-            <PrivateRoute role="organization">
-              <OrgProfile />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/org/profile/edit"
-          element={
-            <PrivateRoute role="organization">
-              <OrgEditProfile />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/org/create-activity"
-          element={
-            <PrivateRoute role="organization">
-              <CreateActivity />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/org/my-activities"
-          element={
-            <PrivateRoute role="organization">
-              <MyOrgActivities />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/org/activity/:id"
-          element={
-            <PrivateRoute role="organization">
-              <OrgActivityDetails />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/org/activity/:id/edit"
-          element={
-            <PrivateRoute role="organization">
-              <EditActivity />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/org/activity/:id/participants"
-          element={
-            <PrivateRoute role="organization">
-              <ActivityParticipants />
-            </PrivateRoute>
-          }
-        />
-
+        <Route path="/verificar/:code" element={<VerifyCertificate />} />
         <Route path="/org/:id/public" element={<OrgPublicProfile />} />
         <Route path="/student/:id/public" element={<StudentPublicProfile />} />
 
-        <Route path="/my-activities" element={<MyActivities />} />
-        <Route path="/edit-student-profile" element={<EditStudentProfile />} />
-        <Route path="/student/activity/:id" element={<StudentActivityDetails />} />
+        {/* Aluno (dentro do layout) */}
+        <Route
+          element={
+            <Protected role="student">
+              <AppLayout />
+            </Protected>
+          }
+        >
+          <Route path="/dashboard" element={<StudentDashboard />} />
+          <Route path="/activities" element={<Activities />} />
+          <Route path="/student/activity/:id" element={<StudentActivityDetails />} />
+          <Route path="/my-activities" element={<MyActivities />} />
+          <Route path="/my-certificates" element={<MyCertificates />} />
+          <Route path="/edit-student-profile" element={<EditStudentProfile />} />
+        </Route>
+
+        {/* ONG (dentro do layout) */}
+        <Route
+          element={
+            <Protected role="organization">
+              <AppLayout />
+            </Protected>
+          }
+        >
+          <Route path="/org" element={<OrgDashboard />} />
+          <Route path="/org/my-activities" element={<OrgMyActivities />} />
+          <Route path="/org/create-activity" element={<CreateActivity />} />
+          <Route path="/org/activity/:id" element={<OrgActivityDetails />} />
+          <Route path="/org/activity/:id/edit" element={<EditActivity />} />
+          <Route path="/org/activity/:id/participants" element={<ActivityParticipants />} />
+          <Route path="/org/profile" element={<OrgProfile />} />
+          <Route path="/org/profile/edit" element={<OrgEditProfile />} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default App;

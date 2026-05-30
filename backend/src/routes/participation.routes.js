@@ -1,20 +1,48 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-import { validatePresence, getUserParticipations, getActivityParticipations } from "../controllers/participation.controller.js";
-import { createParticipation } from "../controllers/participation.controller.js";
+import { requireRole } from "../middlewares/role.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import {
+  validatePresence,
+  getUserParticipations,
+  getActivityParticipations,
+  createParticipation,
+} from "../controllers/participation.controller.js";
+import {
+  createParticipationSchema,
+  validatePresenceSchema,
+} from "../validators/participation.validators.js";
+import { participationIdParam, activityIdParam } from "../validators/common.validators.js";
 
 const router = express.Router();
 
-// Validar presença (ONG)
-router.put("/:participationId/validate", authMiddleware, validatePresence);
+// ONG valida presença
+router.put(
+  "/:participationId/validate",
+  authMiddleware,
+  requireRole("organization"),
+  validate({ params: participationIdParam, body: validatePresenceSchema }),
+  validatePresence
+);
 
-// Listar presenças do usuário logado
+// Minhas participações (aluno)
 router.get("/my", authMiddleware, getUserParticipations);
 
-// Listar presenças de uma atividade
-router.get("/activity/:activityId", authMiddleware, getActivityParticipations);
+// Participações de uma atividade
+router.get(
+  "/activity/:activityId",
+  authMiddleware,
+  validate({ params: activityIdParam }),
+  getActivityParticipations
+);
 
-// Aluno se Inscreve
-router.post("/", authMiddleware, createParticipation);
+// Aluno se inscreve
+router.post(
+  "/",
+  authMiddleware,
+  requireRole("student"),
+  validate({ body: createParticipationSchema }),
+  createParticipation
+);
 
 export default router;

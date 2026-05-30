@@ -40,8 +40,9 @@ export const generateCertificatePDF = async (certificate) => {
 
       doc.moveDown(3);
 
-      // QR Code
-      const validationUrl = `${process.env.APP_URL}/api/certificates/verify/${certificate.verificationCode}`;
+      // QR Code → aponta para a página pública de verificação (frontend)
+      const webUrl = process.env.WEB_URL || process.env.APP_URL || "http://localhost:5173";
+      const validationUrl = `${webUrl}/verificar/${certificate.verificationCode}`;
       const qrImage = await QRCode.toDataURL(validationUrl);
 
       doc.image(qrImage, {

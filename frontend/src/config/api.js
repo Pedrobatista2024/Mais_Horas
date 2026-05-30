@@ -1,10 +1,9 @@
-//const API_BASE_URL ="https://mais-horas.onrender.com"
+// Em prod (Render), defina VITE_API_URL=https://mais-horas-api.onrender.com
+// Em dev local, cai no fallback (http://localhost:3000)
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:3000"
+).replace(/\/$/, "");
 
-const API_BASE_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:3000"
-    : "https://mais-horas.onrender.com";
-
-console.log("🌍 Hostname atual:", window.location.hostname);
 console.log("🔗 API selecionada:", API_BASE_URL);
+
 export default API_BASE_URL;

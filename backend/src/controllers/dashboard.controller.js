@@ -1,26 +1,13 @@
-import Participation from "../models/Participation.js";
-import Certificate from "../models/Certificate.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
+import { participationService } from "../services/participation.service.js";
+import { certificateService } from "../services/certificate.service.js";
 
-export const studentDashboard = async (req, res) => {
+export const studentDashboard = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-
-  // Presenças
-  const participations = await Participation.find({ user: userId })
-    .populate("activity", "title date location");
-
-  // Certificados
-  const certificates = await Certificate.find({ user: userId })
-    .populate("activity", "title date");
-
-  // Total de horas
-  const totalHours = certificates.reduce(
-    (sum, cert) => sum + cert.hours,
-    0
-  );
-
-  return res.json({
-    participations,
-    certificates,
-    totalHours
-  });
-};
+  const [participations, certificates] = await Promise.all([
+    participationService.listMine(userId),
+    certificateService.listMine(userId),
+  ]);
+  const totalHours = certificates.reduce((sum, c) => sum + (c.hours || 0), 0);
+  res.json({ participations, certificates, totalHours });
+});

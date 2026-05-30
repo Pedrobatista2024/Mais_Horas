@@ -1,36 +1,31 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { requireRole } from "../middlewares/role.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
 import {
   generateCertificate,
   validateCertificate,
-  validateCertificatePage,
   getMyCertificates,
   downloadCertificatePDF,
-  downloadCertificatePDFPublic
+  downloadCertificatePDFPublic,
 } from "../controllers/certificate.controller.js";
+import { idParam, participationIdParam, codeParam } from "../validators/common.validators.js";
 
 const router = express.Router();
 
-// ================= PRIVADAS =================
-
-// Emitir certificado (ONG)
-router.post("/:participationId", authMiddleware, generateCertificate);
-
-// Meus certificados (Aluno)
+// ===== Privadas =====
+router.post(
+  "/:participationId",
+  authMiddleware,
+  requireRole("organization"),
+  validate({ params: participationIdParam }),
+  generateCertificate
+);
 router.get("/my", authMiddleware, getMyCertificates);
+router.get("/:id/pdf", authMiddleware, validate({ params: idParam }), downloadCertificatePDF);
 
-// PDF privado (logado)
-router.get("/:id/pdf", authMiddleware, downloadCertificatePDF);
-
-// ================= PÚBLICAS =================
-
-// Validação JSON
-router.get("/validate/:code", validateCertificate);
-
-// Página HTML
-router.get("/verify/:code", validateCertificatePage);
-
-// PDF público (QR Code)
-router.get("/public/:code/pdf", downloadCertificatePDFPublic);
+// ===== Públicas (verificação por QR) =====
+router.get("/validate/:code", validate({ params: codeParam }), validateCertificate);
+router.get("/public/:code/pdf", validate({ params: codeParam }), downloadCertificatePDFPublic);
 
 export default router;

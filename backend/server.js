@@ -1,51 +1,62 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import helmet from "helmet";
+import path from "path";
+import fs from "fs";
+
 import { connectDB } from "./src/config/database.js";
+import { notFound, errorHandler } from "./src/middlewares/error.middleware.js";
+
 import usersRoutes from "./src/routes/users.routes.js";
 import activityRoutes from "./src/routes/activity.routes.js";
 import participationRoutes from "./src/routes/participation.routes.js";
 import certificateRoutes from "./src/routes/certificate.routes.js";
 import dashboardRoutes from "./src/routes/dashboard.routes.js";
-import path from "path";
-import fs from 'fs';
 
-dotenv.config();
+// ===== Checagens de ambiente =====
+if (!process.env.JWT_SECRET) {
+  console.error("❌ JWT_SECRET não definido. Configure no .env antes de iniciar.");
+  process.exit(1);
+}
 
 const app = express();
 
-// 1. CONFIGURAÇÃO DE CORS (Aumenta a segurança e evita o ERR_CONNECTION_REFUSED)
-app.use(cors());
+// ===== Segurança =====
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
-// 2. AUMENTO DO LIMITE DE PAYLOAD (Necessário para uploads de fotos no Render)
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// CORS: libera a origem do frontend (ou tudo, em dev)
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(cors({ origin: corsOrigin ? corsOrigin.split(",") : true }));
 
-// 3. CAMINHO DA PASTA DE UPLOADS (Unificado para funcionar em Local e Render)
+// ===== Body parsing (limite alto p/ upload base64 eventual) =====
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// ===== Uploads estáticos =====
 const uploadDir = path.resolve("uploads");
-
-// Cria a pasta de uploads automaticamente se ela não existir
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('📁 Pasta de uploads pronta!');
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
+app.use("/uploads", express.static(uploadDir));
 
-// 4. ROTAS DA API
+// ===== Rotas =====
+app.get("/", (req, res) => res.send("API Mais Horas rodando e conectada ao PostgreSQL!"));
+app.get("/health", (req, res) => res.json({ status: "ok" }));
+
 app.use("/api/users", usersRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/participations", participationRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-// 5. SERVIR ARQUIVOS ESTÁTICOS (Crucial para a foto aparecer no navegador)
-app.use("/uploads", express.static(uploadDir));
+// ===== 404 + erro central =====
+app.use(notFound);
+app.use(errorHandler);
 
-// Conectar ao banco
-connectDB();
-
-app.get("/", (req, res) => {
-  res.send("API do MVP rodando e conectada ao MongoDB!");
-});
-
+// ===== Boot =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+connectDB().then(() => {
+  app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+});
