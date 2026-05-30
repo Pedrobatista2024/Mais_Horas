@@ -1,47 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Paper,
-  Group,
-  Avatar,
-  Title,
-  Text,
-  Button,
-  Stack,
-  Divider,
-  SimpleGrid,
-} from "@mantine/core";
-import {
-  IconArrowLeft,
-  IconMail,
-  IconMapPin,
-  IconSchool,
-  IconBook,
-  IconBrandLinkedin,
-} from "@tabler/icons-react";
+import { Avatar, Divider, Group, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { IconBook, IconBrandLinkedin, IconMail, IconMapPin, IconSchool } from "@tabler/icons-react";
 
 import PublicPage from "../../components/layout/PublicPage";
+import BackButton from "../../components/ui/BackButton";
+import InfoItem from "../../components/ui/InfoItem";
 import Loading from "../../components/ui/Loading";
 import { api } from "../../services/api";
 import { notifyError } from "../../utils/notify";
-import { resolveImage, initials } from "../../utils/format";
-
-function Info({ icon: Icon, label, value }) {
-  if (!value) return null;
-  return (
-    <Group gap="xs" wrap="nowrap" align="flex-start">
-      <Icon size={18} style={{ opacity: 0.6, marginTop: 2 }} />
-      <div style={{ minWidth: 0 }}>
-        <Text size="xs" c="dimmed">
-          {label}
-        </Text>
-        <Text size="sm" fw={600}>
-          {value}
-        </Text>
-      </div>
-    </Group>
-  );
-}
+import { initials, resolveImage } from "../../utils/format";
 
 export default function StudentPublicProfile() {
   const { id } = useParams();
@@ -67,23 +35,15 @@ export default function StudentPublicProfile() {
 
   return (
     <PublicPage maxWidth="md">
-      <Button
-        variant="subtle"
-        color="gray"
-        leftSection={<IconArrowLeft size={18} />}
-        onClick={() => navigate(-1)}
-        mb="md"
-      >
-        Voltar
-      </Button>
+      <BackButton onClick={() => navigate(-1)} />
 
       {loading ? (
         <Loading />
       ) : !user ? (
         <Text>Aluno não encontrado.</Text>
       ) : (
-        <Paper withBorder radius="lg" p="xl" shadow="sm">
-          <Group wrap="nowrap" mb="lg">
+        <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} shadow="sm" className="mh-page-band">
+          <Group wrap="wrap" mb="lg">
             <Avatar src={resolveImage(sp.photo, sp.photoUrl)} size={84} radius="xl" color="brand">
               {initials(user.name)}
             </Avatar>
@@ -102,11 +62,11 @@ export default function StudentPublicProfile() {
           <Divider my="md" />
           <Stack gap="md">
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
-              <Info icon={IconMail} label="Email" value={user.email} />
-              <Info icon={IconMapPin} label="Localização" value={location} />
-              <Info icon={IconSchool} label="Instituição" value={sp.institution} />
-              <Info icon={IconBook} label="Curso" value={sp.courseName} />
-              <Info icon={IconBrandLinkedin} label="LinkedIn" value={sp.linkedin} />
+              <InfoItem icon={IconMail} label="Email" value={user.email} />
+              <InfoItem icon={IconMapPin} label="Localização" value={location} />
+              <InfoItem icon={IconSchool} label="Instituição" value={sp.institution} />
+              <InfoItem icon={IconBook} label="Curso" value={sp.courseName} />
+              <InfoItem icon={IconBrandLinkedin} label="LinkedIn" value={sp.linkedin} />
             </SimpleGrid>
           </Stack>
         </Paper>

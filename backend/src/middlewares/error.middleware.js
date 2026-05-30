@@ -42,6 +42,6 @@ export const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ message: msg });
   }
 
-  console.error("❌ Erro não tratado:", err);
+  console.error("Erro não tratado:", err);
   return res.status(500).json({ message: "Erro interno no servidor" });
 };

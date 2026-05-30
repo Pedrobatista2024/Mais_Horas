@@ -56,6 +56,7 @@ export default function Activities() {
   return (
     <>
       <PageHeader
+        eyebrow="Vagas abertas"
         title="Buscar atividades"
         subtitle="Vagas de voluntariado oferecidas pelas ONGs. Inscreva-se e some horas."
       />

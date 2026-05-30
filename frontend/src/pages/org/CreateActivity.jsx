@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@mantine/core";
-import { IconArrowLeft } from "@tabler/icons-react";
 
+import BackButton from "../../components/ui/BackButton";
 import PageHeader from "../../components/ui/PageHeader";
 import ActivityForm from "../../components/forms/ActivityForm";
 import { api } from "../../services/api";
@@ -27,16 +26,12 @@ export default function CreateActivity() {
 
   return (
     <>
-      <Button
-        variant="subtle"
-        color="gray"
-        leftSection={<IconArrowLeft size={18} />}
-        onClick={() => navigate(-1)}
-        mb="md"
-      >
-        Voltar
-      </Button>
-      <PageHeader title="Nova atividade" subtitle="Publique uma vaga de voluntariado para os estudantes." />
+      <BackButton onClick={() => navigate(-1)} />
+      <PageHeader
+        eyebrow="Publicação"
+        title="Nova atividade"
+        subtitle="Publique uma vaga de voluntariado para os estudantes."
+      />
       <ActivityForm
         onSubmit={handleSubmit}
         submitLabel="Criar atividade"

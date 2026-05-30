@@ -1,19 +1,24 @@
-import { Group, Paper, Text, ThemeIcon } from "@mantine/core";
+import { Group, Paper, Stack, Text, ThemeIcon } from "@mantine/core";
 
-export default function StatCard({ icon: Icon, label, value, color = "brand" }) {
+export default function StatCard({ icon: Icon, label, value, color = "brand", helper }) {
   return (
-    <Paper withBorder p="md" radius="md">
-      <Group justify="space-between" wrap="nowrap">
-        <div>
+    <Paper withBorder p="lg" radius="md" className="mh-card-hover">
+      <Group justify="space-between" align="flex-start" wrap="nowrap">
+        <Stack gap={4} style={{ minWidth: 0 }}>
           <Text size="xs" c="dimmed" fw={700} tt="uppercase">
             {label}
           </Text>
-          <Text fz={28} fw={800} lh={1.1} mt={4}>
+          <Text fz={30} fw={900} lh={1.05} c="ink.9">
             {value}
           </Text>
-        </div>
+          {helper && (
+            <Text size="xs" c="dimmed">
+              {helper}
+            </Text>
+          )}
+        </Stack>
         {Icon && (
-          <ThemeIcon color={color} variant="light" size={48} radius="md">
+          <ThemeIcon color={color} variant="light" size={50} radius="md">
             <Icon size={26} />
           </ThemeIcon>
         )}

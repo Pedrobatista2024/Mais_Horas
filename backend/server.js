@@ -16,7 +16,7 @@ import dashboardRoutes from "./src/routes/dashboard.routes.js";
 
 // ===== Checagens de ambiente =====
 if (!process.env.JWT_SECRET) {
-  console.error("❌ JWT_SECRET não definido. Configure no .env antes de iniciar.");
+  console.error("JWT_SECRET não definido. Configure no .env antes de iniciar.");
   process.exit(1);
 }
 
@@ -58,5 +58,5 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3000;
 
 connectDB().then(() => {
-  app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+  app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 });

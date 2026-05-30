@@ -5,7 +5,7 @@ const { Pool } = pg;
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  console.warn("⚠️  DATABASE_URL não definida — configure no .env antes de subir o servidor");
+  console.warn("DATABASE_URL não definida — configure no .env antes de subir o servidor");
 }
 
 export const pool = new Pool({
@@ -84,9 +84,9 @@ export const connectDB = async () => {
   try {
     await pool.query("SELECT 1");
     await pool.query(SCHEMA_SQL);
-    console.log("🔥 Banco PostgreSQL conectado e schema garantido!");
+    console.log("Banco PostgreSQL conectado e schema garantido.");
   } catch (error) {
-    console.error("❌ Erro ao conectar/inicializar PostgreSQL:", error);
+    console.error("Erro ao conectar/inicializar PostgreSQL:", error);
     process.exit(1);
   }
 };

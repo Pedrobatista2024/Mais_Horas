@@ -1,42 +1,20 @@
 import { useNavigate } from "react-router-dom";
-import { Paper, Group, Avatar, Title, Text, Button, Stack, Divider, SimpleGrid, Anchor } from "@mantine/core";
+import { Avatar, Button, Divider, Group, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import {
-  IconEdit,
-  IconBuildingCommunity,
-  IconPhone,
-  IconMail,
-  IconWorld,
   IconBrandInstagram,
-  IconMapPin,
+  IconBuildingCommunity,
+  IconEdit,
   IconId,
+  IconMail,
+  IconMapPin,
+  IconPhone,
+  IconWorld,
 } from "@tabler/icons-react";
 
+import InfoItem from "../../components/ui/InfoItem";
 import Loading from "../../components/ui/Loading";
 import { useFetch } from "../../hooks/useFetch";
 import { resolveImage } from "../../utils/format";
-
-function Contact({ icon: Icon, label, value, href }) {
-  if (!value) return null;
-  return (
-    <Group gap="xs" wrap="nowrap" align="flex-start">
-      <Icon size={18} style={{ opacity: 0.6, marginTop: 2 }} />
-      <div style={{ minWidth: 0 }}>
-        <Text size="xs" c="dimmed">
-          {label}
-        </Text>
-        {href ? (
-          <Anchor href={href} target="_blank" size="sm" fw={600}>
-            {value}
-          </Anchor>
-        ) : (
-          <Text size="sm" fw={600}>
-            {value}
-          </Text>
-        )}
-      </div>
-    </Group>
-  );
-}
 
 export default function OrgProfile() {
   const navigate = useNavigate();
@@ -47,11 +25,16 @@ export default function OrgProfile() {
   const user = data?.user || {};
   const op = user.organizationProfile || {};
   const logo = resolveImage(op.photo);
+  const websiteHref = op.website
+    ? op.website.startsWith("http")
+      ? op.website
+      : `https://${op.website}`
+    : null;
 
   return (
-    <Paper withBorder radius="md" p="xl">
-      <Group justify="space-between" align="flex-start" wrap="nowrap" mb="lg">
-        <Group wrap="nowrap">
+    <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} className="mh-page-band">
+      <Group justify="space-between" align="flex-start" wrap="wrap" mb="lg">
+        <Group wrap="wrap">
           <Avatar src={logo} size={84} radius="md" color="navy">
             <IconBuildingCommunity size={40} />
           </Avatar>
@@ -67,7 +50,7 @@ export default function OrgProfile() {
 
       {op.description && (
         <>
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="dimmed" fw={700} tt="uppercase">
             Sobre a organização
           </Text>
           <Text mb="lg" style={{ whiteSpace: "pre-wrap" }}>
@@ -78,19 +61,14 @@ export default function OrgProfile() {
 
       <Divider my="md" />
       <Stack gap="md">
-        <Text fw={700}>Contato</Text>
+        <Text fw={800}>Contato</Text>
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <Contact icon={IconMail} label="Email" value={user.email} />
-          <Contact icon={IconPhone} label="Telefone" value={op.phone} />
-          <Contact icon={IconMapPin} label="Endereço" value={op.address} />
-          <Contact icon={IconId} label="CNPJ" value={op.cnpj} />
-          <Contact
-            icon={IconWorld}
-            label="Website"
-            value={op.website}
-            href={op.website ? (op.website.startsWith("http") ? op.website : `https://${op.website}`) : null}
-          />
-          <Contact icon={IconBrandInstagram} label="Instagram" value={op.instagram} />
+          <InfoItem icon={IconMail} label="Email" value={user.email} color="navy" />
+          <InfoItem icon={IconPhone} label="Telefone" value={op.phone} color="navy" />
+          <InfoItem icon={IconMapPin} label="Endereço" value={op.address} color="navy" />
+          <InfoItem icon={IconId} label="CNPJ" value={op.cnpj} color="navy" />
+          <InfoItem icon={IconWorld} label="Website" value={op.website} href={websiteHref} color="navy" />
+          <InfoItem icon={IconBrandInstagram} label="Instagram" value={op.instagram} color="navy" />
         </SimpleGrid>
       </Stack>
     </Paper>

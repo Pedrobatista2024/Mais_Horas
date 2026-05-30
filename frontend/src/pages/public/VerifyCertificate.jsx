@@ -1,25 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Paper, Stack, Text, Group, ThemeIcon, Title, Badge, Divider, Loader, Center } from "@mantine/core";
-import { IconShieldCheck, IconShieldX, IconCalendar, IconBuildingCommunity, IconUser, IconHourglass } from "@tabler/icons-react";
+import { Badge, Center, Divider, Group, Loader, Paper, SimpleGrid, Stack, Text, ThemeIcon, Title } from "@mantine/core";
+import {
+  IconBuildingCommunity,
+  IconCalendar,
+  IconHourglass,
+  IconShieldCheck,
+  IconShieldX,
+  IconUser,
+} from "@tabler/icons-react";
 
 import PublicPage from "../../components/layout/PublicPage";
+import InfoItem from "../../components/ui/InfoItem";
 import { api } from "../../services/api";
 import { formatDate } from "../../utils/format";
-
-function Row({ icon: Icon, label, value }) {
-  return (
-    <Group gap="xs" wrap="nowrap" align="flex-start">
-      <Icon size={18} style={{ opacity: 0.6, marginTop: 2 }} />
-      <div>
-        <Text size="xs" c="dimmed">
-          {label}
-        </Text>
-        <Text fw={600}>{value}</Text>
-      </div>
-    </Group>
-  );
-}
 
 export default function VerifyCertificate() {
   const { code } = useParams();
@@ -38,7 +32,7 @@ export default function VerifyCertificate() {
 
   return (
     <PublicPage>
-      <Paper withBorder radius="lg" p="xl" shadow="sm">
+      <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} shadow="sm" className="mh-page-band">
         {state.loading ? (
           <Center py="xl">
             <Loader color="brand" />
@@ -46,7 +40,7 @@ export default function VerifyCertificate() {
         ) : state.valid ? (
           <Stack>
             <Group>
-              <ThemeIcon color="brand" size={56} radius="xl">
+              <ThemeIcon color="brand" size={58} radius="md">
                 <IconShieldCheck size={32} />
               </ThemeIcon>
               <div>
@@ -59,21 +53,21 @@ export default function VerifyCertificate() {
 
             <Divider />
 
-            <Row icon={IconUser} label="Estudante" value={state.cert.user?.name} />
-            <Row icon={IconBuildingCommunity} label="Atividade" value={state.cert.activity?.title} />
-            <Row
-              icon={IconBuildingCommunity}
-              label="Organização"
-              value={state.cert.activity?.createdBy?.name || "—"}
-            />
-            <Group>
-              <Row icon={IconHourglass} label="Carga horária" value={`${state.cert.hours}h`} />
-              <Row
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
+              <InfoItem icon={IconUser} label="Estudante" value={state.cert.user?.name} />
+              <InfoItem icon={IconBuildingCommunity} label="Atividade" value={state.cert.activity?.title} />
+              <InfoItem
+                icon={IconBuildingCommunity}
+                label="Organização"
+                value={state.cert.activity?.createdBy?.name || "-"}
+              />
+              <InfoItem icon={IconHourglass} label="Carga horária" value={`${state.cert.hours}h`} />
+              <InfoItem
                 icon={IconCalendar}
                 label="Data da atividade"
                 value={formatDate(state.cert.activity?.date)}
               />
-            </Group>
+            </SimpleGrid>
 
             <Badge variant="light" color="gray" radius="sm" mt="xs">
               Código: {code}
@@ -81,7 +75,7 @@ export default function VerifyCertificate() {
           </Stack>
         ) : (
           <Stack align="center" py="md">
-            <ThemeIcon color="red" size={56} radius="xl">
+            <ThemeIcon color="red" size={58} radius="md">
               <IconShieldX size={32} />
             </ThemeIcon>
             <Title order={3}>Certificado inválido</Title>

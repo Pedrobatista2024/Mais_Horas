@@ -1,49 +1,22 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Avatar, Divider, Group, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import {
-  Paper,
-  Group,
-  Avatar,
-  Title,
-  Text,
-  Button,
-  Stack,
-  Divider,
-  SimpleGrid,
-  Anchor,
-} from "@mantine/core";
-import {
-  IconArrowLeft,
-  IconBuildingCommunity,
-  IconPhone,
-  IconMail,
-  IconWorld,
   IconBrandInstagram,
+  IconBuildingCommunity,
+  IconMail,
   IconMapPin,
+  IconPhone,
+  IconWorld,
 } from "@tabler/icons-react";
 
 import PublicPage from "../../components/layout/PublicPage";
+import BackButton from "../../components/ui/BackButton";
+import InfoItem from "../../components/ui/InfoItem";
 import Loading from "../../components/ui/Loading";
 import { api } from "../../services/api";
 import { notifyError } from "../../utils/notify";
 import { resolveImage } from "../../utils/format";
-
-function Contact({ icon: Icon, label, value }) {
-  if (!value) return null;
-  return (
-    <Group gap="xs" wrap="nowrap" align="flex-start">
-      <Icon size={18} style={{ opacity: 0.6, marginTop: 2 }} />
-      <div style={{ minWidth: 0 }}>
-        <Text size="xs" c="dimmed">
-          {label}
-        </Text>
-        <Text size="sm" fw={600}>
-          {value}
-        </Text>
-      </div>
-    </Group>
-  );
-}
 
 export default function OrgPublicProfile() {
   const { id } = useParams();
@@ -64,53 +37,43 @@ export default function OrgPublicProfile() {
     })();
   }, [id]);
 
+  const profile = user?.organizationProfile || {};
+
   return (
     <PublicPage maxWidth="md">
-      <Button
-        variant="subtle"
-        color="gray"
-        leftSection={<IconArrowLeft size={18} />}
-        onClick={() => navigate(-1)}
-        mb="md"
-      >
-        Voltar
-      </Button>
+      <BackButton onClick={() => navigate(-1)} />
 
       {loading ? (
         <Loading />
       ) : !user ? (
         <Text>ONG não encontrada.</Text>
       ) : (
-        <Paper withBorder radius="lg" p="xl" shadow="sm">
-          <Group wrap="nowrap" mb="lg">
-            <Avatar src={resolveImage(user.organizationProfile?.photo)} size={84} radius="md" color="navy">
+        <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} shadow="sm" className="mh-page-band">
+          <Group wrap="wrap" mb="lg">
+            <Avatar src={resolveImage(profile.photo)} size={84} radius="md" color="navy">
               <IconBuildingCommunity size={40} />
             </Avatar>
             <div>
-              <Title order={2}>{user.organizationProfile?.organizationName || user.name}</Title>
+              <Title order={2}>{profile.organizationName || user.name}</Title>
               <Text c="dimmed">Organização</Text>
             </div>
           </Group>
 
-          {user.organizationProfile?.description && (
+          {profile.description && (
             <Text mb="lg" style={{ whiteSpace: "pre-wrap" }}>
-              {user.organizationProfile.description}
+              {profile.description}
             </Text>
           )}
 
           <Divider my="md" />
           <Stack gap="md">
-            <Text fw={700}>Contato</Text>
+            <Text fw={800}>Contato</Text>
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
-              <Contact icon={IconMail} label="Email" value={user.email} />
-              <Contact icon={IconPhone} label="Telefone" value={user.organizationProfile?.phone} />
-              <Contact icon={IconMapPin} label="Endereço" value={user.organizationProfile?.address} />
-              <Contact icon={IconWorld} label="Website" value={user.organizationProfile?.website} />
-              <Contact
-                icon={IconBrandInstagram}
-                label="Instagram"
-                value={user.organizationProfile?.instagram}
-              />
+              <InfoItem icon={IconMail} label="Email" value={user.email} color="navy" />
+              <InfoItem icon={IconPhone} label="Telefone" value={profile.phone} color="navy" />
+              <InfoItem icon={IconMapPin} label="Endereço" value={profile.address} color="navy" />
+              <InfoItem icon={IconWorld} label="Website" value={profile.website} color="navy" />
+              <InfoItem icon={IconBrandInstagram} label="Instagram" value={profile.instagram} color="navy" />
             </SimpleGrid>
           </Stack>
         </Paper>

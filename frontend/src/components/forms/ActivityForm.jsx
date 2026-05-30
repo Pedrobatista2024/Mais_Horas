@@ -74,7 +74,7 @@ export default function ActivityForm({
 
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
-      <Paper withBorder radius="md" p="xl">
+      <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} className="mh-page-band">
         {lockedExceptLimits && (
           <Alert icon={<IconInfoCircle size={18} />} color="navy" mb="lg">
             Esta atividade já tem inscritos. Por isso, só é possível ajustar o número mínimo e máximo

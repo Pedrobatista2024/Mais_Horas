@@ -1,22 +1,24 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { SimpleGrid, Button, Card, Group, Text, Stack, Title } from "@mantine/core";
+import { Button, Card, Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import {
-  IconPlus,
-  IconCalendarEvent,
   IconActivity,
-  IconCircleCheck,
   IconArrowRight,
-  IconUserCircle,
+  IconBuildingCommunity,
+  IconCalendarEvent,
+  IconCircleCheck,
+  IconPlus,
+  IconUsers,
 } from "@tabler/icons-react";
 
+import ActionCard from "../../components/ui/ActionCard";
+import EmptyState from "../../components/ui/EmptyState";
+import Loading from "../../components/ui/Loading";
 import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
 import StatusBadge from "../../components/ui/StatusBadge";
-import Loading from "../../components/ui/Loading";
-import EmptyState from "../../components/ui/EmptyState";
-import { useFetch } from "../../hooks/useFetch";
 import { useAuth } from "../../context/AuthContext";
+import { useFetch } from "../../hooks/useFetch";
 import { formatDate } from "../../utils/format";
 
 export default function OrgDashboard() {
@@ -40,8 +42,9 @@ export default function OrgDashboard() {
   return (
     <>
       <PageHeader
-        title={`Olá, ${user?.name || "organização"} 👋`}
-        subtitle="Gerencie suas atividades e valide a presença dos estudantes."
+        eyebrow="Painel da organização"
+        title={`Olá, ${user?.name || "organização"}`}
+        subtitle="Publique atividades, acompanhe inscrições e valide a presença dos estudantes."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={() => navigate("/org/create-activity")}>
             Nova atividade
@@ -49,17 +52,63 @@ export default function OrgDashboard() {
         }
       />
 
-      <SimpleGrid cols={{ base: 1, sm: 3 }} mb="xl">
-        <StatCard icon={IconCalendarEvent} label="Total de atividades" value={stats.total} color="navy" />
-        <StatCard icon={IconActivity} label="Ativas" value={stats.active} color="brand" />
-        <StatCard icon={IconCircleCheck} label="Finalizadas" value={stats.finished} color="navy" />
+      <SimpleGrid cols={{ base: 1, sm: 3 }} mb="lg">
+        <StatCard
+          icon={IconCalendarEvent}
+          label="Total de atividades"
+          value={stats.total}
+          color="navy"
+          helper="Vagas publicadas pela organização"
+        />
+        <StatCard
+          icon={IconActivity}
+          label="Ativas"
+          value={stats.active}
+          color="brand"
+          helper="Recebendo inscrições ou validações"
+        />
+        <StatCard
+          icon={IconCircleCheck}
+          label="Finalizadas"
+          value={stats.finished}
+          color="navy"
+          helper="Prontas para certificados"
+        />
+      </SimpleGrid>
+
+      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg" mb="xl">
+        <ActionCard
+          icon={IconPlus}
+          title="Publicar oportunidade"
+          description="Crie uma vaga com data, local, carga horária e limite de participantes."
+          actionLabel="Criar atividade"
+          onClick={() => navigate("/org/create-activity")}
+        />
+        <ActionCard
+          icon={IconUsers}
+          title="Validar estudantes"
+          description="Abra suas atividades para confirmar presença e emitir certificados."
+          actionLabel="Gerenciar atividades"
+          color="navy"
+          onClick={() => navigate("/org/my-activities")}
+        />
+        <ActionCard
+          icon={IconBuildingCommunity}
+          title="Fortalecer perfil"
+          description="Um perfil completo passa mais confiança para quem busca horas."
+          actionLabel="Ver perfil"
+          color="clay"
+          onClick={() => navigate("/org/profile")}
+        />
       </SimpleGrid>
 
       <Group justify="space-between" mb="sm">
         <Title order={4}>Atividades recentes</Title>
-        <Button variant="subtle" size="compact-sm" onClick={() => navigate("/org/my-activities")}>
-          Ver todas
-        </Button>
+        {recent.length > 0 && (
+          <Button variant="subtle" size="compact-sm" onClick={() => navigate("/org/my-activities")}>
+            Ver todas
+          </Button>
+        )}
       </Group>
 
       {recent.length === 0 ? (
@@ -81,16 +130,17 @@ export default function OrgDashboard() {
               withBorder
               radius="md"
               padding="md"
+              className="mh-card-hover"
               style={{ cursor: "pointer" }}
               onClick={() => navigate(`/org/activity/${a._id}`)}
             >
-              <Group justify="space-between" wrap="nowrap">
+              <Group justify="space-between" wrap="wrap">
                 <div style={{ minWidth: 0 }}>
                   <Text fw={700} truncate>
                     {a.title}
                   </Text>
                   <Text size="sm" c="dimmed">
-                    {formatDate(a.date)} · {a.location || "-"}
+                    {formatDate(a.date)} - {a.location || "-"}
                   </Text>
                 </div>
                 <Group gap="sm" wrap="nowrap">
@@ -102,23 +152,6 @@ export default function OrgDashboard() {
           ))}
         </Stack>
       )}
-
-      <Card withBorder radius="md" padding="lg" mt="xl">
-        <Group justify="space-between">
-          <Group>
-            <IconUserCircle size={28} />
-            <div>
-              <Text fw={700}>Perfil da organização</Text>
-              <Text size="sm" c="dimmed">
-                Um perfil completo passa mais confiança para os estudantes.
-              </Text>
-            </div>
-          </Group>
-          <Button variant="light" onClick={() => navigate("/org/profile")}>
-            Ver perfil
-          </Button>
-        </Group>
-      </Card>
     </>
   );
 }

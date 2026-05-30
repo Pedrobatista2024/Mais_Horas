@@ -25,6 +25,7 @@ export default function OrgMyActivities() {
   return (
     <>
       <PageHeader
+        eyebrow="Gestão de vagas"
         title="Minhas atividades"
         subtitle="Gerencie as vagas que sua organização publicou."
         action={

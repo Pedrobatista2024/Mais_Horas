@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, Group, Text, Button, SimpleGrid, Anchor, Alert, Avatar } from "@mantine/core";
-import { IconArrowLeft, IconCheck, IconX, IconAlertTriangle, IconUsers } from "@tabler/icons-react";
+import { IconCheck, IconX, IconAlertTriangle, IconUsers } from "@tabler/icons-react";
 
+import BackButton from "../../components/ui/BackButton";
 import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
 import StatusBadge from "../../components/ui/StatusBadge";
@@ -54,15 +55,7 @@ export default function ActivityParticipants() {
 
   return (
     <>
-      <Button
-        variant="subtle"
-        color="gray"
-        leftSection={<IconArrowLeft size={18} />}
-        onClick={() => navigate(-1)}
-        mb="md"
-      >
-        Voltar
-      </Button>
+      <BackButton onClick={() => navigate(-1)} />
 
       <PageHeader
         title="Participantes"
@@ -93,9 +86,9 @@ export default function ActivityParticipants() {
           {participants.map((p) => {
             const studentId = p?.user?._id;
             return (
-              <Card key={p._id} withBorder radius="md" padding="md">
-                <Group justify="space-between" wrap="nowrap" align="flex-start">
-                  <Group wrap="nowrap" align="flex-start">
+              <Card key={p._id} withBorder radius="md" padding="md" className="mh-card-hover">
+                <Group justify="space-between" wrap="wrap" align="flex-start">
+                  <Group wrap="wrap" align="flex-start">
                     <Avatar color="brand" radius="xl">
                       {initials(p?.user?.name)}
                     </Avatar>

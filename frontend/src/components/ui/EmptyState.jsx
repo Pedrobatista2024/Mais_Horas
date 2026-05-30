@@ -8,9 +8,9 @@ export default function EmptyState({
   action,
 }) {
   return (
-    <Paper withBorder p="xl" radius="md">
-      <Stack align="center" gap="sm" py="lg">
-        <ThemeIcon variant="light" color="gray" size={56} radius="xl">
+    <Paper withBorder p={{ base: "lg", sm: "xl" }} radius="md">
+      <Stack align="center" gap="sm" py={{ base: "md", sm: "lg" }}>
+        <ThemeIcon variant="light" color="brand" size={58} radius="md">
           <Icon size={30} />
         </ThemeIcon>
         <Text fw={700} size="lg">

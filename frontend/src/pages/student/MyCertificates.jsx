@@ -44,6 +44,7 @@ export default function MyCertificates() {
   return (
     <>
       <PageHeader
+        eyebrow="Comprovação"
         title="Meus certificados"
         subtitle="Certificados emitidos pelas ONGs. Cada um pode ser validado por QR Code."
       />
@@ -62,7 +63,7 @@ export default function MyCertificates() {
       ) : (
         <Stack gap="md">
           {certs.map((cert) => (
-            <Card key={cert._id} withBorder radius="md" padding="lg">
+            <Card key={cert._id} withBorder radius="md" padding="lg" className="mh-card-hover">
               <Group justify="space-between" align="flex-start" wrap="wrap">
                 <div style={{ minWidth: 0 }}>
                   <Group gap="xs">

@@ -20,6 +20,7 @@ export default function MyActivities() {
   return (
     <>
       <PageHeader
+        eyebrow="Minha jornada"
         title="Minhas inscrições"
         subtitle="Atividades em que você se inscreveu e o status da sua presença."
       />
@@ -43,10 +44,11 @@ export default function MyActivities() {
               withBorder
               radius="md"
               padding="md"
+              className="mh-card-hover"
               style={{ cursor: "pointer" }}
               onClick={() => navigate(`/student/activity/${p.activity._id}`)}
             >
-              <Group justify="space-between" wrap="nowrap">
+              <Group justify="space-between" wrap="wrap">
                 <div style={{ minWidth: 0 }}>
                   <Text fw={700} truncate>
                     {p.activity.title}

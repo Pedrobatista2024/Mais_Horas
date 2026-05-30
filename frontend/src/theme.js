@@ -12,8 +12,21 @@ export const theme = createTheme({
     "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   headings: {
     fontWeight: "800",
+    textWrap: "balance",
   },
   colors: {
+    ink: [
+      "#f0f5f2",
+      "#dce8e1",
+      "#bfd2c7",
+      "#9db8aa",
+      "#789b8a",
+      "#597f6b",
+      "#416352",
+      "#2d493c",
+      "#1b3027",
+      "#10211a",
+    ],
     brand: [
       "#e7f9ef",
       "#c8efd9",
@@ -38,6 +51,35 @@ export const theme = createTheme({
       "#1a345f",
       "#10213d",
     ],
+    clay: [
+      "#fbf4ec",
+      "#f2dfc8",
+      "#e4c49d",
+      "#d4a56e",
+      "#c78a48",
+      "#b97431",
+      "#9b5d27",
+      "#79481f",
+      "#573315",
+      "#341e0b",
+    ],
+  },
+  components: {
+    Button: {
+      defaultProps: {
+        radius: "md",
+      },
+    },
+    Paper: {
+      defaultProps: {
+        radius: "md",
+      },
+    },
+    Card: {
+      defaultProps: {
+        radius: "md",
+      },
+    },
   },
 });
 

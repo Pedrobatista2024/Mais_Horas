@@ -16,10 +16,10 @@ import { useForm } from "@mantine/form";
 import {
   IconDeviceFloppy,
   IconUpload,
-  IconArrowLeft,
   IconBuildingCommunity,
 } from "@tabler/icons-react";
 
+import BackButton from "../../components/ui/BackButton";
 import PageHeader from "../../components/ui/PageHeader";
 import Loading from "../../components/ui/Loading";
 import { api } from "../../services/api";
@@ -103,20 +103,12 @@ export default function OrgEditProfile() {
 
   return (
     <>
-      <Button
-        variant="subtle"
-        color="gray"
-        leftSection={<IconArrowLeft size={18} />}
-        onClick={() => navigate(-1)}
-        mb="md"
-      >
-        Voltar
-      </Button>
+      <BackButton onClick={() => navigate(-1)} />
 
-      <PageHeader title="Editar perfil da organização" />
+      <PageHeader eyebrow="Conta da organização" title="Editar perfil da organização" />
 
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Paper withBorder radius="md" p="xl">
+        <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} className="mh-page-band">
           <Group mb="lg">
             <Avatar src={photoPreview} size={80} radius="md" color="navy">
               <IconBuildingCommunity size={36} />

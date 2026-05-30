@@ -1,29 +1,29 @@
 # Mapa de melhorias do Backend — Mais Horas
 
 Levantamento dos pontos fracos encontrados no backend e o que foi (ou será) feito.
-Status: ✅ feito agora · 🔶 recomendado depois
+Status: feito agora / recomendado depois
 
 ---
 
 ## 1. Validação de entrada
 **Problema:** cada controller validava na mão (`if (!title) ...`), com regras espalhadas, duplicadas entre `create` e `update`, e sem padrão de resposta de erro.
-**Solução ✅:** schemas com **zod** (`src/validators/*`) + middleware `validate` que roda antes do controller. Entrada inválida retorna `400` com lista de campos e mensagens padronizadas.
+**Solução (feito):** schemas com **zod** (`src/validators/*`) + middleware `validate` que roda antes do controller. Entrada inválida retorna `400` com lista de campos e mensagens padronizadas.
 
 ## 2. Tratamento de erros
 **Problema:** `try/catch` repetido em todo controller, com `console.error` + `res.status(500)` copiado dezenas de vezes. Mensagens inconsistentes (`error` vs `message`).
-**Solução ✅:** wrapper `asyncHandler` remove o try/catch repetido; **middleware de erro central** (`error.middleware.js`) formata toda resposta de erro no mesmo formato `{ message, details? }`. Classe `AppError` para erros de negócio com status correto.
+**Solução (feito):** wrapper `asyncHandler` remove o try/catch repetido; **middleware de erro central** (`error.middleware.js`) formata toda resposta de erro no mesmo formato `{ message, details? }`. Classe `AppError` para erros de negócio com status correto.
 
 ## 3. Autorização por papel (role)
 **Problema:** qualquer usuário logado conseguia chamar rotas de ONG (criar/finalizar atividade). A checagem era feita ad-hoc dentro de alguns controllers (`activity.createdBy === req.user._id`), e faltava em outros.
-**Solução ✅:** middleware `requireRole("organization")` / `requireRole("student")` nas rotas. A checagem de dono (ownership) virou helper reutilizável no service.
+**Solução (feito):** middleware `requireRole("organization")` / `requireRole("student")` nas rotas. A checagem de dono (ownership) virou helper reutilizável no service.
 
 ## 4. Camada de serviço (regras de negócio)
 **Problema:** controllers gordos misturando HTTP + regra de negócio + acesso a dados (ex.: `finishActivity` com 80 linhas).
-**Solução ✅:** `src/services/*` concentram a regra (finalizar atividade, gerar certificados, validar presença). Controllers ficam finos: validam, chamam o service, devolvem resposta.
+**Solução (feito):** `src/services/*` concentram a regra (finalizar atividade, gerar certificados, validar presença). Controllers ficam finos: validam, chamam o service, devolvem resposta.
 
 ## 5. Segurança
 **Problema:** sem headers de segurança; `cors()` liberado para qualquer origem; login sem proteção contra força bruta; JWT sem checagem de secret ausente.
-**Solução ✅:**
+**Solução (feito):**
 - **helmet** (headers de segurança)
 - **express-rate-limit** no `/users/login` e `/users/register` (anti força-bruta)
 - CORS configurável por env (`CORS_ORIGIN`), com fallback liberado em dev
@@ -31,26 +31,26 @@ Status: ✅ feito agora · 🔶 recomendado depois
 
 ## 6. Consistência de dados / integridade
 **Problema:** no Mongo o array `participants` dentro de `Activity` duplicava a info que já estava em `Participation`, podendo divergir.
-**Solução ✅ (já na migração p/ Postgres):** fonte única de verdade = tabela `participations` com `UNIQUE(activity_id, user_id)` e contagem por `COUNT(*)`. FKs com `ON DELETE CASCADE`.
+**Solução (feito, já na migração p/ Postgres):** fonte única de verdade = tabela `participations` com `UNIQUE(activity_id, user_id)` e contagem por `COUNT(*)`. FKs com `ON DELETE CASCADE`.
 
 ## 7. Geração de certificado / QR (o "desafio técnico")
 **Problema:** o código de verificação era só um hash aleatório (`crypto.randomBytes`). Validação por QR existia, mas a página pública era HTML cru montado por string (risco de injeção e visual pobre).
-**Solução ✅:**
+**Solução (feito):**
 - página de verificação virou rota do **frontend** (`/verificar/:code`), bonita e responsiva, consumindo o endpoint JSON `GET /certificates/validate/:code`.
 - QR do PDF aponta para essa página pública.
-**Recomendado 🔶 (próximo nível, ótimo p/ o trabalho de faculdade):** check-in de presença com **QR dinâmico/rotativo** (token com expiração curta por atividade), impedindo "passar foto do QR" para terceiros. Ver seção "Desafio tecnológico" abaixo.
+**Recomendado (próximo nível, ótimo p/ o trabalho de faculdade):** check-in de presença com **QR dinâmico/rotativo** (token com expiração curta por atividade), impedindo "passar foto do QR" para terceiros. Ver seção "Desafio tecnológico" abaixo.
 
 ## 8. Uploads
 **Problema:** fotos salvas em disco local (`uploads/`) — some a cada deploy no Render (disco efêmero). Sem limpeza de órfãos.
-**Solução ✅ (parcial):** mantido em disco para dev, documentada a limitação.
-**Recomendado 🔶:** storage externo (Cloudinary/S3/R2) em produção.
+**Solução (parcial):** mantido em disco para dev, documentada a limitação.
+**Recomendado:** storage externo (Cloudinary/S3/R2) em produção.
 
 ## 9. Variáveis de ambiente
 **Problema:** `APP_URL`, `JWT_SECRET` usados sem checagem; `.env` versável.
-**Solução ✅:** `.env.example` documentado, `.gitignore` cobrindo `.env`, checagem de secret no boot.
+**Solução (feito):** `.env.example` documentado, `.gitignore` cobrindo `.env`, checagem de secret no boot.
 
 ## 10. Padrões gerais
-**Solução ✅:** estrutura de pastas clara (`validators/`, `services/`, `middlewares/`, `utils/`), respostas de API uniformes, remoção de `console.log` de debug.
+**Solução (feito):** estrutura de pastas clara (`validators/`, `services/`, `middlewares/`, `utils/`), respostas de API uniformes, remoção de `console.log` de debug.
 
 ---
 

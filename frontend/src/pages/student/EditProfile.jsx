@@ -16,9 +16,10 @@ import {
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
-import { IconDeviceFloppy, IconUpload, IconArrowLeft } from "@tabler/icons-react";
+import { IconDeviceFloppy, IconUpload } from "@tabler/icons-react";
 import dayjs from "dayjs";
 
+import BackButton from "../../components/ui/BackButton";
 import PageHeader from "../../components/ui/PageHeader";
 import Loading from "../../components/ui/Loading";
 import { api } from "../../services/api";
@@ -116,20 +117,16 @@ export default function EditStudentProfile() {
 
   return (
     <>
-      <Button
-        variant="subtle"
-        color="gray"
-        leftSection={<IconArrowLeft size={18} />}
-        onClick={() => navigate(-1)}
-        mb="md"
-      >
-        Voltar
-      </Button>
+      <BackButton onClick={() => navigate(-1)} />
 
-      <PageHeader title="Editar perfil" subtitle="Mantenha seus dados atualizados." />
+      <PageHeader
+        eyebrow="Conta do estudante"
+        title="Editar perfil"
+        subtitle="Mantenha seus dados atualizados."
+      />
 
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Paper withBorder radius="md" p="xl">
+        <Paper withBorder radius="md" p={{ base: "lg", sm: "xl" }} className="mh-page-band">
           <Group mb="lg">
             <Avatar src={photoPreview} size={80} radius="xl" color="brand">
               {initials(form.values.fullName || form.values.name)}

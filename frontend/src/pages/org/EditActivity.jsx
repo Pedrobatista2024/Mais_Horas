@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@mantine/core";
-import { IconArrowLeft } from "@tabler/icons-react";
 
+import BackButton from "../../components/ui/BackButton";
 import PageHeader from "../../components/ui/PageHeader";
 import ActivityForm from "../../components/forms/ActivityForm";
 import Loading from "../../components/ui/Loading";
@@ -58,16 +57,8 @@ export default function EditActivity() {
 
   return (
     <>
-      <Button
-        variant="subtle"
-        color="gray"
-        leftSection={<IconArrowLeft size={18} />}
-        onClick={() => navigate(-1)}
-        mb="md"
-      >
-        Voltar
-      </Button>
-      <PageHeader title="Editar atividade" />
+      <BackButton onClick={() => navigate(-1)} />
+      <PageHeader eyebrow="Gestão de vaga" title="Editar atividade" />
       <ActivityForm
         initialValues={initial}
         onSubmit={handleSubmit}
