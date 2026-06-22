@@ -1,17 +1,22 @@
-import { Group, Stack, Text, ThemeIcon } from "@mantine/core";
-import { IconHeartHandshake } from "@tabler/icons-react";
+import { Stack, Text } from "@mantine/core";
+import ClockGlyph from "./ClockGlyph";
 
+/**
+ * Logotipo "MaisHoras" — o "o" de Horas é um relógio (ClockGlyph).
+ * "Mais" em tom escuro, "H_ras" em azul da marca.
+ */
 export default function BrandMark({
   onClick,
   compact = false,
   showTagline = false,
   align = "flex-start",
 }) {
+  const fz = compact ? 21 : 26;
+
   return (
-    <Group
-      gap={compact ? 8 : 10}
-      wrap="nowrap"
-      align="center"
+    <Stack
+      gap={0}
+      align={align}
       className="mh-brand-mark"
       data-clickable={onClick ? "true" : undefined}
       onClick={onClick}
@@ -21,30 +26,29 @@ export default function BrandMark({
         if (!onClick) return;
         if (event.key === "Enter" || event.key === " ") onClick();
       }}
+      style={{ minWidth: 0, lineHeight: 1 }}
     >
-      <ThemeIcon
-        size={compact ? 38 : 46}
-        radius={8}
-        variant="filled"
-        color="brand"
-        className="mh-brand-symbol"
+      <Text
+        component="span"
+        fw={900}
+        fz={fz}
+        c="ink.8"
+        style={{ display: "inline-flex", alignItems: "center", letterSpacing: "-0.01em", lineHeight: 1 }}
       >
-        <IconHeartHandshake size={compact ? 21 : 25} stroke={1.8} />
-      </ThemeIcon>
-
-      <Stack gap={0} align={align} style={{ minWidth: 0 }}>
-        <Text fw={900} fz={compact ? 20 : 24} lh={1} c="ink.8">
-          Mais
-          <Text span inherit c="brand.7">
-            Horas
-          </Text>
+        Mais
+        <Text span inherit c="brand.7">
+          H
         </Text>
-        {showTagline && (
-          <Text size="xs" c="dimmed" lh={1.25}>
-            Conexão entre estudantes e impacto social
-          </Text>
-        )}
-      </Stack>
-    </Group>
+        <ClockGlyph size={fz * 0.96} style={{ margin: "0 0.5px" }} />
+        <Text span inherit c="brand.7">
+          ras
+        </Text>
+      </Text>
+      {showTagline && (
+        <Text size="xs" c="dimmed" lh={1.25} mt={2}>
+          Horas que transformam
+        </Text>
+      )}
+    </Stack>
   );
 }

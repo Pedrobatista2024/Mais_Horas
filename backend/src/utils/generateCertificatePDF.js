@@ -25,7 +25,7 @@ export const generateCertificatePDF = async (certificate) => {
           certificate.activity.date
         ).toLocaleDateString()}, totalizando ${
           certificate.hours
-        } horas de atividades complementares.`,
+        } horas de atividades de extensão.`,
         { align: "center" }
       );
 

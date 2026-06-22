@@ -40,7 +40,7 @@ export default function StudentDashboard() {
       <PageHeader
         eyebrow="Painel do estudante"
         title={`Olá, ${user?.name?.split(" ")[0] || "estudante"}`}
-        subtitle="Acompanhe suas horas complementares, inscrições e certificados emitidos pelas ONGs."
+        subtitle="Acompanhe suas horas de extensão, inscrições e certificados emitidos pelas ONGs."
         action={
           <Button leftSection={<IconSearch size={18} />} onClick={() => navigate("/activities")}>
             Buscar atividades

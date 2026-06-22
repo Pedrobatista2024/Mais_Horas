@@ -2,7 +2,7 @@
 
 Plataforma que conecta **estudantes** e **ONGs**: as ONGs publicam vagas de
 voluntariado (como ofertas de trabalho), os estudantes se inscrevem para cumprir
-horas complementares, e a presença confirmada gera um **certificado validável por QR Code**.
+horas de extensão, e a presença confirmada gera um **certificado validável por QR Code**.
 
 ## Stack
 

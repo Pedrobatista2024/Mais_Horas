@@ -14,7 +14,7 @@ import {
 import ActionCard from "../../components/ui/ActionCard";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
-import PageHeader from "../../components/ui/PageHeader";
+import WelcomeBanner from "../../components/ui/WelcomeBanner";
 import StatCard from "../../components/ui/StatCard";
 import StatusBadge from "../../components/ui/StatusBadge";
 import { useAuth } from "../../context/AuthContext";
@@ -41,12 +41,18 @@ export default function OrgDashboard() {
 
   return (
     <>
-      <PageHeader
+      <WelcomeBanner
+        icon={IconBuildingCommunity}
         eyebrow="Painel da organização"
-        title={`Olá, ${user?.name || "organização"}`}
+        title={`Olá, ${user?.name || "organização"}!`}
         subtitle="Publique atividades, acompanhe inscrições e valide a presença dos estudantes."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={() => navigate("/org/create-activity")}>
+          <Button
+            size="md"
+            color="clay"
+            leftSection={<IconPlus size={18} />}
+            onClick={() => navigate("/org/create-activity")}
+          >
             Nova atividade
           </Button>
         }

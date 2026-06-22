@@ -2,85 +2,84 @@ import { createTheme } from "@mantine/core";
 
 /**
  * Tema da marca "Mais Horas".
- * Paleta verde (comunidade / impacto social) como cor primária,
- * com um azul de apoio para a área das ONGs.
+ * Azul royal institucional (inspiração: universidades), botões em formato
+ * "pill", tipografia display forte para títulos.
  */
 export const theme = createTheme({
   primaryColor: "brand",
+  primaryShade: 7,
   defaultRadius: "md",
   fontFamily:
     "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   headings: {
+    fontFamily: "Inter, 'Segoe UI', sans-serif",
     fontWeight: "800",
-    textWrap: "balance",
+    sizes: {
+      h1: { fontSize: "2.6rem", lineHeight: "1.1" },
+      h2: { fontSize: "2rem", lineHeight: "1.15" },
+    },
   },
-  colors: {
-    ink: [
-      "#f0f5f2",
-      "#dce8e1",
-      "#bfd2c7",
-      "#9db8aa",
-      "#789b8a",
-      "#597f6b",
-      "#416352",
-      "#2d493c",
-      "#1b3027",
-      "#10211a",
-    ],
-    brand: [
-      "#e7f9ef",
-      "#c8efd9",
-      "#a3e4c0",
-      "#7bd9a5",
-      "#54cf8c",
-      "#2fc575",
-      "#27ae60", // 6 - principal
-      "#1f8f4f",
-      "#176b3b",
-      "#0d4727",
-    ],
-    navy: [
-      "#eaf0fb",
-      "#cfdcf3",
-      "#aec3ea",
-      "#86a6e0",
-      "#5f8ad6",
-      "#3d72cc",
-      "#2e5aac", // 6
-      "#244784",
-      "#1a345f",
-      "#10213d",
-    ],
-    clay: [
-      "#fbf4ec",
-      "#f2dfc8",
-      "#e4c49d",
-      "#d4a56e",
-      "#c78a48",
-      "#b97431",
-      "#9b5d27",
-      "#79481f",
-      "#573315",
-      "#341e0b",
-    ],
-  },
+  defaultGradient: { from: "brand.8", to: "brand.6", deg: 135 },
   components: {
     Button: {
-      defaultProps: {
-        radius: "md",
-      },
+      defaultProps: { radius: "xl" },
     },
-    Paper: {
-      defaultProps: {
-        radius: "md",
-      },
-    },
-    Card: {
-      defaultProps: {
-        radius: "md",
-      },
+    Badge: {
+      defaultProps: { radius: "sm" },
     },
   },
+  colors: {
+    // Azul royal saturado (primária)
+    brand: [
+      "#e8edfb",
+      "#cdd8f6",
+      "#a3b6ef",
+      "#7390e7",
+      "#4a6ee0",
+      "#2f57d8",
+      "#1f47c9", // 6
+      "#1839b0", // 7 - principal (royal)
+      "#142f8f",
+      "#0f2570",
+    ],
+    // Azul profundo (fundos escuros / hero)
+    navy: [
+      "#e7ebf6",
+      "#c4cde9",
+      "#9badd9",
+      "#7089c9",
+      "#4d6bbc",
+      "#3656b3",
+      "#2b49a0",
+      "#21397e",
+      "#172a5e",
+      "#0d1b40",
+    ],
+    // Âmbar/dourado (CTA de destaque, como o "Inscreva-se" laranja da Unifor)
+    clay: [
+      "#fff4e0",
+      "#ffe5b8",
+      "#ffd384",
+      "#ffc14f",
+      "#ffb226",
+      "#fba70f",
+      "#ef9504",
+      "#c77703",
+      "#9e5d05",
+      "#744304",
+    ],
+    // Cinza-azulado (textos/neutros)
+    ink: [
+      "#f4f6fa",
+      "#e6eaf1",
+      "#cbd3e0",
+      "#aab8cd",
+      "#8b9bb6",
+      "#64748f",
+      "#4a5a75",
+      "#36465f",
+      "#212e45",
+      "#111c30",
+    ],
+  },
 });
-
-export default theme;
