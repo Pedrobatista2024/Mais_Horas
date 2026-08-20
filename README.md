@@ -1,98 +1,86 @@
 # Mais Horas
 
-Plataforma que conecta **estudantes** e **ONGs**: as ONGs publicam vagas de
-voluntariado (como ofertas de trabalho), os estudantes se inscrevem para cumprir
-horas de extensão, e a presença confirmada gera um **certificado validável por QR Code**.
+Plataforma que conecta **estudantes** e **ONGs**: as ONGs publicam vagas de voluntariado
+(como ofertas de trabalho), os estudantes se inscrevem para cumprir horas de extensão, e a
+presença confirmada gera um **certificado validável por QR Code**.
 
 ## Stack
 
-- **Backend**: Node + Express + `pg` (PostgreSQL nativo), validação com **zod**, segurança com **helmet** + **rate limit**
-- **Frontend**: React + Vite + **Mantine** (UI), organizado por telas
-- **Banco**: PostgreSQL (UUID, JSONB para perfis)
-
-## Arquitetura
-
-```
-backend/src
-  config/        conexão + schema do Postgres, upload (multer)
-  validators/    schemas zod (entrada validada antes do controller)
-  middlewares/   auth, requireRole, validate, asyncHandler, erro central, rate limit
-  services/      regras de negócio (user, activity, participation, certificate)
-  controllers/   finos: chamam o service e respondem
-  routes/        rotas + middlewares aplicados
-  models/        acesso a dados (SQL)
-  utils/         AppError, token, código de verificação, PDF, datas
-
-frontend/src
-  context/       AuthContext (sessão)
-  components/    layout (AppShell/Navbar), ui (cards, badges...), forms
-  hooks/         useFetch
-  pages/auth     login, register
-  pages/student  dashboard, atividades, inscrições, certificados, perfil
-  pages/org      dashboard, atividades, criar/editar, participantes, perfil
-  pages/public   verificação de certificado, perfis públicos
-  utils/         formatação, notificações (toast)
-```
+| Camada | Tecnologias |
+|---|---|
+| **Backend** | Node + Express, `pg` (PostgreSQL nativo), zod, helmet, express-rate-limit, JWT |
+| **Frontend** | React 19 + Vite + Mantine v8, react-router, axios |
+| **Banco** | PostgreSQL 16 (UUID, JSONB para perfis) |
+| **Deploy** | Render (blueprint em `render.yaml`) |
 
 ## Rodar local
 
-### 1. Postgres (Docker)
+Precisa de Node 18+ e Docker.
+
+**1. Banco**
 
 ```bash
-docker compose up -d   # sobe Postgres na porta 5433 do host
+docker compose up -d
 ```
 
-### 2. Backend
+Sobe o Postgres na porta **5433** do host.
+
+**2. Backend**
 
 ```bash
-cd backend
-cp .env.example .env
-npm install
-npm run dev            # cria as tabelas automaticamente no 1º boot
+cd backend && cp .env.example .env && npm install && npm run dev
 ```
 
-### 3. Frontend
+Roda em `http://localhost:3000`. As tabelas são criadas automaticamente no primeiro boot.
+
+> O servidor **aborta se `JWT_SECRET` não estiver definido** no `.env`. O `.env.example`
+> já traz um valor de exemplo — troque por uma string aleatória longa.
+
+**3. Frontend**
 
 ```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev            # http://localhost:5173
+cd frontend && cp .env.example .env && npm install && npm run dev
 ```
 
-## Deploy no Render
+Roda em `http://localhost:5173`.
 
-`render.yaml` na raiz provisiona Postgres + API + site estático. Passos:
+## Documentação
 
-1. Suba o repo no GitHub.
-2. Render → **New** → **Blueprint** → selecione o `render.yaml`.
-3. Após o 1º deploy, preencha as envs marcadas `sync: false`:
-   - `mais-horas-api`: `APP_URL` e `WEB_URL`/`CORS_ORIGIN` (URL do site)
-   - `mais-horas-web`: `VITE_API_URL` (URL da API)
-4. Redeploy do frontend.
+| Documento | O que contém |
+|---|---|
+| [docs/arquitetura.md](docs/arquitetura.md) | Estrutura de pastas, rotas de tela, schema do banco |
+| [docs/api.md](docs/api.md) | Referência dos endpoints: acesso, payload, formato de erro |
+| [docs/desafio-tecnico.md](docs/desafio-tecnico.md) | O problema difícil do projeto e a proposta de QR dinâmico |
+| [docs/backend-refactor.md](docs/backend-refactor.md) | Histórico das melhorias do backend e dívida técnica aberta |
+| [docs/deploy.md](docs/deploy.md) | Deploy no Render, variáveis de ambiente, limitações |
+| [presentation/roteiro.md](presentation/roteiro.md) | Roteiro da apresentação do projeto de extensão |
 
-> **Uploads**: o disco do plano free do Render é efêmero (fotos somem em redeploy).
-> Para produção, use storage externo (Cloudinary/S3). Em dev funciona em `backend/uploads/`.
+Convenções de código do frontend estão na skill
+[`.claude/skills/frontend-maishoras/SKILL.md`](.claude/skills/frontend-maishoras/SKILL.md).
 
-## Verificação de certificado (desafio técnico)
+## O diferencial
 
-Cada certificado tem um código único e uma página pública `/verificar/:code` acessível
-por QR Code, que confirma estudante, atividade, ONG e horas — sem depender do PDF, que
-poderia ser editado. Veja `MELHORIAS_BACKEND.md` para a evolução proposta (QR dinâmico
-anti-fraude de presença).
+Qualquer plataforma consegue listar vagas de voluntariado. O problema difícil é **provar
+que a hora complementar é verdadeira** — que o aluno esteve presente e que o certificado
+não foi forjado.
 
-## Estrutura do banco
+Cada certificado tem um código único e uma página pública `/verificar/:code` acessível por
+QR Code, que confirma estudante, atividade, ONG e horas consultando o banco — sem depender
+do PDF, que poderia ser editado. A evolução proposta é o **check-in por QR dinâmico**, que
+rotaciona a cada poucos segundos para impedir que o aluno ausente registre presença com um
+print enviado por um colega.
+
+O raciocínio completo está em [docs/desafio-tecnico.md](docs/desafio-tecnico.md).
+
+## Estrutura do repositório
 
 ```
-users          (id UUID, name, email UNIQUE, password, role,
-                student_profile JSONB, organization_profile JSONB)
-activities     (id UUID, title, description, date, start/end_time, location,
-                workload_hours, created_by → users, min/max_participants, status)
-participations (id UUID, activity_id → activities, user_id → users,
-                status: pending|present|absent, validated_by, workload_hours,
-                UNIQUE(activity_id, user_id))
-certificates   (id UUID, user_id, activity_id, participation_id UNIQUE,
-                hours, verification_code UNIQUE, issued_at)
+backend/         API Express (ver docs/arquitetura.md)
+frontend/        SPA React + Vite + Mantine
+docs/            documentação técnica
+presentation/    slides, PDF e roteiro da apresentação
+logo/            SVGs da marca
+scripts/         gerador PowerShell da apresentação
+docker-compose.yml   Postgres local
+render.yaml          blueprint de deploy
 ```
-
-A API expõe o ID como `"_id"` (alias) para compatibilidade com o frontend.
