@@ -1,0 +1,28 @@
+# ===== Mais Horas - API (FastAPI) =====
+
+# Framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Configuração e validação
+pydantic==2.10.4
+pydantic-settings==2.7.1
+email-validator==2.2.0
+
+# Banco
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+greenlet==3.1.1
+
+# Segurança
+pyjwt==2.10.1
+argon2-cffi==23.1.0
+bcrypt==4.2.1
+
+# Upload de arquivos
+python-multipart==0.0.20
+
+# Certificado (PDF + QR Code)
+reportlab==4.2.5
+qrcode[pil]==8.0

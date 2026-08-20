@@ -8,14 +8,15 @@ presença confirmada gera um **certificado validável por QR Code**.
 
 | Camada | Tecnologias |
 |---|---|
-| **Backend** | Node + Express, `pg` (PostgreSQL nativo), zod, helmet, express-rate-limit, JWT |
+| **Backend** | Python + FastAPI, SQLAlchemy 2.0 (async) + asyncpg, Alembic, Pydantic v2 |
+| **Autenticação** | JWT access token curto + refresh token rotativo em cookie httpOnly, senhas em Argon2id |
 | **Frontend** | React 19 + Vite + Mantine v8, react-router, axios |
 | **Banco** | PostgreSQL 16 (UUID, JSONB para perfis) |
 | **Deploy** | Render (blueprint em `render.yaml`) |
 
 ## Rodar local
 
-Precisa de Node 18+ e Docker.
+Precisa de Python 3.12+, Node 18+ e Docker.
 
 **1. Banco**
 
@@ -28,13 +29,22 @@ Sobe o Postgres na porta **5433** do host.
 **2. Backend**
 
 ```bash
-cd backend && cp .env.example .env && npm install && npm run dev
+cd backend && python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt
 ```
 
-Roda em `http://localhost:3000`. As tabelas são criadas automaticamente no primeiro boot.
+No Linux/macOS o activate é `source .venv/bin/activate`.
 
-> O servidor **aborta se `JWT_SECRET` não estiver definido** no `.env`. O `.env.example`
-> já traz um valor de exemplo — troque por uma string aleatória longa.
+Depois configure o ambiente e crie as tabelas:
+
+```bash
+cp .env.example .env && alembic upgrade head && uvicorn app.main:app --reload --port 3000
+```
+
+Roda em `http://localhost:3000`. A documentação interativa da API fica em
+`http://localhost:3000/docs`.
+
+> O servidor **aborta se `JWT_SECRET` não estiver definido** no `.env`. Gere um valor com
+> `python -c "import secrets; print(secrets.token_urlsafe(64))"`.
 
 **3. Frontend**
 
@@ -44,12 +54,24 @@ cd frontend && cp .env.example .env && npm install && npm run dev
 
 Roda em `http://localhost:5173`.
 
+## Testes
+
+O backend tem um teste de fumaça que exercita os 25 endpoints ponta a ponta — cadastro,
+login, rotação de sessão, atividade, presença, certificado e verificação por QR:
+
+```bash
+cd backend && python smoke_test.py
+```
+
+Exige o Postgres no ar. São 68 verificações; qualquer falha sai com código 1.
+
 ## Documentação
 
 | Documento | O que contém |
 |---|---|
 | [docs/arquitetura.md](docs/arquitetura.md) | Estrutura de pastas, rotas de tela, schema do banco |
 | [docs/api.md](docs/api.md) | Referência dos endpoints: acesso, payload, formato de erro |
+| [docs/autenticacao.md](docs/autenticacao.md) | Como funciona a sessão: tokens, rotação, detecção de roubo |
 | [docs/desafio-tecnico.md](docs/desafio-tecnico.md) | O problema difícil do projeto e a proposta de QR dinâmico |
 | [docs/backend-refactor.md](docs/backend-refactor.md) | Histórico das melhorias do backend e dívida técnica aberta |
 | [docs/deploy.md](docs/deploy.md) | Deploy no Render, variáveis de ambiente, limitações |
@@ -75,7 +97,7 @@ O raciocínio completo está em [docs/desafio-tecnico.md](docs/desafio-tecnico.m
 ## Estrutura do repositório
 
 ```
-backend/         API Express (ver docs/arquitetura.md)
+backend/         API FastAPI (ver docs/arquitetura.md)
 frontend/        SPA React + Vite + Mantine
 docs/            documentação técnica
 presentation/    slides, PDF e roteiro da apresentação

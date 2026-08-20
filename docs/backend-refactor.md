@@ -5,6 +5,11 @@ Serve como histórico técnico do projeto e como guia do padrão a seguir daqui 
 
 Legenda: **Feito** — já está no código. **Recomendado** — evolução mapeada, ainda não implementada.
 
+> **Os itens 1 a 10 são história do backend Node/Express**, que foi substituído por
+> Python/FastAPI (item 11). Os problemas e as soluções continuam valendo como registro do
+> raciocínio — e as decisões de arquitetura que eles descrevem foram preservadas na
+> migração — mas o código citado neles não existe mais no repositório.
+
 ---
 
 ## 1. Validação de entrada — Feito
@@ -103,17 +108,65 @@ respostas de API uniformes, remoção dos `console.log` de debug.
 
 ---
 
+## 11. Migração para Python + FastAPI — Feito
+
+O backend Node/Express foi reescrito em **Python + FastAPI**, preservando o contrato da
+API para o frontend não precisar mudar de forma.
+
+| Antes (Express) | Depois (FastAPI) |
+|---|---|
+| zod + middleware `validate` | Pydantic — validação sai do type hint |
+| `authMiddleware` | `Depends(get_current_user)` |
+| `requireRole("organization")` | `Depends(require_role("organization"))` |
+| `asyncHandler` | desnecessário — `async def` nativo |
+| `error.middleware.js` | `@app.exception_handler` |
+| `helmet` | middleware de headers próprio |
+| `express-rate-limit` | dependência `auth_rate_limit` |
+| `multer` | `UploadFile` |
+| `pdfkit` | `reportlab` |
+| `pg` com SQL cru | SQLAlchemy 2.0 async + asyncpg |
+| schema no boot | **Alembic** (resolve o item de migrations) |
+
+**O que a migração ganhou de brinde:**
+
+- **Migrations de verdade** com Alembic — a dívida nº 2 desta lista deixou de existir.
+- **Documentação OpenAPI automática** em `/docs` e `/redoc`.
+- **Teste de fumaça** (`smoke_test.py`) com 68 verificações cobrindo todos os endpoints —
+  o projeto saiu de zero cobertura.
+- **Autenticação mais forte** (item 12).
+
+**Compatibilidade preservada:** o schema do banco não mudou (só ganhou `refresh_tokens`),
+os aliases `_id` continuam, e as senhas bcrypt do backend Node seguem válidas.
+
+## 12. Autenticação: access + refresh — Feito
+
+**Problema:** o backend Node emitia um único JWT de **7 dias**, guardado no `localStorage`.
+Três consequências ruins: um XSS lia a sessão inteira; não havia como revogar o token,
+nem no logout; e um token vazado valia uma semana.
+
+**Solução:** access token de 15 minutos em memória + refresh token opaco de 7 dias em
+cookie `httpOnly`, guardado no banco só como hash, com rotação a cada uso e revogação da
+família inteira ao detectar reuso. Senhas passaram para **Argon2id**.
+
+O modelo completo, incluindo a janela de graça que evita derrubar sessão legítima em
+requisição concorrente, está em [autenticacao.md](autenticacao.md).
+
+---
+
 ## Dívida técnica em aberto
 
 Levantada durante a organização da documentação, ainda não resolvida:
 
-- **Sem testes.** `backend/tests/` existe mas está vazio. Não há suíte nem runner configurado.
-- **Sem migrations.** O schema é recriado via `CREATE TABLE IF NOT EXISTS` no boot. Funciona
-  para o MVP, mas qualquer alteração de coluna em produção vira trabalho manual.
-- **Uploads efêmeros** em produção (item 8).
-- **`backend/.gitignore`** tem o padrão `backend/uploads/`. Como o arquivo já está dentro de
-  `backend/`, esse padrão aponta para `backend/backend/uploads/` e não ignora nada.
-  Deveria ser só `uploads/`.
+- **Cobertura de teste é rasa.** O `smoke_test.py` cobre o caminho feliz e as travas
+  principais dos 25 endpoints, mas não é suíte unitária: não há teste de borda por service,
+  nem runner (pytest) configurado.
+- **Uploads efêmeros** em produção (item 8). Hoje as fotos ficam versionadas no git, que é
+  o único motivo de sobreviverem a um redeploy — ver `backend/.gitignore`.
+- **Rate limit em memória, por processo.** Com mais de um worker o limite vira "20 por
+  worker". Corrigir exige contador compartilhado (Redis).
+- **Refresh tokens expirados não são limpos** da tabela. Convém uma rotina periódica.
 - **`frontend/.env`** está versionado no git. Hoje só contém `VITE_API_URL`, mas o padrão
   convida a vazar segredo depois.
-- **`backend/cod.js`** é um arquivo vazio (0 bytes) e órfão.
+
+Resolvidos na migração para FastAPI: ausência de migrations, ausência de testes,
+`backend/.gitignore` com padrão que não ignorava nada, e o arquivo órfão `backend/cod.js`.

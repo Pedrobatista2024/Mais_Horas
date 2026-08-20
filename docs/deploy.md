@@ -1,14 +1,14 @@
 # Deploy — Mais Horas
 
 O [`render.yaml`](../render.yaml) na raiz é um blueprint que provisiona os três serviços de
-uma vez: banco Postgres, API Node e site estático.
+uma vez: banco Postgres, API Python e site estático.
 
 ## Serviços provisionados
 
 | Serviço | Tipo | Diretório | Comando |
 |---|---|---|---|
 | `mais-horas-db` | PostgreSQL (free) | — | — |
-| `mais-horas-api` | Web / Node (free) | `backend` | `npm install` → `npm start` |
+| `mais-horas-api` | Web / Python (free) | `backend` | `pip install -r requirements.txt && alembic upgrade head` → `uvicorn` |
 | `mais-horas-web` | Static site (free) | `frontend` | `npm install && npm run build` → `./dist` |
 
 O site estático usa rewrite de `/*` para `/index.html`, necessário para o roteamento
@@ -42,10 +42,13 @@ client-side do React Router funcionar em links diretos (ex.: alguém abrindo
 |---|---|---|
 | `DATABASE_URL` | sim | String de conexão do Postgres. No Render vem automática do `mais-horas-db` |
 | `JWT_SECRET` | sim | Secret de assinatura do JWT. **O servidor aborta o boot se faltar.** No Render é gerada automaticamente |
+| `ENVIRONMENT` | em produção | `production` liga cookie `Secure`, `SameSite=None` e HSTS |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | não | Padrão `15` |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | não | Padrão `7` |
 | `APP_URL` | sim | URL pública da API |
 | `WEB_URL` | sim | URL pública do site — vira o destino do QR Code |
-| `CORS_ORIGIN` | recomendada | Origens permitidas, separadas por vírgula. **Vazio libera todas** — nunca deixe vazio em produção |
-| `PGSSL` | em produção | `true` para exigir SSL na conexão. `NODE_ENV=production` tem o mesmo efeito |
+| `CORS_ORIGIN` | **sim em produção** | Origens permitidas, separadas por vírgula. Com `ENVIRONMENT=production` a API **se recusa a subir** sem esta variável |
+| `PGSSL` | em produção | `true` para exigir SSL na conexão. `ENVIRONMENT=production` tem o mesmo efeito |
 | `PORT` | não | Padrão `3000` |
 
 ### Frontend
@@ -59,22 +62,32 @@ Modelos completos em [`backend/.env.example`](../backend/.env.example) e
 
 ## O banco
 
-Não há sistema de migrations. No primeiro boot, `connectDB()` roda o `SCHEMA_SQL` de
-`backend/src/config/database.js`, que usa `CREATE TABLE IF NOT EXISTS` — as tabelas nascem
-sozinhas e o boot é idempotente.
+O schema é versionado com **Alembic**. O `buildCommand` do Render roda
+`alembic upgrade head` antes de subir a aplicação, então o deploy aplica as migrations
+pendentes sozinho.
 
-**Consequência:** alterar uma coluna existente não acontece automaticamente. Em produção,
-qualquer mudança de schema precisa ser aplicada manualmente via `psql` antes do deploy.
+A migration `0001` usa `CREATE TABLE IF NOT EXISTS`, espelhando exatamente o schema que o
+backend Node criava. Isso faz o mesmo comando funcionar em banco novo e em banco que já
+rodou a versão anterior — não é preciso `alembic stamp` manual.
+
+**Migrar um ambiente que já rodava o backend Node:** nada além de `alembic upgrade head`.
+As tabelas existentes ficam intactas, só a `refresh_tokens` é adicionada. Os usuários
+mantêm as senhas — os hashes bcrypt continuam sendo aceitos e são convertidos para
+Argon2id no primeiro login. Ver [autenticacao.md](autenticacao.md).
 
 ## Limitação conhecida: uploads
 
 O disco do plano free do Render é **efêmero**. As fotos de perfil são gravadas em
 `backend/uploads/` e **somem a cada redeploy**.
 
-Em desenvolvimento isso não incomoda. Para produção de verdade, a correção é trocar o
-`multer` de disco por um storage externo (Cloudinary, S3 ou R2) em
-`backend/src/config/upload.js`. Está registrado como dívida técnica em
+Em desenvolvimento isso não incomoda. Para produção de verdade, a correção é trocar a
+gravação em disco por um storage externo (Cloudinary, S3 ou R2) em
+`backend/app/services/user_service.py`. Está registrado como dívida técnica em
 [backend-refactor.md](backend-refactor.md).
+
+> Hoje as fotos em `backend/uploads/` estão **versionadas no git** — é o único motivo de
+> as imagens já existentes sobreviverem a um redeploy. O `backend/.gitignore` explica a
+> situação e o que fazer quando o storage externo entrar.
 
 ## Nota sobre o plano free
 

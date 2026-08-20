@@ -3,39 +3,47 @@
 Base: `http://localhost:3000` em dev (`APP_URL` em produção).
 Todas as rotas de negócio ficam sob `/api`.
 
+Documentação interativa gerada pelo FastAPI: **`/docs`** (Swagger) e **`/redoc`**.
+
 ## Autenticação
 
-JWT no header, obtido em `POST /api/users/login`:
+Dois tokens. O **access token** vem no corpo do login e vai no header:
 
 ```
-Authorization: Bearer <token>
+Authorization: Bearer <access token>
 ```
+
+Ele dura **15 minutos**. O **refresh token** não aparece no corpo — é gravado num cookie
+`httpOnly` e trocado em `POST /api/users/refresh`, que rotaciona o par.
+
+O cliente precisa enviar credenciais para o cookie viajar (`withCredentials: true` no
+axios). O detalhamento do modelo está em [autenticacao.md](autenticacao.md).
 
 A coluna **Acesso** abaixo significa:
 
 - `público` — sem token
 - `logado` — qualquer usuário autenticado
-- `aluno` — exige `role: "student"` (via `requireRole`)
+- `aluno` — exige `role: "student"` (via `Depends(require_role("student"))`)
 - `ONG` — exige `role: "organization"`
 
 ## Formato de erro
 
-Toda resposta de erro sai no mesmo formato, do middleware central:
+Toda resposta de erro sai no mesmo formato, dos handlers em `app/core/errors.py`:
 
 ```json
 { "message": "Dados inválidos", "details": [{ "field": "email", "message": "Email inválido" }] }
 ```
 
-O campo `details` só aparece em erros de validação (zod) e em `AppError` que o traga.
+O campo `details` só aparece em erros de validação (Pydantic) e em `AppError` que o traga.
 
 | Status | Quando |
 |---|---|
-| `400` | validação zod falhou, ou erro de upload (multer) |
+| `400` | validação Pydantic falhou, ou arquivo de upload inválido |
 | `401` | token ausente ou inválido |
 | `403` | role errado para a rota, ou não é dono do recurso |
 | `404` | recurso ou rota inexistente |
 | `409` | violação de unique no Postgres (ex.: email já cadastrado) |
-| `429` | rate limit em `/register` e `/login` |
+| `429` | rate limit em `/register` e `/login` (20 por IP a cada 15 min) |
 | `500` | erro não tratado (mensagem genérica, detalhe fica no log) |
 
 ## Rotas de serviço
@@ -51,7 +59,9 @@ O campo `details` só aparece em erros de validação (zod) e em `AppError` que 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
 | `POST` | `/register` | público | Cria conta. **Rate limit** |
-| `POST` | `/login` | público | Retorna JWT. **Rate limit** |
+| `POST` | `/login` | público | Retorna access token + cookie de refresh. **Rate limit** |
+| `POST` | `/refresh` | cookie | Rotaciona a sessão e devolve access token novo |
+| `POST` | `/logout` | cookie | Revoga a família de refresh tokens e limpa o cookie |
 | `GET` | `/profile` | logado | Perfil do próprio usuário |
 | `PUT` | `/profile` | logado | Atualiza perfil. Aceita `multipart/form-data` com `photo` |
 | `GET` | `/org/:orgId/public` | logado | Perfil público de uma ONG |
@@ -73,6 +83,25 @@ O campo `details` só aparece em erros de validação (zod) e em `AppError` que 
 ```json
 { "email": "maria@email.com", "password": "senha123" }
 ```
+
+Resposta (o refresh token vai no cookie, não aqui):
+
+```json
+{
+  "message": "Login realizado",
+  "user": { "_id": "...", "name": "Maria Silva", "email": "maria@email.com", "role": "student" },
+  "token": "<access token>",
+  "expiresIn": 900
+}
+```
+
+Email inexistente e senha errada devolvem a **mesma** mensagem, de propósito — evita usar
+a tela de login para descobrir quais emails estão cadastrados.
+
+**`POST /refresh`** — não recebe corpo. Lê o cookie `mh_refresh`, invalida aquele token e
+emite um par novo. Responde no mesmo formato do login. Devolve `401` se o cookie estiver
+ausente, expirado, revogado, ou se for a reapresentação de um token já consumido fora da
+janela de graça — nesse caso a família inteira é revogada.
 
 **`PUT /profile`** — aceita qualquer subconjunto dos campos. Campos de aluno:
 `fullName`, `sex`, `birthDate`, `phone`, `city`, `state`, `neighborhood`,

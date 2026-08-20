@@ -5,10 +5,12 @@ Como o código está organizado, quais são as rotas de tela e como é o banco.
 ## Visão geral
 
 ```
-Frontend (React + Vite + Mantine)          Backend (Node + Express)
+Frontend (React + Vite + Mantine)          Backend (Python + FastAPI)
         :5173                                       :3000
           |                                           |
-          |  axios  ->  /api/*  (JWT no header)  ->   |
+          |  axios  ->  /api/*                        |
+          |    access token no header Authorization   |
+          |    refresh token em cookie httpOnly       |
           |                                           |
                                               PostgreSQL :5433
 ```
@@ -23,38 +25,42 @@ Três camadas de acesso:
 
 ```
 backend/
-  server.js              boot: env check, helmet, cors, rotas, error handler
-  src/
-    config/
-      database.js        pool do pg + SCHEMA_SQL (cria tabelas no 1o boot)
-      upload.js          multer em disco, só imagens, máx 2MB
-    validators/          schemas zod (activity, participation, user, common)
-    middlewares/
-      auth.middleware.js       verifica JWT, popula req.user
-      role.middleware.js       requireRole("student" | "organization")
-      validate.middleware.js   valida body/params/query antes do controller
-      asyncHandler.js          remove try/catch repetido
-      error.middleware.js      notFound + errorHandler central
-      rateLimit.middleware.js  authLimiter (20 req / 15 min por IP)
-    services/            regra de negócio (activity, participation, certificate, user)
-    controllers/         finos: validam entrada, chamam service, respondem
-    routes/              monta rotas + middlewares
-    models/              acesso a dados (SQL puro)
-    utils/               AppError, token, código de verificação, PDF, datas
-  tests/                 (vazio — sem suíte de testes ainda)
+  app/
+    main.py            boot: checagem de env, headers, CORS, rotas, handlers de erro
+    core/
+      config.py        Settings (pydantic-settings), lê o .env
+      security.py      hash de senha (Argon2id + bcrypt legado), JWT, refresh token
+      deps.py          get_db, get_current_user, require_role
+      errors.py        AppError + handlers centrais
+      rate_limit.py    limite de tentativas em login/registro
+    db/
+      session.py       engine e sessão async (SQLAlchemy 2.0 + asyncpg)
+      models.py        User, Activity, Participation, Certificate, RefreshToken
+      migration_utils.py  helper das migrations
+    schemas/           Pydantic — validação de entrada (equivale aos validators zod)
+    services/          regra de negócio (user, activity, participation, certificate)
+    routers/           endpoints + dependências de auth/papel
+    utils/             datas, código de verificação, PDF+QR, serialização
+  alembic/             migrations (0001 schema inicial, 0002 refresh_tokens)
+  smoke_test.py        teste de fumaça ponta a ponta (68 verificações)
+  requirements.txt
 ```
 
 **Fluxo de uma requisição:**
 
 ```
-rota -> authMiddleware -> requireRole -> validate(zod) -> controller -> service -> model -> pg
-                                                                    |
-                                              erro em qualquer ponto -> errorHandler
+rota -> Depends(get_current_user) -> Depends(require_role) -> Pydantic -> service -> SQLAlchemy
+                                                                       |
+                                                 erro em qualquer ponto -> exception handler
 ```
 
-O `errorHandler` traduz `ZodError` em `400`, `AppError` no status do próprio erro,
-violação de unique do Postgres (`23505`) em `409` e `MulterError` em `400`.
-Qualquer outra coisa vira `500` genérico com log no servidor.
+Diferente do Express, a validação e a autorização não são middlewares escondidos: elas
+aparecem na **assinatura do endpoint**, então o FastAPI já documenta quem exige token e
+qual papel cada rota pede. A documentação OpenAPI sai de graça em `/docs`.
+
+Os handlers em `core/errors.py` traduzem `RequestValidationError` em `400` com lista de
+campos, `AppError` no status do próprio erro, violação de unique do Postgres (`23505`) em
+`409`. Qualquer outra coisa vira `500` genérico com log no servidor.
 
 ## Frontend
 
@@ -65,7 +71,7 @@ frontend/src/
   theme.js             paleta Mantine (brand, navy, clay, ink)
   index.css            classes utilitárias .mh-*
   config/api.js        base URL da API (VITE_API_URL)
-  services/api.js      instância axios + interceptor de token
+  services/api.js      axios + access token em memória + renovação no 401
   context/AuthContext  sessão do usuário (login, logout, isAuthenticated)
   routes/PrivateRoute  guarda de rota por autenticação e role
   hooks/useFetch       GET com { data, loading, error, refetch, setData }
@@ -119,13 +125,19 @@ Qualquer rota não encontrada cai em `/login`.
 
 ## Banco de dados
 
-O schema é criado automaticamente no primeiro boot (`SCHEMA_SQL` em
-`src/config/database.js`) — não há sistema de migrations.
+O schema é versionado com **Alembic** (`backend/alembic/versions/`). Aplique com:
+
+```bash
+cd backend && alembic upgrade head
+```
+
+As migrations usam `CREATE TABLE IF NOT EXISTS`, então rodam tanto em banco novo quanto
+num banco que já foi criado pelo backend Node — sem precisar de `alembic stamp` manual.
 
 ```
 users
   id UUID PK              email TEXT UNIQUE
-  name TEXT               password TEXT (bcrypt)
+  name TEXT               password TEXT (Argon2id; bcrypt legado aceito no login)
   role TEXT               CHECK ('student' | 'organization'), default 'student'
   student_profile JSONB   dados do aluno (curso, instituição, cidade, sobre...)
   organization_profile JSONB   dados da ONG (CNPJ, site, endereço...)
@@ -156,12 +168,23 @@ certificates
   hours INTEGER
   verification_code TEXT  UNIQUE — é o que o QR Code carrega
   issued_at TIMESTAMPTZ
+
+refresh_tokens
+  id UUID PK
+  user_id UUID            -> users(id) ON DELETE CASCADE
+  token_hash VARCHAR(64)  UNIQUE — SHA-256; o token em claro nunca é gravado
+  family_id UUID          agrupa os tokens rotacionados a partir de um login
+  expires_at TIMESTAMPTZ
+  used_at TIMESTAMPTZ     quando foi consumido pela rotação
+  revoked_at TIMESTAMPTZ  logout ou revogação da família por suspeita de roubo
+  user_agent, ip_address  contexto da sessão
 ```
 
 Todas as tabelas têm `created_at` e `updated_at` (`TIMESTAMPTZ`, default `NOW()`).
 
 **Índices:** `activities(created_by)`, `participations(activity_id)`,
-`participations(user_id)`, `certificates(user_id)`.
+`participations(user_id)`, `certificates(user_id)`, `refresh_tokens(user_id)`,
+`refresh_tokens(family_id)`, `refresh_tokens(expires_at)`.
 
 **Decisões importantes:**
 
@@ -172,4 +195,6 @@ Todas as tabelas têm `created_at` e `updated_at` (`TIMESTAMPTZ`, default `NOW()
 - Perfis usam **JSONB** porque aluno e ONG têm campos muito diferentes; evita uma tabela
   larga com metade das colunas sempre nulas.
 - A API expõe o `id` também como `"_id"` (alias) — herança da versão MongoDB, mantida
-  para não quebrar o frontend.
+  para não quebrar o frontend. A tradução acontece só em `app/utils/serialize.py`.
+- `refresh_tokens` guarda **hash**, nunca o token. Vazamento do banco não dá sessão a
+  ninguém. Ver [autenticacao.md](autenticacao.md).
