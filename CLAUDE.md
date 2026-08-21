@@ -124,6 +124,7 @@ Ao mudar algo estrutural, atualize o doc correspondente:
 | Mudou | Atualize |
 |---|---|
 | Comportamento novo, tela, botão, estado | [docs/especificacao.md](docs/especificacao.md) |
+| Caminho de uso, erro tratado, cenário | [docs/fluxos.md](docs/fluxos.md) |
 | Regra de negócio, permissão de perfil, fluxo | [docs/requisitos.md](docs/requisitos.md) |
 | Pastas, componentes, rotas de tela, schema | [docs/arquitetura.md](docs/arquitetura.md) |
 | Endpoint, payload, regra de acesso | [docs/api.md](docs/api.md) |

@@ -70,6 +70,7 @@ Exige o Postgres no ar. São 68 verificações; qualquer falha sai com código 1
 | Documento | O que contém |
 |---|---|
 | [docs/especificacao.md](docs/especificacao.md) | **O sistema que estamos construindo** — atores, estados, telas, botões e regras |
+| [docs/fluxos.md](docs/fluxos.md) | Todos os caminhos do sistema: feliz, alternativos e de erro, por perfil |
 | [docs/requisitos.md](docs/requisitos.md) | Retrato do sistema como está hoje: requisitos, casos de uso e lacunas |
 | [docs/arquitetura.md](docs/arquitetura.md) | Estrutura de pastas, rotas de tela, schema do banco |
 | [docs/api.md](docs/api.md) | Referência dos endpoints: acesso, payload, formato de erro |
