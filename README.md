@@ -69,6 +69,7 @@ Exige o Postgres no ar. São 68 verificações; qualquer falha sai com código 1
 
 | Documento | O que contém |
 |---|---|
+| [docs/requisitos.md](docs/requisitos.md) | Requisitos, regras de negócio, casos de uso e fluxos por perfil |
 | [docs/arquitetura.md](docs/arquitetura.md) | Estrutura de pastas, rotas de tela, schema do banco |
 | [docs/api.md](docs/api.md) | Referência dos endpoints: acesso, payload, formato de erro |
 | [docs/autenticacao.md](docs/autenticacao.md) | Como funciona a sessão: tokens, rotação, detecção de roubo |

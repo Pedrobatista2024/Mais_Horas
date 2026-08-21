@@ -123,6 +123,7 @@ Ao mudar algo estrutural, atualize o doc correspondente:
 
 | Mudou | Atualize |
 |---|---|
+| Regra de negócio, permissão de perfil, fluxo | [docs/requisitos.md](docs/requisitos.md) |
 | Pastas, componentes, rotas de tela, schema | [docs/arquitetura.md](docs/arquitetura.md) |
 | Endpoint, payload, regra de acesso | [docs/api.md](docs/api.md) |
 | Login, token, sessão | [docs/autenticacao.md](docs/autenticacao.md) |
