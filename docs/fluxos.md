@@ -107,8 +107,8 @@ Cada fluxo segue a mesma estrutura:
 
 **Pós-condições:** access token em memória · refresh token no cookie `httpOnly`
 
-**Auditoria:** `sessao.iniciada` no sucesso, `sessao.falha` nas exceções E1–E3 — o registro
-de falha é o que permite detectar ataque de força bruta depois
+**Auditoria:** `sessao.iniciada` no sucesso, `sessao.falha` nas exceções E1–E3 (RN-42) — o
+registro de falha é o que permite detectar ataque de força bruta depois
 
 ---
 
@@ -170,12 +170,12 @@ Fluxo automático, invisível ao usuário.
 | E3 | Token já usado | Mesma mensagem de E2 |
 | E4 | Nova senha fraca | `400`, com o medidor |
 
-**Pós-condições:** senha nova em Argon2id · todas as sessões antigas revogadas
+**Pós-condições:** senha nova em Argon2id · **todas as sessões antigas revogadas** (RN-38)
 
 **Auditoria:** `senha.redefinicao_disparada` · `senha.redefinida`
 
-> Revogar as sessões no passo 5 é essencial: se a pessoa está redefinindo porque
-> desconfia de invasão, deixar a sessão do invasor viva anularia a troca.
+> **RN-38.** Revogar as sessões no passo 5 é essencial: se a pessoa está redefinindo
+> porque desconfia de invasão, deixar a sessão do invasor viva anularia a troca.
 
 ---
 
@@ -682,10 +682,11 @@ Fluxo automático, invisível ao usuário.
 | E1 | Aluno já tem check-in | "Este aluno já registrou presença" |
 | E2 | Aluno sem inscrição confirmada | "Este aluno não está inscrito na atividade" |
 
-**Auditoria:** `checkin.registrado` com `origem: manual`
+**Auditoria:** `checkin.registrado` com `origem: manual` (RN-43)
 
 > Sem esta saída, quem esqueceu o celular seria punido por ter ido. A distinção de origem
-> preserva a rastreabilidade: dá para ver quantos foram por QR e quantos pela mão da ONG.
+> (RN-43) preserva a rastreabilidade: dá para ver quantos foram por QR e quantos pela mão
+> da ONG.
 
 ---
 
@@ -724,7 +725,7 @@ Fluxo automático, invisível ao usuário.
 | E2 | Já `finalizada` | `400` — "Esta atividade já foi finalizada" |
 | E3 | Carga horária inválida | `400` (RN-15) |
 | E4 | Não é a criadora | `403` (RN-11) |
-| E5 | Falha ao assinar | `500`, **transação revertida** — nenhum certificado é emitido pela metade |
+| E5 | Falha ao assinar | `500`, **transação revertida** — nenhum certificado sai pela metade (RN-41) |
 
 **Pós-condições:** atividade `finalizada` · certificados emitidos e assinados · horas
 creditadas
@@ -951,12 +952,13 @@ o código, ou do certificado impresso com o QR danificado.
 | # | Situação | Resposta |
 |---|---|---|
 | E1 | Suspender a si mesmo | `400` — "Você não pode suspender a própria conta" |
-| E2 | Último admin ativo | `400` — "É preciso haver ao menos um administrador ativo" |
+| E2 | Último admin ativo | `400` — "É preciso haver ao menos um administrador ativo" (RN-44) |
 
 **Auditoria:** `conta.suspensa` / `conta.reativada` com motivo
 
-> **Suspender não apaga.** O histórico, os certificados emitidos e a auditoria permanecem —
-> apagar destruiria comprovação legítima de alunos que não têm culpa nenhuma.
+> **Suspender não apaga (RN-40).** O histórico, os certificados emitidos e a auditoria
+> permanecem — apagar destruiria comprovação legítima de alunos que não têm culpa nenhuma,
+> e ainda eliminaria a evidência necessária para investigar a própria ONG.
 
 ---
 
@@ -1171,8 +1173,10 @@ O usuário só percebe quando a renovação falha.
 ## FX-03 — Falha de rede
 
 A tela mostra estado de erro com botão de tentar de novo, preservando o que foi digitado.
-Operações de escrita **não são repetidas automaticamente** — repetir um "finalizar
-atividade" poderia emitir certificado duplicado.
+
+Operações de escrita **não são repetidas automaticamente** (RN-39) — repetir um "finalizar
+atividade" poderia emitir a segunda leva de certificados. Leitura pode ser repetida à
+vontade; escrita exige que a pessoa decida.
 
 ## FX-04 — Limite de tentativas
 

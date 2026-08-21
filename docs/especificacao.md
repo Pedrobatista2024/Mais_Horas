@@ -1004,6 +1004,45 @@ Busca por código, aluno, ONG ou atividade. Mostra a situação da assinatura de
 | **RN-35** | Atividade editada pelo admin exibe o aviso de edição administrativa à ONG e aos inscritos |
 | **RN-36** | Suspender uma ONG remove suas atividades da vitrine, sem apagar histórico |
 | **RN-37** | Criar outro administrador exige que o admin reconfirme a própria senha |
+| **RN-38** | Redefinir senha **revoga todas as sessões ativas** daquele usuário |
+| **RN-39** | Falha em operação de escrita **não é repetida automaticamente** pelo cliente |
+| **RN-40** | Suspender conta **não apaga nada** — histórico, certificados e auditoria permanecem |
+| **RN-41** | A emissão de certificados ao finalizar é **atômica**: falha em um reverte todos |
+| **RN-42** | Tentativa de login malsucedida é registrada na auditoria |
+| **RN-43** | Check-in manual grava origem distinta do check-in por QR |
+| **RN-44** | O sistema mantém sempre **ao menos um superadmin ativo** |
+
+### Por que estas sete existem
+
+Cada uma nasceu de um modo de falha concreto, não de preferência de estilo.
+
+**RN-38 — sessões caem junto com a senha.** Quem redefine a senha em geral está reagindo a
+uma suspeita de invasão. Se a sessão do invasor continuar viva, a troca de senha não
+resolveu nada — ele segue dentro. *(FA-04)*
+
+**RN-39 — escrita não se repete sozinha.** Um "finalizar atividade" reenviado após timeout
+poderia emitir a segunda leva de certificados. Leitura pode ser repetida à vontade; escrita
+exige que a pessoa decida. *(FX-03)*
+
+**RN-40 — suspender preserva.** Uma ONG suspensa por má conduta continua tendo alunos que
+participaram de verdade e ganharam o certificado. Apagar destruiria comprovação de quem não
+tem culpa nenhuma, e ainda apagaria a evidência necessária para investigar a própria ONG.
+*(FS-05)*
+
+**RN-41 — tudo ou nada na emissão.** Se a assinatura falhar no oitavo de catorze
+certificados, metade da turma sai com documento e metade não, sem ninguém saber quem. A
+transação inteira volta atrás e a ONG tenta de novo. *(FO-09 E5)*
+
+**RN-42 — falha de login também é registro.** Sem registrar o que deu errado, não há como
+detectar ataque de força bruta depois. O rate limit barra o excesso; a auditoria é o que
+permite investigar. *(FA-02)*
+
+**RN-43 — QR e manual não se confundem.** Distinguir a origem mantém a rastreabilidade: dá
+para ver quantas presenças tiveram evidência automática e quantas dependeram da palavra da
+ONG. Sem isso, a entrada manual contaminaria a força da camada de QR. *(FO-08)*
+
+**RN-44 — nunca zero admin.** Suspender ou remover o último administrador deixaria o
+sistema sem quem o opere, sem caminho de recuperação pela interface. *(FS-05 E2)*
 
 ---
 
