@@ -22,6 +22,12 @@ Tomadas antes do desenho, porque cada uma ramifica tudo o que vem depois.
 | **D6** | Rascunho | **A ONG monta a atividade antes de publicar** | Atividade ganha o estado `rascunho` |
 | **D7** | Vitrine | **A atividade fica visível mesmo lotada**, e some quando o dia do evento passa | "Lotada" é condição calculada, não estado |
 | **D8** | Recusa | **Sem justificativa** — o aluno vê uma mensagem genérica | Nenhum campo de motivo |
+| **D9** | Porta de entrada | **Portal público** apresenta a plataforma; o sistema vive dentro dele | Login único para todos os perfis |
+| **D10** | Estrutura | **Uma aplicação, quatro zonas visuais**: portal, app do aluno, painel da ONG, console admin | Um deploy, sem duplicar componentes |
+| **D11** | Superadmin | **Existe**, com acesso operacional total. Criado por comando, nunca por cadastro público | Terceiro perfil autenticado |
+| **D12** | Senha pelo admin | **Dispara redefinição** — o admin nunca vê nem define senha | Preserva a não-repúdio |
+| **D13** | Suporte | **"Entrar como" somente leitura**, com tarja permanente e trilha de auditoria | Admin nunca age disfarçado de usuário |
+| **D14** | Certificado pelo admin | **Só revoga, nunca emite** | Certificado sempre tem presença real por trás |
 
 ---
 
@@ -53,9 +59,18 @@ Termos com um significado só, no código e na interface.
 | **Estudante** | `student` | Cumprir suas horas de extensão e comprová-las |
 | **ONG** | `organization` | Conseguir voluntários e reconhecê-los sem trabalho manual |
 | **Verificador** | Não | Confirmar, em segundos, que um certificado é verdadeiro |
+| **Superadmin** | `superadmin` | Operar, auditar e destravar o sistema |
 
 O **Verificador** — coordenação de curso, faculdade, empregador — nunca cria conta. É para
 ele que a verificação pública existe, e é o ator que justifica o projeto.
+
+O **Superadmin** é operador da plataforma, não usuário do domínio: não se inscreve em
+atividade nem publica vaga. Ele existe para investigar problema, destravar usuário e
+responder por incidente.
+
+> **Conta criada por comando**, nunca por cadastro público. Não há tela para virar admin.
+> O primeiro é criado no servidor com `python -m app.cli criar-admin`; os demais, por um
+> admin existente. Toda criação é auditada.
 
 ---
 
@@ -172,6 +187,31 @@ Registro de evidência. Não muda o estado da inscrição sozinho — alimenta a
 | `emitido_em` | — |
 | `revogado_em` | Permite invalidar sem apagar o registro |
 
+### 4.6 Registro de auditoria
+
+Toda ação relevante vira uma linha. **A tabela é somente inserção** — não existe caminho no
+sistema para editar nem apagar registro de auditoria, nem para o superadmin.
+
+| Campo | Conteúdo |
+|---|---|
+| `ator_id` | Quem executou |
+| `ator_papel` | Papel no momento da ação |
+| `em_nome_de_id` | Preenchido quando o admin agiu via "entrar como" (D13) |
+| `acao` | Verbo canônico: `atividade.publicada`, `senha.redefinicao_disparada`... |
+| `entidade` / `entidade_id` | O que foi afetado |
+| `antes` / `depois` | JSON com o estado, só nos campos que mudaram |
+| `ip`, `user_agent` | Origem |
+| `ocorrido_em` | Quando |
+
+**O que é auditado:** tudo que muda dados ou concede acesso — login, falha de login,
+criação e mudança de estado de atividade, inscrição, aprovação e recusa, check-in,
+validação de presença, emissão e revogação de certificado, edição de perfil, e **todas as
+ações do superadmin**.
+
+> **O admin é auditado como qualquer um.** Um log em que o administrador pode se apagar é
+> teatro. Como ele tem poder de escrita amplo, o registro das ações *dele* é justamente o
+> mais importante.
+
 ---
 
 ## 5. Regras de visibilidade da vitrine
@@ -204,23 +244,37 @@ A atividade aparece na vitrine pública quando:
 
 ## 6. Mapa de telas
 
+Quatro zonas, uma aplicação só (D10). Cada zona tem identidade visual própria: o portal é
+institucional, o app do aluno é leve e mobile-first, o painel da ONG é denso e orientado a
+gestão, o console do admin é tabular e sóbrio.
+
 ```
-PÚBLICO                    ESTUDANTE                    ONG
-────────                   ─────────                    ───
-P1 Landing                 E1 Painel                    O1 Painel
-P2 Entrar                  E2 Vitrine                   O2 Minhas atividades
-P3 Criar conta             E3 Detalhe da atividade      O3 Criar/editar atividade
-P4 Verificar certificado   E4 Minhas inscrições         O4 Gerenciar atividade
-                           E5 Check-in (câmera)         O5 Inscrições
-                           E6 Meus certificados         O6 Painel de check-in (QR)
-                           E7 Meu perfil                O7 Validar presenças
-                                                        O8 Perfil da ONG
+┌─────────────────────────────────────────────────────────────────┐
+│  PORTAL  (público)                                              │
+│  T1 Início · T2 Como funciona · T3 Para estudantes              │
+│  T4 Para ONGs · T5 ONGs parceiras · T6 Verificar certificado    │
+│  T7 Entrar · T8 Criar conta                                     │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ login único (D9)
+       ┌───────────────────┼───────────────────┐
+       ▼                   ▼                   ▼
+┌─────────────┐    ┌──────────────┐    ┌─────────────────┐
+│ APP ALUNO   │    │ PAINEL ONG   │    │ CONSOLE ADMIN   │
+│             │    │              │    │                 │
+│ E1 Painel   │    │ O1 Painel    │    │ A1 Visão geral  │
+│ E2 Vitrine  │    │ O2 Atividades│    │ A2 Auditoria    │
+│ E3 Detalhe  │    │ O3 Criar/edit│    │ A3 Usuários     │
+│ E4 Inscrições│   │ O4 Gerenciar │    │ A4 Detalhe user │
+│ E5 Check-in │    │ O5 Inscrições│    │ A5 ONGs         │
+│ E6 Certific.│    │ O6 QR ao vivo│    │ A6 Atividades   │
+│ E7 Perfil   │    │ O7 Presenças │    │ A7 Certificados │
+│             │    │ O8 Perfil    │    │ A8 Sistema      │
+└─────────────┘    └──────────────┘    └─────────────────┘
 ```
 
-19 telas. As duas em **negrito** abaixo são as novas em relação ao sistema atual:
-**E5 (check-in do aluno)** e **O6 (QR rotativo da ONG)** — o coração da decisão D3.
-
----
+**Login único:** todos entram pela mesma tela (T7). O destino sai do papel — aluno vai para
+E1, ONG para O1, admin para A1. Não existe URL de login separada para admin: expor
+`/admin/login` só entrega ao atacante a informação de que existe um alvo ali.
 
 ## 7. Detalhe das telas
 
@@ -228,69 +282,78 @@ Cada botão traz: **quando aparece** e **o que faz**.
 
 ---
 
-### P1 — Landing
+### T1 — Início do portal
 
 **Para quem:** visitante · **Rota:** `/`
 
-Explica a proposta e converte em cadastro. Usuário logado é redirecionado ao seu painel.
+A cara pública da plataforma. Explica a proposta e converte em cadastro. Usuário logado é
+levado direto ao painel do seu perfil.
+
+**Seções:** proposta em uma frase · como funciona em 4 passos · para quem serve (três
+públicos) · ONGs parceiras · impacto em números · chamada final.
 
 | Botão | Quando aparece | Ação |
 |---|---|---|
-| Sou estudante | sempre | Vai para P3 com perfil pré-selecionado |
-| Sou ONG | sempre | Vai para P3 com perfil pré-selecionado |
-| Entrar | sempre | Vai para P2 |
-| Verificar certificado | sempre | Vai para P4 |
+| Sou estudante | sempre | Vai para T8 com o perfil pré-selecionado |
+| Sou ONG | sempre | Vai para T8 com o perfil pré-selecionado |
+| Entrar | sempre | Vai para T7 |
+| Verificar certificado | sempre | Vai para T6 |
+| Como funciona | sempre | Vai para T2 |
 
-> Os números da vitrine ("+120 vagas") devem sair de dados reais ou não existir. Número
-> ilustrativo na tela vira problema em apresentação.
+> **Números da vitrine saem de dados reais ou não existem.** Contagem ilustrativa fixa no
+> código vira constrangimento na hora que alguém perguntar.
 
 ---
 
-### P2 — Entrar
+### T2 — Como funciona
 
-**Para quem:** visitante · **Rota:** `/entrar`
+**Rota:** `/como-funciona`
 
-| Campo | Regra |
-|---|---|
-| E-mail | obrigatório, formato válido |
-| Senha | obrigatória |
+A jornada completa, do anúncio ao certificado verificado, com a explicação do QR dinâmico e
+da assinatura. É a página que sustenta a conversa técnica sem exigir login.
 
 | Botão | Quando aparece | Ação |
 |---|---|---|
-| Entrar | sempre | Autentica e leva ao painel do perfil |
-| Criar conta | sempre | Vai para P3 |
-| Esqueci minha senha | sempre | Inicia recuperação *(v2)* |
-
-**Erros:** credencial inválida mostra **a mesma mensagem** para e-mail inexistente e senha
-errada — "E-mail ou senha incorretos". Excesso de tentativas mostra o aviso de espera.
+| Criar conta | visitante | Vai para T8 |
+| Ver uma verificação de exemplo | sempre | Abre T6 com um código de demonstração |
 
 ---
 
-### P3 — Criar conta
+### T3 — Para estudantes · T4 — Para ONGs
 
-**Para quem:** visitante · **Rota:** `/criar-conta`
+**Rotas:** `/para-estudantes` e `/para-ongs`
 
-| Campo | Regra |
-|---|---|
-| Tipo de conta | Estudante ou ONG — **escolha explícita, sem padrão silencioso** |
-| Nome | 2 a 120 caracteres |
-| E-mail | válido e ainda não cadastrado |
-| Senha | mínimo 8 caracteres, com indicador de força |
+Uma página por público, cada uma respondendo "o que eu ganho com isso" e terminando em
+cadastro com o perfil já escolhido.
 
 | Botão | Quando aparece | Ação |
 |---|---|---|
-| Criar conta | sempre | Cria, autentica e leva ao painel |
-| Já tenho conta | sempre | Vai para P2 |
+| Criar conta de estudante / de ONG | visitante | Vai para T8 pré-configurada |
+| Ver atividades abertas | em T3 | Abre a vitrine pública |
 
 ---
 
-### P4 — Verificar certificado
+### T5 — ONGs parceiras
+
+**Rota:** `/ongs`
+
+Vitrine das organizações ativas: logo, nome, cidade, quantas atividades já realizaram.
+Serve de prova social e dá visibilidade a quem publica.
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Ver perfil | sempre | Abre o perfil público da ONG |
+| Publicar minha ONG aqui | visitante | Vai para T8 como ONG |
+
+---
+
+### T6 — Verificar certificado
 
 **Para quem:** verificador, **sem login** · **Rota:** `/verificar/:codigo`
 
 **A tela mais importante do sistema.** É o destino do QR Code.
 
-**Resultado — quatro desfechos possíveis:**
+**Quatro desfechos possíveis:**
 
 | Desfecho | O que mostra |
 |---|---|
@@ -304,8 +367,46 @@ errada — "E-mail ou senha incorretos". Excesso de tentativas mostra o aviso de
 | Baixar PDF oficial | resultado válido | Baixa o PDF **da fonte**, não o arquivo recebido |
 | Verificar outro código | sempre | Limpa e mostra o campo de código |
 
-> O botão de baixar o PDF oficial é sutil e importante: o verificador para de depender do
-> arquivo que lhe entregaram.
+> O botão do PDF oficial é sutil e decisivo: o verificador para de depender do arquivo que
+> lhe entregaram.
+
+---
+
+### T7 — Entrar
+
+**Rota:** `/entrar` · **Login único para os três perfis** (D9)
+
+| Campo | Regra |
+|---|---|
+| E-mail | obrigatório, formato válido |
+| Senha | obrigatória |
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Entrar | sempre | Autentica e leva ao painel conforme o papel |
+| Criar conta | sempre | Vai para T8 |
+| Esqueci minha senha | sempre | Inicia a redefinição |
+
+**Erros:** e-mail inexistente e senha errada mostram **a mesma mensagem**. Excesso de
+tentativas mostra o aviso de espera.
+
+---
+
+### T8 — Criar conta
+
+**Rota:** `/criar-conta`
+
+| Campo | Regra |
+|---|---|
+| Tipo de conta | Estudante ou ONG — **escolha explícita**. Admin não aparece aqui (D11) |
+| Nome | 2 a 120 caracteres |
+| E-mail | válido e ainda não cadastrado |
+| Senha | mínimo 8 caracteres, com indicador de força |
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Criar conta | sempre | Cria, autentica e leva ao painel |
+| Já tenho conta | sempre | Vai para T7 |
 
 ---
 
@@ -667,6 +768,201 @@ Nome, CNPJ, descrição, contato, endereço, redes e logo.
 
 ---
 
+## 7b. Console do superadmin
+
+Zona visual própria: tabular, densa, sóbria. Nada de ilustração — quem usa está
+investigando um problema.
+
+**Tarja permanente no topo:** `MODO ADMINISTRADOR — todas as suas ações são registradas`.
+Não é enfeite: lembra o operador de que ele também é auditado.
+
+---
+
+### A1 — Visão geral
+
+**Rota:** `/admin`
+
+| Indicador | Conteúdo |
+|---|---|
+| Contas | Total, por papel, novas na semana |
+| Atividades | Por estado |
+| Certificados | Emitidos, revogados |
+| Check-ins | Últimas 24h |
+| Saúde | Banco, fila de e-mail, último erro |
+
+**Alertas** que exigem atenção: atividade parada em `aguardando_validacao` há mais de 7
+dias · pico de falha de login · certificado com assinatura inválida · ONG sem CNPJ.
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Ver auditoria | sempre | Abre A2 |
+| Investigar alerta | há alerta | Abre a listagem já filtrada |
+
+---
+
+### A2 — Auditoria
+
+**Rota:** `/admin/auditoria`
+
+O registro completo de tudo (seção 4.6). **Somente leitura — não existe botão de editar nem
+de apagar.**
+
+**Filtros:** período · ator · papel · ação · entidade · IP · só ações de admin ·
+só ações via "entrar como"
+
+Cada linha expande e mostra o `antes`/`depois` em JSON.
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Exportar CSV | há resultado | Baixa o recorte filtrado |
+| Ver o ator | sempre | Abre A4 |
+| Ver a entidade | sempre | Abre a atividade, inscrição ou certificado |
+
+---
+
+### A3 — Usuários
+
+**Rota:** `/admin/usuarios`
+
+Tabela de todas as contas: nome, e-mail, papel, situação, criada em, último acesso.
+
+**Filtros:** papel · situação · texto · sem acesso há X dias
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Ver detalhe | sempre | Abre A4 |
+| Suspender | conta ativa | Bloqueia o acesso; confirma e audita |
+| Reativar | conta suspensa | Restaura o acesso |
+| Criar administrador | sempre | Cria conta `superadmin`; **exige a senha do próprio admin** |
+
+---
+
+### A4 — Detalhe do usuário
+
+**Rota:** `/admin/usuarios/:id`
+
+Perfil completo, sessões ativas, histórico de atividades e inscrições, e a auditoria
+filtrada por aquele usuário.
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| **Redefinir senha** | sempre | Envia o link de redefinição. **O admin não vê nem define a senha** (D12) |
+| **Entrar como** | conta ativa, não admin | Abre a sessão espelho somente leitura (D13) |
+| Encerrar sessões | há sessão ativa | Revoga todos os refresh tokens da pessoa |
+| Suspender / Reativar | conforme situação | Alterna e audita |
+| Editar dados de contato | sempre | Corrige e-mail ou telefone errado |
+| Ver auditoria deste usuário | sempre | Abre A2 filtrada |
+
+> **Por que não existe "definir senha":** um admin capaz de definir a senha de alguém é um
+> admin capaz de se passar por essa pessoa — e o log registraria as ações como se fossem
+> dela. Disparando a redefinição, o problema do usuário é resolvido e ninguém perde a
+> capacidade de provar quem fez o quê.
+
+---
+
+### A4b — Modo "entrar como"
+
+Não é tela: é um **estado da sessão** que atravessa todo o sistema.
+
+```
+┌───────────────────────────────────────────────────────────┐
+│ 👁  Você está vendo como Maria Silva (aluna) · SOMENTE     │
+│    LEITURA · registrado na auditoria      [ Sair do modo ] │
+└───────────────────────────────────────────────────────────┘
+```
+
+**Regras:**
+
+- **Somente leitura.** Todo botão de ação fica desabilitado; a API recusa qualquer escrita
+- A tarja é fixa e não pode ser fechada
+- A sessão espelho **expira em 30 minutos** e não renova
+- Cada tela visitada gera registro com `em_nome_de` preenchido
+- **Não funciona sobre outro superadmin** — admin não observa admin
+
+---
+
+### A5 — ONGs
+
+**Rota:** `/admin/ongs`
+
+Nome, CNPJ, cidade, atividades publicadas, voluntários atendidos, certificados emitidos,
+data de entrada.
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Ver detalhe | sempre | Abre A4 da conta |
+| Ver atividades | tem atividade | Abre A6 filtrada |
+| Marcar como verificada | não verificada | Concede o selo de ONG verificada |
+| Remover verificação | verificada | Retira o selo |
+| Suspender | ativa | Bloqueia; as atividades saem da vitrine |
+
+---
+
+### A6 — Atividades
+
+**Rota:** `/admin/atividades`
+
+Todas as atividades de todas as ONGs, com filtro por estado, ONG, período e cidade.
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Ver detalhe | sempre | Abre a atividade em modo administrativo |
+| **Editar** | qualquer estado editável | Corrige dados. Fica marcada como *editada pela administração* |
+| Cancelar atividade | `publicada` ou `em_andamento` | Cancela e avisa os inscritos |
+| Forçar validação | `aguardando_validacao` há muito tempo | Destrava a ONG inerte, com confirmação reforçada |
+| Ver inscrições | tem inscritos | Lista com os check-ins |
+
+> **A edição administrativa é visível.** A atividade passa a exibir "editada pela
+> administração em <data>" para a ONG e para os inscritos. Correção silenciosa em dado de
+> terceiro é indefensável.
+
+---
+
+### A7 — Certificados
+
+**Rota:** `/admin/certificados`
+
+Busca por código, aluno, ONG ou atividade. Mostra a situação da assinatura de cada um.
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Ver verificação pública | sempre | Abre T6 — o admin vê o que o verificador vê |
+| **Revogar** | certificado válido | Invalida, **exigindo motivo**. O registro permanece (RN-25) |
+| Reverter revogação | revogado | Restaura, com auditoria |
+| Reconferir assinatura | sempre | Recalcula e compara |
+
+> **Não existe botão de emitir** (D14). Certificado nasce de presença confirmada em
+> atividade real, e de mais nada. Um certificado criado à mão pelo admin teria assinatura
+> válida sem lastro nenhum — e derrubaria a história anti-fraude inteira.
+>
+> Note o contraste com a revogação, que **exige motivo**, ao contrário da recusa de
+> inscrição (D8): recusar afeta uma pessoa; revogar desfaz um documento que já circulou.
+
+---
+
+### A8 — Sistema
+
+**Rota:** `/admin/sistema`
+
+| Seção | Conteúdo |
+|---|---|
+| Chave de assinatura | Impressão digital da chave pública, data de criação |
+| Parâmetros | Duração do token de check-in, do access token, limites de upload |
+| Integridade | Executa a verificação de assinatura em lote e reporta divergências |
+| Manutenção | Limpeza de refresh tokens expirados, de uploads órfãos |
+
+| Botão | Quando aparece | Ação |
+|---|---|---|
+| Verificar todos os certificados | sempre | Varre a base e lista os que falharem |
+| Limpar tokens expirados | sempre | Remove o que já venceu |
+| Baixar chave pública | sempre | Entrega o `.pem` para auditoria externa |
+
+> **Rotação da chave de assinatura não é botão de tela.** Trocar a chave invalidaria a
+> verificação de todos os certificados já emitidos. Se um dia for necessário, é procedimento
+> com assinatura em duas chaves durante a transição — decisão de engenharia, não clique.
+
+---
+
 ## 8. Regras de negócio
 
 | ID | Regra |
@@ -697,6 +993,17 @@ Nome, CNPJ, descrição, contato, endereço, redes e logo.
 | **RN-24** | Todo certificado é assinado na emissão; a verificação confere a assinatura |
 | **RN-25** | O certificado é revogável sem ser apagado |
 | **RN-26** | A recusa de inscrição não registra nem exibe motivo |
+| **RN-27** | Conta `superadmin` não é criada por cadastro público — só por comando no servidor ou por outro admin |
+| **RN-28** | O superadmin **não define nem visualiza senha** de ninguém; só dispara redefinição |
+| **RN-29** | O modo "entrar como" é **somente leitura** — a API recusa qualquer escrita nele |
+| **RN-30** | O modo "entrar como" não se aplica sobre outro superadmin |
+| **RN-31** | A sessão espelho expira em 30 minutos e não é renovada |
+| **RN-32** | Toda ação do superadmin é auditada, inclusive leitura de dado sensível |
+| **RN-33** | O registro de auditoria é **somente inserção** — nenhum perfil edita ou apaga |
+| **RN-34** | O superadmin **não emite certificado**; só revoga, e a revogação exige motivo |
+| **RN-35** | Atividade editada pelo admin exibe o aviso de edição administrativa à ONG e aos inscritos |
+| **RN-36** | Suspender uma ONG remove suas atividades da vitrine, sem apagar histórico |
+| **RN-37** | Criar outro administrador exige que o admin reconfirme a própria senha |
 
 ---
 
@@ -798,3 +1105,8 @@ fechado gera falso negativo — o que puniria o aluno certo.
 | Excluir atividade finalizada | permitido (destrói certificados) | **proibido** (RN-18) |
 | Autorização na presença | **falha conhecida** | corrigida por RN-11 |
 | Vitrine | filtrada no navegador | filtrada no servidor (seção 5) |
+| Portal institucional | não existe (só landing) | ✅ 8 páginas públicas |
+| Perfis autenticados | 2 | 3 (entra o superadmin) |
+| Auditoria | não existe | ✅ registro somente inserção |
+| Console administrativo | não existe | ✅ 8 telas |
+| Suporte a usuário | nenhum caminho | redefinição de senha e "entrar como" somente leitura |
