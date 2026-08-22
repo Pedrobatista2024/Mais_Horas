@@ -409,7 +409,7 @@ servidor devolve título e mensagem prontos, e a página exibe o que veio (RN-56
 
 Os três primeiros mostram também os selos *existe* · *não revogado* · *assinatura confere*,
 e os dados do certificado. O texto exato de cada mensagem está em
-[contrato-api.md](contrato-api.md#9-certificados--certificados).
+[contrato-api.md](contrato-api.md), seção 9.
 
 > **Adulterado é o desfecho mais importante da tela.** Ele significa que o registro foi
 > alterado depois da emissão — e a mensagem precisa dizer isso com todas as letras, não
