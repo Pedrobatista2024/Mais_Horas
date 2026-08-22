@@ -81,6 +81,7 @@ Exige o Postgres no ar. São 68 verificações; qualquer falha sai com código 1
 | [docs/backend-refactor.md](docs/backend-refactor.md) | Histórico das melhorias do backend e dívida técnica aberta |
 | [docs/deploy.md](docs/deploy.md) | Deploy no Render, variáveis de ambiente, limitações |
 | [presentation/roteiro.md](presentation/roteiro.md) | Roteiro da apresentação do projeto de extensão |
+| [presentation/Mais_Horas_Documento_de_Requisitos.pdf](presentation/Mais_Horas_Documento_de_Requisitos.pdf) | Documento de requisitos em ABNT, entregue na faculdade ([gerador](docs/requisitos-abnt/)) |
 
 Convenções de código do frontend estão na skill
 [`.claude/skills/frontend-maishoras/SKILL.md`](.claude/skills/frontend-maishoras/SKILL.md).
