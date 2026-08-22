@@ -28,6 +28,17 @@ Tomadas antes do desenho, porque cada uma ramifica tudo o que vem depois.
 | **D12** | Senha pelo admin | **Dispara redefinição** — o admin nunca vê nem define senha | Preserva a não-repúdio |
 | **D13** | Suporte | **"Entrar como" somente leitura**, com tarja permanente e trilha de auditoria | Admin nunca age disfarçado de usuário |
 | **D14** | Certificado pelo admin | **Só revoga, nunca emite** | Certificado sempre tem presença real por trás |
+| **D15** | Recuperação de senha | **Entra na v1** — é pré-requisito de D12 | Exige envio de e-mail desde o início |
+| **D16** | Notificação | **Aviso dentro do sistema na v1**, e-mail depois | Entidade `Notificacao` e sino no cabeçalho |
+| **D17** | Duração | **Uma atividade ocupa um único dia** | Mutirão de fim de semana vira duas atividades |
+| **D18** | Carga horária | **Calculada do horário, ajustável pela ONG** | Evita erro de digitação sem engessar |
+| **D19** | Perfil | **Dados mínimos obrigatórios antes da 1ª inscrição** | A ONG aprova com informação; certificado sai com nome certo |
+| **D20** | Limite de inscrições | **Até 5 ativas por aluno** | Impede que um aluno segure vaga em tudo |
+| **D21** | Privacidade | **O aluno vê só a contagem de inscritos**, não os nomes | A ONG continua vendo a lista completa |
+| **D22** | Transições por tempo | **Estado calculado na leitura**, sem tarefa agendada | Nada quebra se o servidor hibernar |
+| **D23** | Emissor | **A ONG emite, a plataforma atesta** | O PDF traz a ONG como responsável |
+| **D24** | Autoria | **Uma atividade tem uma ONG** | Parceria fica para depois |
+| **D25** | Fuso horário | **`America/Sao_Paulo`**, gravado em UTC | Sem ambiguidade em "chegou a hora" |
 
 ---
 
@@ -106,9 +117,26 @@ responder por incidente.
 | `finalizada` | Presenças confirmadas, certificados emitidos | ❌ | ❌ |
 | `cancelada` | A ONG desistiu de realizar | ❌ | ❌ |
 
-**Transições automáticas** (por tempo, não por clique):
-- `publicada` → `em_andamento` quando chega a data e a hora de início
-- `em_andamento` → `aguardando_validacao` quando passa a hora de término
+**Transições por tempo — calculadas, não agendadas (D22)**
+
+`em_andamento` e `aguardando_validacao` **não são gravados no banco**: saem da combinação
+entre o status armazenado e o relógio.
+
+```
+status gravado = publicada
+        │
+        ├─ agora < início           → publicada
+        ├─ início ≤ agora ≤ término → em_andamento
+        └─ agora > término          → aguardando_validacao
+
+status gravado = finalizada | cancelada | rascunho  → é o próprio
+```
+
+Só `rascunho`, `publicada`, `finalizada` e `cancelada` existem como valor no banco. Isso
+elimina a necessidade de processo em segundo plano — que falharia em silêncio se caísse, e
+que não roda de forma confiável em serviço que hiberna por inatividade.
+
+Todos os horários são interpretados em **`America/Sao_Paulo`** e gravados em UTC (D25).
 
 ### 4.2 Condições calculadas — não são estados
 
@@ -117,6 +145,7 @@ responder por incidente.
 | **Lotada** | vagas ocupadas ≥ máximo | Botão de inscrição vira "Vagas esgotadas", desabilitado. **A atividade continua na vitrine** (D7) |
 | **Vagas restantes** | máximo − ocupadas | Exibido no cartão: "3 vagas restantes" |
 | **Já inscrito** | existe inscrição ativa do aluno | Botão vira "Cancelar inscrição" |
+| **Inscrições do aluno** | inscrições ativas dele no sistema | Ao chegar em 5, o botão de inscrever desabilita (D20) |
 
 Uma vaga é ocupada por inscrição `pendente` **ou** `confirmada` — quem está aguardando
 aprovação já segura o lugar. Cancelamento e recusa devolvem a vaga.
@@ -187,7 +216,22 @@ Registro de evidência. Não muda o estado da inscrição sozinho — alimenta a
 | `emitido_em` | — |
 | `revogado_em` | Permite invalidar sem apagar o registro |
 
-### 4.6 Registro de auditoria
+### 4.6 Notificação
+
+Aviso dentro do sistema (D16). Sino no cabeçalho, com contador de não lidas.
+
+| Campo | Conteúdo |
+|---|---|
+| `destinatario_id` | Quem recebe |
+| `tipo` | `inscricao.aprovada`, `inscricao.recusada`, `atividade.cancelada`, `certificado.emitido`, `certificado.revogado` |
+| `titulo` / `mensagem` | Texto exibido |
+| `link` | Para onde leva ao clicar |
+| `lida_em` | Nulo enquanto não lida |
+
+O envio por e-mail entra depois reaproveitando esta mesma tabela — o registro já existe,
+só falta o disparo.
+
+### 4.7 Registro de auditoria
 
 Toda ação relevante vira uma linha. **A tabela é somente inserção** — não existe caminho no
 sistema para editar nem apagar registro de auditoria, nem para o superadmin.
@@ -468,8 +512,11 @@ limpar os filtros.
 
 **Rota:** `/atividades/:id`
 
-Descrição completa, dados do evento, ONG responsável (com link ao perfil público), vagas e
-quem já se inscreveu.
+Descrição completa, dados do evento, ONG responsável (com link ao perfil público) e vagas.
+
+**Mostra apenas a contagem de inscritos** — "12 pessoas inscritas" — nunca os nomes (D21).
+Expor nome, curso e instituição de terceiros a qualquer colega seria vazar dado de quem não
+consentiu. A ONG continua vendo a lista completa em `O5`, porque precisa dela para decidir.
 
 Mesmos botões do cartão em E2, mais:
 
@@ -621,9 +668,9 @@ Abas: **Rascunhos** · **Publicadas** · **Acontecendo** · **A validar** · **F
 | Título | 1 a 40 caracteres |
 | Descrição | 1 a 1500 |
 | Local | 1 a 50 |
-| Data | não pode ser no passado |
+| Data | não pode ser no passado. **Um único dia** (D17) |
 | Início / término | término depois do início |
-| Carga horária | inteiro maior que zero |
+| Carga horária | **sugerida pelo horário** (08:00–12:00 → 4h), editável para descontar intervalo (D18) |
 | Vagas | mínimo e máximo; máximo ≥ mínimo |
 | **Exigir aprovação** | interruptor (D1) — padrão desligado |
 
@@ -1011,6 +1058,17 @@ Busca por código, aluno, ONG ou atividade. Mostra a situação da assinatura de
 | **RN-42** | Tentativa de login malsucedida é registrada na auditoria |
 | **RN-43** | Check-in manual grava origem distinta do check-in por QR |
 | **RN-44** | O sistema mantém sempre **ao menos um superadmin ativo** |
+| **RN-45** | O aluno precisa ter nome completo, instituição e curso preenchidos antes da **primeira** inscrição |
+| **RN-46** | Cada aluno tem no máximo **5 inscrições ativas** (`pendente` + `confirmada` ainda não realizadas) |
+| **RN-47** | O aluno vê apenas a **contagem** de inscritos; nomes só para a ONG dona |
+| **RN-48** | A carga horária é **sugerida pela diferença entre início e término**, editável pela ONG, sempre maior que zero |
+| **RN-49** | Uma atividade ocupa **um único dia** |
+| **RN-50** | O certificado usa o **nome completo**; na falta dele, o nome de cadastro |
+| **RN-51** | Suspender ONG **cancela as atividades futuras** e preserva as finalizadas e seus certificados |
+| **RN-52** | A verificação pública aceita **60 consultas por minuto por IP** |
+| **RN-53** | Todo horário é interpretado em `America/Sao_Paulo` e gravado em UTC |
+| **RN-54** | `em_andamento` e `aguardando_validacao` são **derivados do relógio**, não gravados |
+| **RN-55** | Uma atividade pertence a **uma única ONG** |
 
 ### Por que estas sete existem
 
@@ -1107,14 +1165,16 @@ camada. O QR carrega só a URL: curto e fácil de ler.
 
 ### Versão 1
 
-Tudo descrito acima, com uma exceção: a geolocalização no check-in fica **opcional e
-desligada** por padrão. A rotação do token já resolve o ataque principal, e GPS em ambiente
+Tudo descrito acima, incluindo **recuperação de senha** (D15) e **notificação dentro do
+sistema** (D16) — ambas são pré-requisito de fluxos que já existem no desenho, não extras.
+
+Uma exceção: a geolocalização no check-in fica **opcional e desligada** por padrão. A rotação do token já resolve o ataque principal, e GPS em ambiente
 fechado gera falso negativo — o que puniria o aluno certo.
 
 ### Depois
 
-- Recuperação de senha
-- Notificação por e-mail (inscrição aprovada, certificado emitido, atividade cancelada)
+- **Notificação por e-mail** — a v1 avisa dentro do sistema (D16); o e-mail reaproveita a
+  mesma tabela
 - Exportação de listas em CSV
 - Categorias e áreas de atuação
 - Avaliação mútua entre aluno e ONG
@@ -1149,3 +1209,10 @@ fechado gera falso negativo — o que puniria o aluno certo.
 | Auditoria | não existe | ✅ registro somente inserção |
 | Console administrativo | não existe | ✅ 8 telas |
 | Suporte a usuário | nenhum caminho | redefinição de senha e "entrar como" somente leitura |
+| Recuperação de senha | não existe | ✅ na v1 |
+| Notificações | não existe | ✅ dentro do sistema na v1 |
+| Carga horária | digitada livremente | sugerida pelo horário, ajustável |
+| Perfil mínimo | não exigido | exigido antes da 1ª inscrição |
+| Limite de inscrições | sem limite | 5 ativas por aluno |
+| Lista de inscritos | visível a todos | só a contagem para o aluno |
+| Fuso horário | implícito | `America/Sao_Paulo` explícito |

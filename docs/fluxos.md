@@ -219,6 +219,7 @@ Fluxo automático, invisível ao usuário.
 - **A3** — Atividade **lotada**: aparece normalmente, com o botão desabilitado (D7)
 - **A4** — Atividade acontecendo hoje: aparece com "Inscrições encerradas"
 - **A5** — Já inscrito: o cartão mostra o selo do estado e o botão de cancelar
+- **A6** — Chegou a 5 inscrições ativas: os botões de inscrever desabilitam com a explicação (RN-46)
 
 **Exceções**
 
@@ -255,6 +256,8 @@ Fluxo automático, invisível ao usuário.
 | E3 | Atividade cancelada nesse intervalo | `400` — "Esta atividade foi cancelada" |
 | E4 | Atividade já começou | `400` — "As inscrições estão encerradas" |
 | E5 | Uma ONG tenta se inscrever | `403` |
+| E6 | **Perfil incompleto** | Antes de chamar a API, a interface leva a `E7`: "Complete seu perfil para se inscrever" (RN-45) |
+| E7 | **Já tem 5 inscrições ativas** | `400` — "Você já tem 5 inscrições ativas. Conclua ou cancele alguma" (RN-46) |
 
 **Pós-condições:** inscrição `confirmada` · uma vaga ocupada (RN-19)
 
@@ -440,6 +443,10 @@ Fluxo automático, invisível ao usuário.
 2. Opcionalmente envia foto
 3. Salva
 
+**Nome completo, instituição e curso são obrigatórios antes da primeira inscrição** (RN-45).
+A interface destaca os três enquanto estiverem vazios, e é para cá que `FE-02 E6` traz o
+aluno que tentou se inscrever sem tê-los.
+
 **Alternativos**
 
 - **A1** — Atualização parcial: só o que mudou é enviado
@@ -508,7 +515,7 @@ Fluxo automático, invisível ao usuário.
 | E1 | Campo obrigatório vazio | `400`, com todos os pendentes destacados |
 | E2 | Data no passado | `400` — "A data não pode ser no passado" (RN-05) |
 | E3 | Término antes do início | `400` (RN-06) |
-| E4 | Carga horária inválida | `400` (RN-07) |
+| E4 | Carga horária inválida | `400` (RN-48). O formulário já sugere a partir do horário |
 | E5 | Máximo menor que o mínimo | `400` (RN-08) |
 | E6 | Não é a criadora | `403` (RN-11) |
 
@@ -560,7 +567,7 @@ Fluxo automático, invisível ao usuário.
 3. Muda para `cancelada`
 4. Sai da vitrine
 5. As inscrições viram `cancelada`
-6. Os inscritos são notificados
+6. Os inscritos recebem notificação no sistema (D16)
 
 **Alternativos**
 
@@ -589,7 +596,7 @@ Fluxo automático, invisível ao usuário.
 3. Vê nome, curso e instituição de cada candidato
 4. Clica em "Aprovar"
 5. A inscrição vira `confirmada`
-6. O aluno é notificado
+6. O aluno recebe notificação no sistema (D16)
 
 **Alternativos**
 
@@ -705,7 +712,7 @@ Fluxo automático, invisível ao usuário.
 7. O sistema muda cada inscrição para `presente` ou `ausente`
 8. Emite e **assina** um certificado para cada presente (D4)
 9. A atividade vira `finalizada`
-10. Os alunos são notificados
+10. Os alunos recebem notificação no sistema (D16)
 
 **Alternativos**
 
@@ -945,7 +952,7 @@ o código, ou do certificado impresso com o QR danificado.
 **Alternativos**
 
 - **A1** — Reativar: restaura o acesso e as atividades voltam
-- **A2** — Suspender ONG com atividade em andamento: os inscritos são notificados
+- **A2** — Suspender ONG: as atividades futuras são canceladas e os inscritos notificados (RN-51)
 
 **Exceções**
 
@@ -1039,7 +1046,7 @@ o código, ou do certificado impresso com o QR danificado.
 4. Confirma
 5. O certificado é marcado como revogado; **o registro permanece** (RN-25)
 6. `T6` passa a exibir o aviso de revogação
-7. O aluno é notificado
+7. O aluno recebe notificação no sistema (D16)
 
 **Alternativos**
 
@@ -1109,7 +1116,14 @@ o código, ou do certificado impresso com o QR danificado.
 
 # Transições automáticas
 
-Acontecem por tempo, sem ninguém clicar.
+Acontecem por tempo, sem ninguém clicar — e sem nenhum processo em segundo plano.
+
+> **São calculadas na leitura** (D22). O banco guarda só `rascunho`, `publicada`,
+> `finalizada` e `cancelada`; `em_andamento` e `aguardando_validacao` saem da comparação
+> entre o horário da atividade e o relógio, em `America/Sao_Paulo` (RN-53, RN-54).
+>
+> Não há tarefa agendada para cair em silêncio, nem atraso entre "deu a hora" e "o sistema
+> percebeu".
 
 ## FT-01 — Publicada → Em andamento
 
