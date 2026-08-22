@@ -397,14 +397,24 @@ Serve de prova social e dá visibilidade a quem publica.
 
 **A tela mais importante do sistema.** É o destino do QR Code.
 
-**Quatro desfechos possíveis:**
+**Quatro desfechos, cada um com texto próprio.** Nenhum deles é tela de erro genérica — o
+servidor devolve título e mensagem prontos, e a página exibe o que veio (RN-56).
 
-| Desfecho | O que mostra |
-|---|---|
-| ✅ **Válido** | Aluno, atividade, ONG, carga horária, data. Três selos: *existe*, *não revogado*, *assinatura confere* |
-| ⚠️ **Revogado** | Os dados, com aviso destacado de que o certificado foi invalidado |
-| ⛔ **Adulterado** | Registro existe mas a assinatura não confere — **alerta de fraude** |
-| ❌ **Inexistente** | "Nenhum certificado com este código" |
+| Desfecho | Título na tela | Cor |
+|---|---|---|
+| ✅ `valido` | "Certificado válido" | verde |
+| ⚠️ `revogado` | "Este certificado foi revogado" | âmbar |
+| ⛔ `adulterado` | "Este certificado não confere" | vermelho |
+| ❌ `inexistente` | "Certificado não encontrado" | neutro |
+
+Os três primeiros mostram também os selos *existe* · *não revogado* · *assinatura confere*,
+e os dados do certificado. O texto exato de cada mensagem está em
+[contrato-api.md](contrato-api.md#9-certificados--certificados).
+
+> **Adulterado é o desfecho mais importante da tela.** Ele significa que o registro foi
+> alterado depois da emissão — e a mensagem precisa dizer isso com todas as letras, não
+> apenas mostrar um selo vermelho. Quem está lendo é a coordenação decidindo se aceita ou
+> não uma comprovação de horas.
 
 | Botão | Quando aparece | Ação |
 |---|---|---|
@@ -1069,6 +1079,7 @@ Busca por código, aluno, ONG ou atividade. Mostra a situação da assinatura de
 | **RN-53** | Todo horário é interpretado em `America/Sao_Paulo` e gravado em UTC |
 | **RN-54** | `em_andamento` e `aguardando_validacao` são **derivados do relógio**, não gravados |
 | **RN-55** | Uma atividade pertence a **uma única ONG** |
+| **RN-56** | A verificação de certificado **nunca exibe erro genérico** — cada um dos quatro desfechos tem título e mensagem próprios, vindos do servidor |
 
 ### Por que estas sete existem
 

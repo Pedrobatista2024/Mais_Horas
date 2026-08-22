@@ -236,7 +236,7 @@ CONSTRAINT inscricoes_manual_tem_responsavel CHECK (
 | `nome_organizacao` | `TEXT` | congelado |
 | `titulo_atividade` | `TEXT` | congelado |
 | `data_atividade` | `DATE` | congelado |
-| `assinatura` | `TEXT` | Ed25519 em base64 (D4) |
+| `assinatura` | `TEXT` | **`NOT NULL`** — Ed25519 em base64 (D4). Sem caso legado |
 | `emitido_em` | `TIMESTAMPTZ` | |
 | `revogado_em` / `revogado_por` | `TIMESTAMPTZ` / `UUID` | |
 | `motivo_revogacao` | `TEXT` | obrigatório ao revogar (RN-34) |
@@ -475,24 +475,25 @@ Schema novo em base limpa, com script de carga preservando o que existe.
 | `users.password` | `usuarios.senha_hash` | **Hash bcrypt é preservado** e vira Argon2id no primeiro login |
 | `activities` | `atividades` | `created_by` → `ong_id`; `active` → `publicada` |
 | `participations` | `inscricoes` | `pending` → `pendente`, `present` → `presente`, `absent` → `ausente` |
-| `certificates` | `certificados` | Precisa de tratamento especial — abaixo |
+| `certificates` | — | **Não migrados** — eram teste, e sem assinatura |
 | `refresh_tokens` | `tokens_sessao` | Ou simplesmente descartada, forçando login novo |
 | `uploads/*.png` | mantidos | Os caminhos são reescritos nos perfis |
 
 ### Os certificados já emitidos
 
-Eles **não têm assinatura** — foram emitidos antes de D4. Duas saídas:
+**Não são migrados.** Os certificados que existem hoje na base foram gerados em teste, não
+têm assinatura (são anteriores a D4) e não pertencem a ninguém de verdade.
 
-1. **Assinar na migração**, com os dados que existem hoje. Simples, e todos passam a
-   verificar normalmente. Mas a assinatura afirma algo que não foi verificado na origem.
-2. **Marcar como legado**, deixando `assinatura` nula. `T6` mostra "emitido antes da
-   assinatura digital" — válido, sem o terceiro selo.
+Isso fecha a única questão que estava em aberto aqui e evita o pior caminho: **assinar
+retroativamente**, que seria o sistema afirmar uma garantia que não tinha na hora da
+emissão.
 
-**Recomendo a segunda.** Assinar retroativamente é o sistema afirmando uma garantia que ele
-não tinha na hora. Certificado legado continua verificável pelos dois primeiros selos, e a
-diferença fica honesta na tela.
+> Como consequência, `certificados.assinatura` nasce **`NOT NULL`**: todo certificado do
+> sistema novo é assinado, sem exceção nem caso legado para tratar na verificação. Um campo
+> a menos que pode vir nulo é uma condição a menos para errar depois.
 
-> Esta é a única decisão de migração ainda em aberto.
+Se algum dia for preciso importar certificado de outro sistema, aí sim se cria o conceito
+de certificado legado — mas com o desenho pensado para isso, não como resíduo de migração.
 
 ---
 

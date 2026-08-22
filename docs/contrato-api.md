@@ -329,19 +329,56 @@ O token é **derivado do tempo** (D31) — nada é gravado. O cliente busca de n
 }
 ```
 
-Os três selos são independentes e a interface mostra os três:
+Os três selos são independentes e a interface mostra os três.
 
-| Desfecho | `valido` | Selos | Status |
-|---|:---:|---|---|
-| Válido | `true` | todos verdadeiros | `200` |
-| Revogado | `false` | `naoRevogado: false` + `motivo` | `200` |
-| **Adulterado** | `false` | `assinaturaConfere: false` | `200` |
-| Inexistente | `false` | `existe: false` | `404` |
+**A resposta carrega o texto pronto para a tela.** O servidor devolve `desfecho`, `titulo` e
+`mensagem`, e a página exibe o que veio — nunca monta texto genérico por conta própria:
 
-> Adulterado responde `200`, não erro: **é uma resposta legítima com conteúdo importante**.
-> A página precisa exibir o alerta de fraude, não uma tela de erro genérica.
+```json
+{
+  "valido": false,
+  "desfecho": "adulterado",
+  "titulo": "Este certificado não confere",
+  "mensagem": "Os dados registrados não correspondem à assinatura digital emitida pela Mais Horas. Isso indica que o registro foi alterado depois da emissão. Não aceite este documento como comprovação de horas.",
+  "selos": { "existe": true, "naoRevogado": true, "assinaturaConfere": false },
+  "certificado": { ... }
+}
+```
 
----
+### Os quatro desfechos
+
+| `desfecho` | Status | `valido` | Cor |
+|---|:---:|:---:|---|
+| `valido` | `200` | `true` | verde |
+| `revogado` | `200` | `false` | âmbar |
+| `adulterado` | `200` | `false` | vermelho |
+| `inexistente` | `404` | `false` | neutro |
+
+**`valido`** — título: *"Certificado válido"*
+
+> Este certificado foi emitido pela **{organizacao}** em {dataEmissao} e confere
+> **{horas} horas** de atividade de extensão a **{aluno}**. Os dados abaixo vêm direto da
+> base da Mais Horas, não do arquivo.
+
+**`revogado`** — título: *"Este certificado foi revogado"*
+
+> Este certificado existiu e foi emitido pela **{organizacao}**, mas foi **invalidado em
+> {dataRevogacao}**. Motivo: {motivo}. Ele não deve ser aceito como comprovação de horas.
+
+**`adulterado`** — título: *"Este certificado não confere"*
+
+> Os dados registrados não correspondem à assinatura digital emitida pela Mais Horas. Isso
+> indica que o registro foi alterado depois da emissão. **Não aceite este documento como
+> comprovação de horas.** Se você o recebeu de alguém, avise a instituição.
+
+**`inexistente`** — título: *"Certificado não encontrado"*
+
+> Nenhum certificado corresponde ao código **{codigo}**. Confira se o código foi digitado
+> corretamente — ele tem 16 caracteres. Se veio de um QR Code, tente escanear novamente.
+
+> **Nenhum desses quatro é tela de erro.** Nos três primeiros o sistema funcionou
+> perfeitamente e tem algo importante a dizer; no quarto, provavelmente foi erro de
+> digitação, não falha. Tela de erro genérica fica reservada para quando a API não responde.
 
 ## 10. Notificações — `/notificacoes`
 
