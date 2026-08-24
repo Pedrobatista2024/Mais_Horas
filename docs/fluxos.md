@@ -31,7 +31,7 @@ Cada fluxo segue a mesma estrutura:
 | Grupo | Fluxos |
 |---|---|
 | **Acesso** | FA-01 a FA-05 |
-| **Estudante** | FE-01 a FE-09 |
+| **Estudante** | FE-01 a FE-10 |
 | **ONG** | FO-01 a FO-11 |
 | **Verificador** | FV-01 a FV-02 |
 | **Superadmin** | FS-01 a FS-11 |
@@ -121,7 +121,7 @@ Fluxo automático, invisível ao usuário.
 **Caminho feliz**
 
 1. Uma requisição qualquer volta `401`
-2. O cliente chama `POST /users/refresh` com o cookie
+2. O cliente chama `POST /api/v1/auth/renovar`, enviando o cookie
 3. O servidor valida, **rotaciona** o par e devolve o novo access
 4. O cliente refaz a requisição original
 5. O usuário não percebe nada
@@ -186,7 +186,7 @@ Fluxo automático, invisível ao usuário.
 **Caminho feliz**
 
 1. O cliente limpa o estado local **na hora** — a interface reage sem esperar
-2. Em paralelo, chama `POST /users/logout`
+2. Em paralelo, chama `POST /api/v1/auth/sair`
 3. O servidor revoga a família de refresh tokens e limpa o cookie
 4. Vai para o portal
 
@@ -462,6 +462,50 @@ aluno que tentou se inscrever sem tê-los.
 | E3 | Campo acima do limite | `400`, campo destacado |
 
 **Auditoria:** `perfil.atualizado`
+
+---
+
+## FE-10 — Acompanhar notificações
+
+**Ator:** estudante ou ONG · **Gatilho:** o sino do cabeçalho exibe contador de não lidas
+
+Fluxo curto, mas necessário: sete pontos deste documento dizem que o usuário "recebe
+notificação". Este é o fluxo em que ele efetivamente toma conhecimento.
+
+**Caminho feliz**
+
+1. O contador do sino mostra quantas notificações não foram lidas
+2. O usuário abre a lista
+3. Vê os avisos em ordem cronológica, com os não lidos destacados
+4. Clica em um aviso
+5. O sistema marca como lido e leva ao que originou a notificação
+
+**Alternativos**
+
+- **A1** — "Marcar todas como lidas": zera o contador sem abrir uma a uma
+- **A2** — Filtra apenas as não lidas
+- **A3** — Notificação de atividade já excluída: o aviso continua legível, mas sem destino
+
+**Tipos gerados pelo sistema**
+
+| Tipo | Originado em |
+|---|---|
+| `inscricao.aprovada` | FO-05 |
+| `inscricao.recusada` | FO-06 |
+| `atividade.cancelada` | FO-04, FS-05 |
+| `certificado.emitido` | FO-09 |
+| `certificado.revogado` | FS-09 |
+
+**Exceções**
+
+| # | Situação | Resposta |
+|---|---|---|
+| E1 | Nenhuma notificação | Estado vazio: "Você não tem avisos no momento" |
+
+**Pós-condições:** notificações marcadas como lidas; contador atualizado
+
+> Na v1 o aviso vive **dentro do sistema** (D16). O envio por e-mail entra depois,
+> reaproveitando a mesma tabela — o registro já é criado hoje, falta só o disparo.
 
 ---
 
