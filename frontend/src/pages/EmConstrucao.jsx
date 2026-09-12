@@ -1,100 +1,103 @@
 import { Link } from "react-router-dom";
 import {
-  Alert, Anchor, Badge, Button, Card, Group, List, Stack, Text, Title,
+  Alert, Anchor, Badge, Card, Group, List, Stack, Text, Title,
 } from "@mantine/core";
-import { IconInfoCircle, IconLogout } from "@tabler/icons-react";
+import { IconInfoCircle } from "@tabler/icons-react";
 
-import PublicPage from "../components/layout/PublicPage";
 import { useAuth } from "../context/AuthContext";
 
 /**
- * Painel provisório enquanto as demais fatias não chegam.
+ * Painel provisório enquanto `E1`/`O1`/`A1` não chegam.
  *
  * A implementação avança por fatia vertical (ver docs/plano-execucao.md): cada
  * uma entrega uma funcionalidade completa, do banco à tela. Esta página existe
  * para o pós-login ser honesto sobre o que já funciona, em vez de mostrar telas
  * que chamariam endpoints ainda inexistentes.
  */
+const ATALHOS = {
+  estudante: [
+    { para: "/atividades", rotulo: "Buscar atividades" },
+    { para: "/minhas-inscricoes", rotulo: "Minhas inscrições" },
+    { para: "/check-in", rotulo: "Fazer check-in numa atividade em andamento" },
+    { para: "/perfil", rotulo: "Meu perfil" },
+  ],
+  ong: [
+    { para: "/ong/atividades", rotulo: "Minhas atividades" },
+    { para: "/ong/atividades/nova", rotulo: "Publicar uma atividade" },
+    { para: "/perfil", rotulo: "Dados da organização" },
+  ],
+  superadmin: [{ para: "/perfil", rotulo: "Meu perfil" }],
+};
+
 const PROXIMAS = [
-  { fatia: 3, titulo: "Atividades", detalhe: "Publicar e encontrar oportunidades" },
-  { fatia: 4, titulo: "Inscrições", detalhe: "Inscrever-se, aprovar, cancelar" },
-  { fatia: 5, titulo: "Presença", detalhe: "Check-in por QR Code rotativo" },
   { fatia: 6, titulo: "Certificado", detalhe: "Emissão assinada e verificação pública" },
+  { fatia: 7, titulo: "Notificações", detalhe: "Aviso no sistema a cada decisão" },
+  { fatia: 8, titulo: "Console do admin", detalhe: "Auditoria e controle da plataforma" },
+  { fatia: 9, titulo: "Portal", detalhe: "Página pública de apresentação" },
 ];
 
 export default function EmConstrucao() {
-  const { usuario, sair } = useAuth();
+  const { usuario } = useAuth();
+  const papel = usuario?.papel;
+  const atalhos = ATALHOS[papel] ?? ATALHOS.estudante;
+
+  const rotulo = papel === "ong" ? "Painel da ONG"
+    : papel === "superadmin" ? "Painel da administração"
+    : "Painel do estudante";
 
   return (
-    <PublicPage>
-      <Stack gap="lg" maw={620} mx="auto" w="100%">
-        <Stack gap={4}>
-          <Text tt="uppercase" c="brand.7" fw={700} size="xs">
-            {usuario?.papel === "ong" ? "Painel da ONG" : "Painel do estudante"}
-          </Text>
-          <Title order={2} fz={{ base: 26, sm: 32 }}>
-            Olá, {usuario?.nome?.split(" ")[0]}
-          </Title>
-        </Stack>
+    <Stack gap="lg" maw={640}>
+      <Stack gap={4}>
+        <Text tt="uppercase" c="brand.7" fw={700} size="xs">
+          {rotulo}
+        </Text>
+        <Title order={1} fz={{ base: 26, sm: 32 }}>
+          Olá, {usuario?.nome?.split(" ")[0]}
+        </Title>
+      </Stack>
 
-        <Alert icon={<IconInfoCircle size={18} />} color="brand" variant="light">
-          Sua conta está criada e o acesso funcionando. As demais áreas estão sendo
-          construídas e entram em seguida.
-        </Alert>
+      <Alert icon={<IconInfoCircle size={18} />} color="brand" variant="light">
+        O painel com seus números entra junto com as fatias que faltam. Por enquanto,
+        use o menu ao lado ou os atalhos abaixo.
+      </Alert>
 
-        <Card withBorder radius="md" p="lg">
-          <Text fw={700} mb="sm">
-            Já disponível
-          </Text>
-          <List spacing={6} size="sm">
-            <List.Item>Criar conta e entrar</List.Item>
-            <List.Item>Sessão que sobrevive ao recarregar a página</List.Item>
-            <List.Item>Recuperação de senha</List.Item>
-            <List.Item>
-              <Anchor component={Link} to="/perfil" fw={600}>
-                Preencher seu perfil
+      <Card withBorder radius="md" p="lg">
+        <Text fw={700} mb="sm">
+          Já disponível
+        </Text>
+        <List spacing={8} size="sm">
+          {atalhos.map((item) => (
+            <List.Item key={item.para}>
+              <Anchor component={Link} to={item.para} fw={600}>
+                {item.rotulo}
               </Anchor>
             </List.Item>
-          </List>
-        </Card>
+          ))}
+        </List>
+      </Card>
 
-        <Card withBorder radius="md" p="lg">
-          <Text fw={700} mb="sm">
-            Em construção
-          </Text>
-          <Stack gap="xs">
-            {PROXIMAS.map((item) => (
-              <Group key={item.fatia} justify="space-between" wrap="wrap" gap="xs">
-                <div>
-                  <Text size="sm" fw={600}>
-                    {item.titulo}
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    {item.detalhe}
-                  </Text>
-                </div>
-                <Badge variant="light" color="ink">
-                  Fatia {item.fatia}
-                </Badge>
-              </Group>
-            ))}
-          </Stack>
-        </Card>
-
-        <Group justify="space-between" wrap="wrap">
-          <Anchor component={Link} to="/" size="sm">
-            Voltar ao início
-          </Anchor>
-          <Button
-            variant="light"
-            color="ink"
-            leftSection={<IconLogout size={16} />}
-            onClick={sair}
-          >
-            Sair da conta
-          </Button>
-        </Group>
-      </Stack>
-    </PublicPage>
+      <Card withBorder radius="md" p="lg">
+        <Text fw={700} mb="sm">
+          Em construção
+        </Text>
+        <Stack gap="sm">
+          {PROXIMAS.map((item) => (
+            <Group key={item.fatia} justify="space-between" wrap="wrap" gap="xs">
+              <div style={{ minWidth: 0 }}>
+                <Text fw={600} size="sm">
+                  {item.titulo}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {item.detalhe}
+                </Text>
+              </div>
+              <Badge variant="light" color="gray" radius="sm">
+                Fatia {item.fatia}
+              </Badge>
+            </Group>
+          ))}
+        </Stack>
+      </Card>
+    </Stack>
   );
 }

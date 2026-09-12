@@ -192,16 +192,81 @@ def test_token_antigo_e_recusado():
     assert not seg.conferir_token_checkin(antigo, atividade)
 
 
-def test_janela_anterior_e_tolerada():
+def test_janela_anterior_e_tolerada_dentro_da_graca():
     """
     Cobre o intervalo entre ver o código na tela e a requisição chegar. Sem
     isso, quem escaneasse no último segundo seria recusado sem culpa.
+
+    O relógio é fixado no teste porque a tolerância é medida a partir do fim da
+    janela: deixá-la depender da hora de execução faria o teste passar ou falhar
+    conforme o minuto.
     """
     atividade = uuid.uuid4()
-    janela = int(time.time() // config.checkin_janela_segundos)
-    assert seg.conferir_token_checkin(
-        seg.gerar_token_checkin(atividade, janela - 1), atividade
-    )
+    duracao = config.checkin_janela_segundos
+    janela = 1_000_000
+
+    # 5 s depois que a janela fechou — dentro da graça de 10 s.
+    momento = (janela + 1) * duracao + 5
+    assert seg.ler_token_checkin(
+        seg.gerar_token_checkin(atividade, janela), momento).valido
+
+
+def test_token_morre_ao_fim_da_graca():
+    """Nenhum código sobrevive além de `janela + graça` — 40 s no padrão."""
+    atividade = uuid.uuid4()
+    duracao = config.checkin_janela_segundos
+    janela = 1_000_000
+
+    limite = (janela + 1) * duracao + config.checkin_graca_segundos
+    lido = seg.ler_token_checkin(seg.gerar_token_checkin(atividade, janela), limite)
+    assert not lido.valido
+    assert lido.motivo == "expirado"
+
+
+def test_codigo_de_quarenta_segundos_atras_e_sempre_recusado():
+    """
+    É o critério da fatia, e precisa valer em qualquer instante do relógio —
+    não só quando a fase da janela ajuda.
+    """
+    atividade = uuid.uuid4()
+    duracao = config.checkin_janela_segundos
+
+    for deslocamento in range(0, duracao):
+        agora = 3_000_000 * duracao + deslocamento
+        janela_do_codigo = int((agora - 40) // duracao)
+        antigo = seg.gerar_token_checkin(atividade, janela_do_codigo)
+        assert not seg.ler_token_checkin(antigo, agora).valido, (
+            f"aceito com deslocamento {deslocamento}s dentro da janela"
+        )
+
+
+def test_token_diz_de_qual_atividade_e():
+    """
+    Sem isso o servidor não conseguiria responder "este código é de outra
+    atividade" — o `POST /checkin` recebe só o token.
+    """
+    atividade = uuid.uuid4()
+    lido = seg.ler_token_checkin(seg.gerar_token_checkin(atividade))
+    assert lido.atividade_id == atividade
+
+
+def test_token_adulterado_acusa_assinatura_e_nao_validade():
+    """Forjar não merece a mensagem simpática de "código vencido"."""
+    atividade = uuid.uuid4()
+    token = seg.gerar_token_checkin(atividade)
+    corpo, assinatura = token.rsplit(".", 1)
+    adulterado = f"{corpo}.{'A' * len(assinatura)}"
+
+    lido = seg.ler_token_checkin(adulterado)
+    assert not lido.valido
+    assert lido.motivo == "assinatura_invalida"
+
+
+def test_token_malformado_nao_explode():
+    for lixo in ("", "abc", "MH1.só-uma-parte", "XX9.a.1.b", "MH1.###.1.###"):
+        lido = seg.ler_token_checkin(lixo)
+        assert not lido.valido
+        assert lido.motivo in ("malformado", "assinatura_invalida")
 
 
 def test_token_muda_de_uma_janela_para_a_outra():

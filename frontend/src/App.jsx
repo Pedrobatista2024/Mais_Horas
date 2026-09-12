@@ -30,6 +30,11 @@ const MinhasInscricoes = lazy(() => import("./pages/estudante/MinhasInscricoes")
 const InscricoesDaAtividade = lazy(() =>
   import("./pages/ong/InscricoesDaAtividade"));
 
+// Presença e check-in — Fatia 5
+const Checkin = lazy(() => import("./pages/estudante/Checkin"));
+const PainelCheckin = lazy(() => import("./pages/ong/PainelCheckin"));
+const ValidarPresencas = lazy(() => import("./pages/ong/ValidarPresencas"));
+
 /**
  * As rotas entram fatia a fatia (docs/plano-execucao.md). As telas das fatias
  * seguintes ainda não estão listadas aqui porque chamariam endpoints que não
@@ -75,6 +80,7 @@ export default function App() {
             <Route path="/atividades" element={<Vitrine />} />
             <Route path="/atividades/:id" element={<DetalheAtividade />} />
             <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
+            <Route path="/check-in" element={<Checkin />} />
           </Route>
 
           {/* Organização */}
@@ -86,6 +92,9 @@ export default function App() {
             <Route path="/ong/atividades/:id/editar" element={<FormularioAtividade />} />
             <Route path="/ong/atividades/:id/inscricoes"
                    element={<InscricoesDaAtividade />} />
+            <Route path="/ong/atividades/:id/check-in" element={<PainelCheckin />} />
+            <Route path="/ong/atividades/:id/presencas"
+                   element={<ValidarPresencas />} />
           </Route>
 
           {/* Administração */}

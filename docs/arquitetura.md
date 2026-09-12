@@ -89,9 +89,9 @@ frontend/src/
   pages/
     auth/              Entrar, CriarConta, EsqueciSenha, RedefinirSenha
     perfil/            MeuPerfil (serve aos dois papéis)
-    estudante/         Vitrine, DetalheAtividade, MinhasInscricoes
+    estudante/         Vitrine, DetalheAtividade, MinhasInscricoes, Checkin
     ong/               MinhasAtividades, FormularioAtividade, GerenciarAtividade,
-                       InscricoesDaAtividade
+                       InscricoesDaAtividade, PainelCheckin, ValidarPresencas
     public/            Landing (+ telas antigas ainda não migradas)
     EmConstrucao.jsx   ocupa as rotas de painel até as fatias correspondentes
   utils/
@@ -123,12 +123,15 @@ endpoint inexistente, e tela quebrada é pior que tela ausente.
 | `/atividades` | aluno | `E2` Vitrine |
 | `/atividades/:id` | aluno | `E3` Detalhe da atividade |
 | `/minhas-inscricoes` | aluno | `E4` Minhas inscrições |
+| `/check-in` | aluno | `E5` Check-in por QR |
 | `/ong` | ONG | `O1` Painel *(em construção)* |
 | `/ong/atividades` | ONG | `O2` Minhas atividades |
 | `/ong/atividades/nova` | ONG | `O3` Criar atividade |
 | `/ong/atividades/:id` | ONG | `O4` Gerenciar atividade |
 | `/ong/atividades/:id/editar` | ONG | `O3` Editar atividade |
 | `/ong/atividades/:id/inscricoes` | ONG | `O5` Inscrições da atividade |
+| `/ong/atividades/:id/check-in` | ONG | `O6` Painel de QR rotativo |
+| `/ong/atividades/:id/presencas` | ONG | `O7` Validar presenças |
 | `/admin` | superadmin | `A1` Visão geral *(em construção)* |
 
 Papel errado não dá erro: o usuário é levado ao painel dele. Ele não fez nada de errado,

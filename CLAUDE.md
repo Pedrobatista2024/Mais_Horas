@@ -23,8 +23,8 @@ o código: quando os dois discordarem, o código é que está atrasado.
 ## Estado atual
 
 A construção é por **fatias verticais**: cada uma entrega backend, frontend e testes de um
-pedaço que funciona ponta a ponta. Fatias 0 a 4 estão concluídas (fundação, acesso, perfil,
-atividades, inscrições). As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
+pedaço que funciona ponta a ponta. Fatias 0 a 5 estão concluídas (fundação, acesso, perfil,
+atividades, inscrições, presença). As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
 propósito: chamariam endpoints que não existem, e tela quebrada é pior que tela ausente.
 
 Restam no frontend alguns arquivos da versão anterior (Node/Express) em `pages/org/`,
@@ -159,6 +159,11 @@ Invariantes que não podem ser quebradas:
 - Contagem de vaga em operação de escrita exige travar a linha da atividade
   (`with_for_update`). Contar sem travar deixa dois cliques simultâneos ocuparem a mesma
   última vaga.
+- O token de check-in **não é gravado**: validar é recalcular a partir de
+  `(atividade, segredo, janela de 30 s)`. Não crie tabela de tokens emitidos.
+- Check-in é **evidência, não decisão** (RN-23). Ele nunca muda a situação da inscrição
+  por conta própria; quem define presença é a ONG, e a divergência entre os dois é
+  justamente o que se quer poder auditar.
 - Situação de atividade **não tem processo em segundo plano**. `em_andamento` e
   `aguardando_validacao` são calculadas na leitura, comparando data e hora com o relógio.
   Não crie scheduler para isso.

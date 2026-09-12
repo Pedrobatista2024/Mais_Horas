@@ -256,6 +256,8 @@ para visitante e para quem não se inscreveu — é o que define qual botão o c
 | `POST` | `/inscricoes/{id}/recusar` | 🏢 | Recusa **sem motivo** (D8) |
 | `POST` | `/inscricoes/aprovar-lote` | 🏢 | Aprova várias de uma vez |
 | `PUT` | `/inscricoes/{id}/presenca` | 🏢 | Marca presente ou ausente |
+| `PUT` | `/atividades/{id}/presencas` | 🏢 | Marca várias de uma vez (`O7`) |
+| `GET` | `/atividades/{id}/presencas` | 🏢 | Lista de `O7`, com sugestão por check-in |
 
 **`GET /inscricoes/minhas`** — filtro `grupo`: `proximas` · `aguardando` · `historico`.
 São as abas de `E4`, separadas **no servidor** pelo mesmo motivo das abas de `O2`.
@@ -288,6 +290,21 @@ carregamento da tela e o clique fica de fora, porque a ONG não decidiu sobre qu
 > [requisitos.md](requisitos.md), em que uma ONG conseguia marcar presença em atividade
 > alheia. A checagem vem do serviço, não só do papel (RN-11).
 
+**`PUT /atividades/{id}/presencas`** → `{ "decisoes": [{ "inscricaoId": "...",
+"situacao": "presente" }] }` → `{ "alteradas": 3 }`
+
+Atende "marcar todos os check-ins como presentes" e "marcar os sem check-in como ausentes"
+numa requisição só.
+
+**`GET /atividades/{id}/presencas`** — cada item traz `checkinEm`, `checkinOrigem`
+(`qr` ou `manual`), `decidida` e `sugestao`. A sugestão vem do servidor porque é ele que
+sabe o que o QR registrou; a ONG continua livre para discordar, e a divergência fica na
+auditoria.
+
+**`POST /atividades/{id}/finalizar`** — exige decisão de presença para **todos**
+(`400 presencas_pendentes`, RN-03) e carga horária válida (`400 carga_horaria_invalida`,
+RN-15). Credita as horas de quem esteve presente (RN-14).
+
 ---
 
 ## 8. Check-in — `/checkin`
@@ -302,11 +319,19 @@ carregamento da tela e o clique fica de fora, porque a ONG não decidiu sobre qu
 **`GET .../checkin/token`**
 
 ```json
-{ "token": "MH1.a8f3...", "expiraEm": "2026-06-15T11:30:30-03:00", "validoPor": 30 }
+{ "token": "MH1.N1Eua1ZPReianIaSTrSPMg.59641008.QIoBP8L70wsbaJv0c1bVaYva",
+  "expiraEm": "2026-06-15T11:30:30-03:00", "validoPor": 30 }
 ```
 
-O token é **derivado do tempo** (D31) — nada é gravado. O cliente busca de novo quando
-`validoPor` acabar.
+Formato: `MH1.<atividade>.<janela>.<assinatura>`. O token é **derivado do tempo** (D31) —
+nada é gravado, validar é recalcular. O cliente busca de novo quando `validoPor` acabar.
+
+Atividade e janela viajam em claro porque quem protege é a assinatura HMAC. É o que
+permite ao `POST /checkin` receber só o token e ainda assim distinguir "vencido" de "de
+outra atividade". Nenhum código vive mais que **40 s** (janela de 30 s + 10 s de folga
+para a requisição chegar), medidos a partir do fim da janela.
+
+A rota exige atividade `em_andamento` e devolve `403 checkin_fora_da_janela` fora dela.
 
 **`POST /checkin`** → `{ "token": "MH1.a8f3..." }`
 

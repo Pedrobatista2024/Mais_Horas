@@ -49,6 +49,9 @@ class Configuracao(BaseSettings):
     # Segredo próprio: comprometer o QR não deve comprometer a sessão.
     checkin_secret: str = Field(default="")
     checkin_janela_segundos: int = 30
+    # Folga depois que a janela fecha, para a requisição de quem escaneou no
+    # último instante chegar. Soma com a janela o tempo máximo de vida do QR.
+    checkin_graca_segundos: int = 10
 
     # ===== URLs públicas =====
     app_url: str = "http://localhost:3000"

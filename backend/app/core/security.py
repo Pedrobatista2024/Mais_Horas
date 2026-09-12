@@ -23,7 +23,7 @@ import secrets
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, NamedTuple
 
 import bcrypt
 import jwt
@@ -226,13 +226,90 @@ def _janela_atual(agora: float | None = None) -> int:
     return int(segundos // config.checkin_janela_segundos)
 
 
-def gerar_token_checkin(atividade_id: uuid.UUID | str, janela: int | None = None) -> str:
+class TokenCheckin(NamedTuple):
+    """
+    Resultado da leitura de um token de QR.
+
+    `motivo` distingue os casos que a tela precisa tratar de formas diferentes:
+    um código vencido é o caso **comum** (o QR roda a cada 30 s), enquanto
+    assinatura inválida é tentativa de forjar.
+    """
+
+    valido: bool
+    atividade_id: uuid.UUID | None = None
+    janela: int | None = None
+    motivo: str | None = None
+
+
+def _cru(dados: bytes) -> str:
+    return base64.urlsafe_b64encode(dados).decode().rstrip("=")
+
+
+def _decodificar(texto: str) -> bytes:
+    return base64.urlsafe_b64decode(texto + "=" * (-len(texto) % 4))
+
+
+def _assinatura(atividade_id: uuid.UUID | str, janela: int) -> bytes:
     if not config.checkin_secret:
         raise RuntimeError("checkin_secret não configurado")
+    mensagem = f"{atividade_id}:{janela}".encode()
+    return hmac.new(config.checkin_secret.encode(), mensagem, hashlib.sha256).digest()[:18]
+
+
+def gerar_token_checkin(atividade_id: uuid.UUID | str, janela: int | None = None) -> str:
+    """
+    `MH1.<atividade>.<janela>.<assinatura>` — derivado do tempo, nada é gravado.
+
+    O token carrega a atividade e a janela **em claro**, e não é problema: a
+    assinatura é que impede forjar. Carregá-los é o que permite ao servidor
+    responder "este código é de outra atividade" em vez de um "inválido" que não
+    ajuda ninguém — e medir a idade exata do código em vez de só compará-lo com
+    a janela vigente.
+    """
     j = _janela_atual() if janela is None else janela
-    mensagem = f"{atividade_id}:{j}".encode()
-    resumo = hmac.new(config.checkin_secret.encode(), mensagem, hashlib.sha256).digest()
-    return f"MH1.{base64.urlsafe_b64encode(resumo[:18]).decode().rstrip('=')}"
+    identificador = uuid.UUID(str(atividade_id))
+    return f"MH1.{_cru(identificador.bytes)}.{j}.{_cru(_assinatura(identificador, j))}"
+
+
+def ler_token_checkin(token: str, agora: float | None = None) -> TokenCheckin:
+    """
+    Confere assinatura e validade, e diz **por que** recusou.
+
+    A janela dura 30 s, mas o token continua aceito por uma folga depois que ela
+    fecha: quem escaneia no último instante precisa de tempo para a requisição
+    chegar. O limite é fixo e medido a partir do fim da janela, então nenhum
+    código sobrevive além de `janela + graça` — 40 s no padrão.
+    """
+    partes = (token or "").split(".")
+    if len(partes) != 4 or partes[0] != "MH1":
+        return TokenCheckin(False, motivo="malformado")
+
+    try:
+        atividade_id = uuid.UUID(bytes=_decodificar(partes[1]))
+        janela = int(partes[2])
+        assinatura = _decodificar(partes[3])
+    except (ValueError, TypeError):
+        return TokenCheckin(False, motivo="malformado")
+
+    # Confere a assinatura antes da validade: um token forjado não merece a
+    # mensagem simpática de "código vencido".
+    if not hmac.compare_digest(assinatura, _assinatura(atividade_id, janela)):
+        return TokenCheckin(False, atividade_id=atividade_id, janela=janela,
+                            motivo="assinatura_invalida")
+
+    segundos = time.time() if agora is None else agora
+    duracao = config.checkin_janela_segundos
+    limite = (janela + 1) * duracao + config.checkin_graca_segundos
+
+    if segundos >= limite:
+        return TokenCheckin(False, atividade_id=atividade_id, janela=janela,
+                            motivo="expirado")
+    if janela > _janela_atual(segundos):
+        # Janela no futuro: relógio adiantado ou token fabricado à frente.
+        return TokenCheckin(False, atividade_id=atividade_id, janela=janela,
+                            motivo="expirado")
+
+    return TokenCheckin(True, atividade_id=atividade_id, janela=janela)
 
 
 def segundos_ate_proximo_token() -> int:
@@ -246,18 +323,9 @@ def segundos_ate_proximo_token() -> int:
 
 
 def conferir_token_checkin(token: str, atividade_id: uuid.UUID | str) -> bool:
-    """
-    Aceita a janela atual e a imediatamente anterior.
-
-    A tolerância de uma janela cobre o intervalo entre o aluno enxergar o código
-    na tela e a requisição chegar ao servidor. Sem ela, quem escaneasse no
-    último segundo seria recusado sem ter feito nada de errado.
-    """
-    atual = _janela_atual()
-    for janela in (atual, atual - 1):
-        if hmac.compare_digest(token, gerar_token_checkin(atividade_id, janela)):
-            return True
-    return False
+    """Atalho para quem já sabe de qual atividade o token deveria ser."""
+    lido = ler_token_checkin(token)
+    return lido.valido and str(lido.atividade_id) == str(atividade_id)
 
 
 # ===================== Código de verificação =====================

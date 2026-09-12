@@ -4,8 +4,8 @@ import {
   Button, Center, Group, Pagination, SimpleGrid, Stack, Tabs,
 } from "@mantine/core";
 import {
-  IconCalendarPlus, IconEdit, IconPlus, IconSettings, IconTrash,
-  IconUsersGroup, IconX,
+  IconCalendarPlus, IconClipboardCheck, IconEdit, IconPlus, IconQrcode,
+  IconSettings, IconTrash, IconUsersGroup, IconX,
 } from "@tabler/icons-react";
 
 import CartaoAtividade from "../../components/atividade/CartaoAtividade";
@@ -128,6 +128,19 @@ export default function MinhasAtividades() {
             Gerenciar
           </Button>
         </Group>
+
+        {situacao === "em_andamento" && (
+          <Button size="compact-sm" leftSection={<IconQrcode size={14} />}
+                  onClick={() => navegar(`/ong/atividades/${id}/check-in`)}>
+            Abrir check-in
+          </Button>
+        )}
+        {situacao === "aguardando_validacao" && (
+          <Button size="compact-sm" leftSection={<IconClipboardCheck size={14} />}
+                  onClick={() => navegar(`/ong/atividades/${id}/presencas`)}>
+            Validar presenças
+          </Button>
+        )}
 
         {situacao !== "rascunho" && (
           <Button size="compact-sm" variant="subtle"

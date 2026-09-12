@@ -153,7 +153,7 @@ Quatro decisões tomadas durante a implementação:
 
 ---
 
-### Fatia 5 — Presença e check-in ⭐
+### Fatia 5 — Presença e check-in ⭐ ✅ concluída
 
 O diferencial técnico do projeto.
 
@@ -162,7 +162,41 @@ O diferencial técnico do projeto.
 **Fluxos:** FE-05, FO-07 a FO-09 · **Regras:** RN-03, RN-04, RN-15 a RN-17, RN-43
 
 **Pronto quando:** o QR rotaciona a cada 30 s, o aluno registra presença lendo a tela, e um
-código de 40 segundos atrás é recusado.
+código de 40 segundos atrás é recusado. ✅
+
+Entregue: `app/services/checkin_service.py`, `app/routers/checkin.py`,
+`app/schemas/checkin.py`, 43 testes em `tests/test_checkin.py`; no frontend,
+`pages/estudante/Checkin.jsx`, `pages/ong/PainelCheckin.jsx` e
+`pages/ong/ValidarPresencas.jsx`.
+
+**O formato do token mudou** — de `MH1.<hmac>` para
+`MH1.<atividade>.<janela>.<assinatura>`. O formato antigo, opaco, não atendia ao
+contrato por dois motivos:
+
+- `POST /checkin` recebe **só o token** (o corpo não diz de qual atividade é), então o
+  próprio token precisa carregar essa informação.
+- Sem saber a atividade e a janela, o servidor não distinguia "código vencido" de "código
+  de outra atividade" — e o fluxo FE-05 exige mensagens diferentes para os dois, porque
+  vencer é o caso comum e não é erro de ninguém.
+
+Carregar atividade e janela em claro não enfraquece nada: quem protege é a assinatura
+HMAC, que continua exigindo o segredo do servidor.
+
+Outras duas decisões:
+
+- **A expiração virou determinística.** Antes o servidor aceitava a janela anterior
+  inteira, o que fazia um código viver de 30 a 60 s conforme a hora em que fosse gerado —
+  e o critério "40 s atrás é recusado" valia ou não conforme a fase do relógio. Agora a
+  folga é medida a partir do **fim** da janela (10 s por padrão), então **nenhum código
+  passa de 40 s de vida**, em qualquer instante. Há um teste que varre os 30 segundos da
+  janela para provar isso.
+- **A abertura do painel é auditada uma vez a cada 15 minutos.** O cliente rebusca o token
+  a cada 30 s; auditar cada busca encheria a trilha de ruído sem dizer nada novo.
+
+**Pendente para a Fatia 6:** `POST /atividades/{id}/finalizar` fecha a atividade e credita
+as horas, mas **ainda não emite certificados**. A emissão entra na fatia seguinte e será
+atômica com a finalização (RN-41). Atividade finalizada antes disso não gera certificado
+retroativamente.
 
 ---
 

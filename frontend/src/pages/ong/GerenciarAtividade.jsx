@@ -5,7 +5,8 @@ import {
 } from "@mantine/core";
 import {
   IconAlertTriangle, IconArrowLeft, IconCalendar, IconClock, IconEdit,
-  IconEye, IconMapPin, IconTrash, IconUsers, IconUsersGroup, IconX,
+  IconEye, IconMapPin, IconQrcode, IconTrash, IconUsers, IconUsersGroup,
+  IconClipboardCheck, IconX,
 } from "@tabler/icons-react";
 
 import SituacaoBadge from "../../components/atividade/SituacaoBadge";
@@ -206,6 +207,24 @@ export default function GerenciarAtividade() {
               <Button variant="light" leftSection={<IconEdit size={16} />}
                       onClick={() => navegar(`/ong/atividades/${id}/editar`)}>
                 Editar
+              </Button>
+            )}
+            {situacao === "em_andamento" && (
+              <Button leftSection={<IconQrcode size={16} />}
+                      onClick={() => navegar(`/ong/atividades/${id}/check-in`)}>
+                Abrir painel de check-in
+              </Button>
+            )}
+            {situacao === "aguardando_validacao" && (
+              <Button leftSection={<IconClipboardCheck size={16} />}
+                      onClick={() => navegar(`/ong/atividades/${id}/presencas`)}>
+                Validar presenças
+              </Button>
+            )}
+            {situacao === "finalizada" && (
+              <Button variant="light" leftSection={<IconClipboardCheck size={16} />}
+                      onClick={() => navegar(`/ong/atividades/${id}/presencas`)}>
+                Ver presenças
               </Button>
             )}
             {!eRascunho && (

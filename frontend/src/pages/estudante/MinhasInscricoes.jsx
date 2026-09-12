@@ -5,7 +5,7 @@ import {
   Title, Tooltip,
 } from "@mantine/core";
 import {
-  IconCalendar, IconClock, IconMapPin, IconSearch, IconTicket,
+  IconCalendar, IconClock, IconMapPin, IconQrcode, IconSearch, IconTicket,
 } from "@tabler/icons-react";
 
 import ConfirmarAcao from "../../components/ui/ConfirmarAcao";
@@ -137,6 +137,13 @@ export default function MinhasInscricoes() {
           </Stack>
 
           <Stack gap={6} mt="auto" pt={4}>
+            {atividade?.situacao === "em_andamento"
+              && inscricao.situacao === "confirmada" && (
+              <Button size="compact-sm" leftSection={<IconQrcode size={14} />}
+                      onClick={() => navegar("/check-in")}>
+                Fazer check-in
+              </Button>
+            )}
             <Button variant="light" size="compact-sm"
                     onClick={() => navegar(`/atividades/${atividade?.id}`)}>
               Ver atividade

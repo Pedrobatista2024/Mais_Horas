@@ -54,7 +54,7 @@ Travas no fluxo:
 impede um combinado entre aluno e ONG, nem cobre o caso do aluno que se inscreve, não vai,
 e a ONG marca presença por engano ou por não ter controle da lista no dia.
 
-## Camada 3 — Anti-fraude de presença com QR dinâmico (recomendado)
+## Camada 3 — Anti-fraude de presença com QR dinâmico (implementado)
 
 É aqui que está o case de engenharia mais forte do projeto.
 
@@ -88,15 +88,21 @@ ONG abre a tela do evento
 
 **Tecnologias:**
 
-- **Token assinado de curta duração** — JWT com `exp` de ~30 segundos, assinado com o
-  secret do servidor. Não dá pra forjar sem o secret.
-- **Janela de tempo estilo TOTP** — o token é derivado de `(activityId, secret, timestamp
-  arredondado)`. Isso permite validar sem guardar estado de cada token emitido.
+- **Token assinado de curta duração** — `MH1.<atividade>.<janela>.<assinatura>`, com HMAC
+  SHA-256 sobre `atividade:janela` usando um segredo exclusivo do check-in. Não dá para
+  forjar sem o segredo. Atividade e janela viajam em claro de propósito: é o que permite
+  responder "este código é de outra atividade" em vez de um "inválido" que não ajuda.
+- **Janela de tempo estilo TOTP** — o token é derivado de `(atividade, segredo, tempo
+  arredondado em 30 s)`. **Nada é gravado**: validar é recalcular. Não há tabela de
+  tokens emitidos para crescer nem para limpar.
+- **Expiração determinística** — a folga de trânsito é contada a partir do *fim* da
+  janela, não da janela inteira. Assim o tempo de vida máximo é fixo (30 s de janela +
+  10 s de folga = 40 s), em vez de variar entre 30 e 60 s conforme a hora de emissão.
 - **Geolocalização opcional** — o check-in envia as coordenadas do celular e o backend
   compara com o local declarado da atividade, dentro de um raio de tolerância.
 
 **Por que funciona:** quando o colega tira o print e manda no WhatsApp, o token daquele QR
-já expirou. Para fraudar, o aluno ausente precisaria de um cúmplice mandando um print novo
+já expirou — no máximo 40 segundos depois de aparecer na tela, sempre. Para fraudar, o aluno ausente precisaria de um cúmplice mandando um print novo
 a cada 30 segundos em tempo real — o custo do ataque fica maior que o de simplesmente ir ao
 evento. E com a checagem de geolocalização, nem isso basta.
 
