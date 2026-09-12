@@ -14,6 +14,9 @@ const EsqueciSenha = lazy(() => import("./pages/auth/EsqueciSenha"));
 const RedefinirSenha = lazy(() => import("./pages/auth/RedefinirSenha"));
 const EmConstrucao = lazy(() => import("./pages/EmConstrucao"));
 
+// Perfil — Fatia 2
+const MeuPerfil = lazy(() => import("./pages/perfil/MeuPerfil"));
+
 /**
  * As rotas entram fatia a fatia (docs/plano-execucao.md). As telas das fatias
  * seguintes ainda não estão listadas aqui porque chamariam endpoints que não
@@ -65,10 +68,21 @@ export default function App() {
             }
           />
 
+          <Route
+            path="/perfil"
+            element={
+              <RotaPrivada>
+                <MeuPerfil />
+              </RotaPrivada>
+            }
+          />
+
           {/* Endereços da versão anterior continuam levando a algum lugar */}
           <Route path="/login" element={<Navigate to="/entrar" replace />} />
           <Route path="/register" element={<Navigate to="/criar-conta" replace />} />
           <Route path="/dashboard" element={<Navigate to="/painel" replace />} />
+          <Route path="/edit-student-profile" element={<Navigate to="/perfil" replace />} />
+          <Route path="/org/profile" element={<Navigate to="/perfil" replace />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

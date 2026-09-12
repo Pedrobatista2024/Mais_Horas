@@ -79,13 +79,21 @@ StrictMode.
 
 ---
 
-### Fatia 2 — Perfil
+### Fatia 2 — Perfil ✅ concluída
 
 **Backend:** `/perfil` (ler, atualizar, foto) · `/usuarios/{id}/publico`
 **Frontend:** `E7` Meu perfil · `O8` Perfil da ONG
 **Fluxos:** FE-09 · **Regras:** RN-13 (perfil mínimo)
 
 **Pronto quando:** o aluno preenche o perfil e o sistema sabe dizer se está completo.
+
+**Entregue:** 5 rotas de perfil · `perfilCompleto` e `camposFaltantes` na resposta, que é o
+sinal que a vitrine vai consultar antes de liberar a inscrição · upload de foto com troca
+apagando a anterior · perfil público reduzido, sem telefone nem e-mail de estudante · tela
+única servindo aos dois papéis · **26 testes**.
+
+Verificado no navegador: o aviso lista os três campos que faltam, vira "perfil completo" ao
+preencher, e a foto sobe, é servida pela API e renderiza.
 
 ---
 

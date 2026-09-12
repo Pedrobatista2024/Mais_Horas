@@ -18,7 +18,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import config
 from app.core.errors import registrar_handlers
 from app.db.session import engine
-from app.routers import auth
+from app.routers import auth, perfil
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("mais_horas")
@@ -125,9 +125,9 @@ async def saude() -> dict[str, str]:
 
 # ===== Rotas de negócio =====
 app.include_router(auth.router, prefix=PREFIXO)
+app.include_router(perfil.router, prefix=PREFIXO)
 
 # A entrar nas próximas fatias:
-#   Fatia 2  /api/v1/perfil
 #   Fatia 3  /api/v1/atividades
 #   Fatia 4  /api/v1/inscricoes
 #   Fatia 5  /api/v1/checkin

@@ -16,7 +16,6 @@ import { useAuth } from "../context/AuthContext";
  * que chamariam endpoints ainda inexistentes.
  */
 const PROXIMAS = [
-  { fatia: 2, titulo: "Perfil", detalhe: "Preencher seus dados e foto" },
   { fatia: 3, titulo: "Atividades", detalhe: "Publicar e encontrar oportunidades" },
   { fatia: 4, titulo: "Inscrições", detalhe: "Inscrever-se, aprovar, cancelar" },
   { fatia: 5, titulo: "Presença", detalhe: "Check-in por QR Code rotativo" },
@@ -51,6 +50,11 @@ export default function EmConstrucao() {
             <List.Item>Criar conta e entrar</List.Item>
             <List.Item>Sessão que sobrevive ao recarregar a página</List.Item>
             <List.Item>Recuperação de senha</List.Item>
+            <List.Item>
+              <Anchor component={Link} to="/perfil" fw={600}>
+                Preencher seu perfil
+              </Anchor>
+            </List.Item>
           </List>
         </Card>
 
