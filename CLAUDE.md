@@ -31,6 +31,11 @@ completa e aprovada, e o código ainda não foi reescrito para ela.
 A seção "Backend — padrões obrigatórios" abaixo vale para **os dois**: são regras de
 estrutura, não de nomenclatura.
 
+**A travessia é por fatia vertical** — uma funcionalidade completa por vez, do banco à
+tela, mantendo o sistema sempre utilizável. A ordem das fatias e a definição de pronto
+estão em [plano-execucao.md](docs/plano-execucao.md). Consulte antes de começar qualquer
+implementação.
+
 ## Comandos
 
 ```bash
@@ -150,6 +155,7 @@ Ao mudar algo estrutural, atualize o doc correspondente:
 
 | Mudou | Atualize |
 |---|---|
+| Ordem de implementação, fatia | [plano-execucao.md](docs/plano-execucao.md) |
 | Comportamento, tela, botão, estado | [especificacao.md](docs/especificacao.md) |
 | Caminho de uso, erro tratado, cenário | [fluxos.md](docs/fluxos.md) |
 | Tabela, coluna, restrição, índice | [modelo-dados.md](docs/modelo-dados.md) |

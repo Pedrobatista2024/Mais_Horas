@@ -69,6 +69,7 @@ Exige o Postgres no ar. São 68 verificações; qualquer falha sai com código 1
 
 | Documento | O que contém |
 |---|---|
+| [docs/plano-execucao.md](docs/plano-execucao.md) | **Como construir** — as fatias, a ordem e a definição de pronto |
 | [docs/especificacao.md](docs/especificacao.md) | **O sistema que estamos construindo** — atores, estados, telas, botões e regras |
 | [docs/fluxos.md](docs/fluxos.md) | Todos os caminhos do sistema: feliz, alternativos e de erro, por perfil |
 | [docs/modelo-dados.md](docs/modelo-dados.md) | Tabelas, restrições, índices e o plano de migrations |
