@@ -1,35 +1,34 @@
 import axios from "axios";
 
-// Em prod (Render), defina VITE_API_URL=https://mais-horas-api.onrender.com
-// Em dev local, deixa cair no fallback (http://localhost:3000)
+// Em produção, defina VITE_API_URL=https://mais-horas-api.onrender.com
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-const API_BASE_URL = `${BASE.replace(/\/$/, "")}/api`;
+export const API_URL = `${BASE.replace(/\/$/, "")}/api/v1`;
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
-  // Necessário para o cookie httpOnly do refresh token viajar junto.
+  // Necessário para o cookie httpOnly do refresh viajar junto.
   withCredentials: true,
 });
 
 /**
  * O access token vive só em memória, nunca no localStorage.
  *
- * Isso é o que impede um XSS de roubar a sessão: mesmo que um script hostil rode
- * na página, ele não acha o token em lugar nenhum que possa ler. A renovação
- * depende do cookie httpOnly, que o JavaScript também não enxerga.
+ * É isso que impede um XSS de roubar a sessão: mesmo que um script hostil rode
+ * na página, não há onde ler o token. A renovação depende do cookie httpOnly,
+ * que o JavaScript também não enxerga.
  *
- * O custo é que um F5 perde o token da memória — por isso o AuthContext chama
- * refresh() ao montar, e a sessão volta sozinha.
+ * O custo é que um F5 perde o token — por isso o AuthContext chama
+ * restaurarSessao() ao montar, e a sessão volta sozinha.
  */
 let accessToken = null;
 
-export function setAccessToken(token) {
+export function definirToken(token) {
   accessToken = token || null;
 }
 
-export function getAccessToken() {
+export function obterToken() {
   return accessToken;
 }
 
@@ -42,63 +41,87 @@ api.interceptors.request.use((config) => {
 //
 // TODA renovação passa por aqui, e só uma pode estar em voo por vez.
 //
-// Isso não é só otimização: o backend rotaciona o refresh token e trata
-// reapresentação como possível roubo. Se dois refresh saíssem em paralelo, o
-// segundo chegaria com o cookie já consumido e derrubaria a sessão. O
-// AuthContext e o interceptor abaixo compartilham esta mesma promessa.
-let refreshing = null;
+// Não é otimização: o servidor rotaciona o refresh e trata reapresentação como
+// possível roubo. Dois refresh em paralelo fariam o segundo chegar com o cookie
+// já consumido. O backend tolera a corrida por 15 s, mas depender disso seria
+// frágil — melhor nunca provocá-la.
+let renovando = null;
 
-export function refreshSession() {
-  if (!refreshing) {
-    refreshing = api
-      .post("/users/refresh")
+export function renovarSessao() {
+  if (!renovando) {
+    renovando = api
+      .post("/auth/renovar")
       .then(({ data }) => {
-        setAccessToken(data.token);
+        definirToken(data.token);
         return data;
       })
       .finally(() => {
-        refreshing = null;
+        renovando = null;
       });
   }
-  return refreshing;
+  return renovando;
 }
 
-// Rotas de sessão não devem entrar no ciclo de retry.
-const AUTH_PATHS = ["/users/login", "/users/register", "/users/refresh", "/users/logout"];
+// Rotas de sessão não entram no ciclo de repetição.
+const ROTAS_DE_SESSAO = [
+  "/auth/entrar",
+  "/auth/cadastro",
+  "/auth/renovar",
+  "/auth/sair",
+  "/auth/senha",
+];
 
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const { config, response } = error;
+  (resposta) => resposta,
+  async (erro) => {
+    const { config, response } = erro;
 
     if (
       !response ||
       response.status !== 401 ||
       !config ||
-      config._retried ||
-      AUTH_PATHS.some((path) => config.url?.startsWith(path))
+      config._repetida ||
+      ROTAS_DE_SESSAO.some((rota) => config.url?.startsWith(rota))
     ) {
-      return Promise.reject(error);
+      return Promise.reject(erro);
     }
 
-    config._retried = true;
+    config._repetida = true;
 
     let token = null;
     try {
-      const data = await refreshSession();
-      token = data.token;
+      ({ token } = await renovarSessao());
     } catch {
       // A sessão morreu de vez — avisa quem estiver ouvindo (AuthContext).
-      window.dispatchEvent(new CustomEvent("mh:session-expired"));
-      return Promise.reject(error);
+      window.dispatchEvent(new CustomEvent("mh:sessao-expirada"));
+      return Promise.reject(erro);
     }
 
-    if (!token) return Promise.reject(error);
+    if (!token) return Promise.reject(erro);
 
     config.headers.Authorization = `Bearer ${token}`;
     return api(config);
   }
 );
 
-export const API_URL = API_BASE_URL;
+/**
+ * Extrai a mensagem de um erro da API.
+ *
+ * O backend responde `{ codigo, mensagem, detalhes? }`. O `codigo` é estável e
+ * deve guiar decisões de lógica; a `mensagem` serve para exibir.
+ */
+export function mensagemDoErro(erro, padrao = "Algo deu errado") {
+  const dados = erro?.response?.data;
+  if (!dados) return erro?.message || padrao;
+  if (Array.isArray(dados.detalhes) && dados.detalhes.length) {
+    return dados.detalhes.map((d) => d.mensagem).join(". ");
+  }
+  return dados.mensagem || padrao;
+}
+
+/** Código estável do erro, para o cliente decidir o que fazer. */
+export function codigoDoErro(erro) {
+  return erro?.response?.data?.codigo || null;
+}
+
 export { api };

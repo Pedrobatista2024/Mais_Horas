@@ -1,49 +1,28 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import PrivateRoute from "./routes/PrivateRoute";
-import AppLayout from "./components/layout/AppLayout";
-import { useAuth } from "./context/AuthContext";
-
-// Público
-import Landing from "./pages/public/Landing";
 import Loading from "./components/ui/Loading";
+import { useAuth } from "./context/AuthContext";
+import { painelDe } from "./routes/destinos";
+import Landing from "./pages/public/Landing";
+import RotaPrivada from "./routes/RotaPrivada";
 
-// Auth
-const Login = lazy(() => import("./pages/auth/Login"));
-const Register = lazy(() => import("./pages/auth/Register"));
+// Acesso — Fatia 1
+const Entrar = lazy(() => import("./pages/auth/Entrar"));
+const CriarConta = lazy(() => import("./pages/auth/CriarConta"));
+const EsqueciSenha = lazy(() => import("./pages/auth/EsqueciSenha"));
+const RedefinirSenha = lazy(() => import("./pages/auth/RedefinirSenha"));
+const EmConstrucao = lazy(() => import("./pages/EmConstrucao"));
 
-// Aluno
-const StudentDashboard = lazy(() => import("./pages/student/Dashboard"));
-const Activities = lazy(() => import("./pages/student/Activities"));
-const StudentActivityDetails = lazy(() => import("./pages/student/ActivityDetails"));
-const MyActivities = lazy(() => import("./pages/student/MyActivities"));
-const MyCertificates = lazy(() => import("./pages/student/MyCertificates"));
-const EditStudentProfile = lazy(() => import("./pages/student/EditProfile"));
-
-// ONG
-const OrgDashboard = lazy(() => import("./pages/org/Dashboard"));
-const OrgMyActivities = lazy(() => import("./pages/org/MyActivities"));
-const CreateActivity = lazy(() => import("./pages/org/CreateActivity"));
-const EditActivity = lazy(() => import("./pages/org/EditActivity"));
-const OrgActivityDetails = lazy(() => import("./pages/org/ActivityDetails"));
-const ActivityParticipants = lazy(() => import("./pages/org/Participants"));
-const OrgProfile = lazy(() => import("./pages/org/Profile"));
-const OrgEditProfile = lazy(() => import("./pages/org/EditProfile"));
-
-// Público
-const OrgPublicProfile = lazy(() => import("./pages/public/OrgPublicProfile"));
-const StudentPublicProfile = lazy(() => import("./pages/public/StudentPublicProfile"));
-const VerifyCertificate = lazy(() => import("./pages/public/VerifyCertificate"));
-
-function Protected({ role, children }) {
-  return <PrivateRoute role={role}>{children}</PrivateRoute>;
-}
-
-function Home() {
-  const { isAuthenticated, user } = useAuth();
-  if (isAuthenticated) {
-    return <Navigate to={user?.role === "organization" ? "/org" : "/dashboard"} replace />;
+/**
+ * As rotas entram fatia a fatia (docs/plano-execucao.md). As telas das fatias
+ * seguintes ainda não estão listadas aqui porque chamariam endpoints que não
+ * existem — melhor ausentes que quebradas.
+ */
+function Inicio() {
+  const { autenticado, usuario } = useAuth();
+  if (autenticado) {
+    return <Navigate to={painelDe(usuario?.papel)} replace />;
   }
   return <Landing />;
 }
@@ -53,50 +32,45 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<Loading label="Carregando..." />}>
         <Routes>
-          {/* Público */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verificar/:code" element={<VerifyCertificate />} />
-          <Route path="/org/:id/public" element={<OrgPublicProfile />} />
-          <Route path="/student/:id/public" element={<StudentPublicProfile />} />
+          {/* Portal — público */}
+          <Route path="/" element={<Inicio />} />
+          <Route path="/entrar" element={<Entrar />} />
+          <Route path="/criar-conta" element={<CriarConta />} />
+          <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
-          {/* Aluno (dentro do layout) */}
+          {/* Painéis — provisórios até as fatias correspondentes */}
           <Route
+            path="/painel"
             element={
-              <Protected role="student">
-                <AppLayout />
-              </Protected>
+              <RotaPrivada papel="estudante">
+                <EmConstrucao />
+              </RotaPrivada>
             }
-          >
-            <Route path="/dashboard" element={<StudentDashboard />} />
-            <Route path="/activities" element={<Activities />} />
-            <Route path="/student/activity/:id" element={<StudentActivityDetails />} />
-            <Route path="/my-activities" element={<MyActivities />} />
-            <Route path="/my-certificates" element={<MyCertificates />} />
-            <Route path="/edit-student-profile" element={<EditStudentProfile />} />
-          </Route>
-
-          {/* ONG (dentro do layout) */}
+          />
           <Route
+            path="/ong"
             element={
-              <Protected role="organization">
-                <AppLayout />
-              </Protected>
+              <RotaPrivada papel="ong">
+                <EmConstrucao />
+              </RotaPrivada>
             }
-          >
-            <Route path="/org" element={<OrgDashboard />} />
-            <Route path="/org/my-activities" element={<OrgMyActivities />} />
-            <Route path="/org/create-activity" element={<CreateActivity />} />
-            <Route path="/org/activity/:id" element={<OrgActivityDetails />} />
-            <Route path="/org/activity/:id/edit" element={<EditActivity />} />
-            <Route path="/org/activity/:id/participants" element={<ActivityParticipants />} />
-            <Route path="/org/profile" element={<OrgProfile />} />
-            <Route path="/org/profile/edit" element={<OrgEditProfile />} />
-          </Route>
+          />
+          <Route
+            path="/admin"
+            element={
+              <RotaPrivada papel="superadmin">
+                <EmConstrucao />
+              </RotaPrivada>
+            }
+          />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Endereços da versão anterior continuam levando a algum lugar */}
+          <Route path="/login" element={<Navigate to="/entrar" replace />} />
+          <Route path="/register" element={<Navigate to="/criar-conta" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/painel" replace />} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

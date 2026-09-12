@@ -58,7 +58,7 @@ utils e o `smoke_test.py`. Volta fatia a fatia, no contrato novo.
 
 ---
 
-### Fatia 1 — Acesso
+### Fatia 1 — Acesso ✅ concluída
 
 **Backend:** `/auth/cadastro` · `/entrar` · `/renovar` · `/sair` · `/senha/esqueci` · `/senha/redefinir`
 **Frontend:** `T7` Entrar · `T8` Criar conta · `AuthContext` no contrato novo
@@ -66,6 +66,16 @@ utils e o `smoke_test.py`. Volta fatia a fatia, no contrato novo.
 
 **Pronto quando:** dá para criar conta, entrar, recarregar a página sem perder a sessão e
 recuperar a senha pelo link que aparece no terminal.
+
+**Entregue:** as 6 rotas de `/auth` · cookie httpOnly com escopo restrito · rotação de
+refresh com janela de graça · auditoria escrita desde já · limite de tentativas · e-mail no
+console (D39) · telas T7, T8, esqueci e redefinir senha · **32 testes** cobrindo FA-01 a
+FA-05, incluindo as exceções.
+
+Verificado no navegador: conta criada pela interface, sessão sobrevivendo a três
+recarregamentos seguidos, token fora do `localStorage`, nenhum cookie visível ao
+JavaScript, e um único refresh por carga — a promessa compartilhada evita a corrida do
+StrictMode.
 
 ---
 

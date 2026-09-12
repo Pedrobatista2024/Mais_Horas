@@ -1,99 +1,86 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { api, refreshSession, setAccessToken } from "../services/api";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+
+import { api, definirToken, renovarSessao } from "../services/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // O access token fica em memória (ver comentário em services/api.js).
-  // Só o usuário é espelhado no localStorage, para a tela pintar sem piscar
-  // enquanto a sessão é restaurada.
+  // O token fica em memória (ver services/api.js). Só o usuário é espelhado no
+  // localStorage, para a tela pintar sem piscar enquanto a sessão é restaurada.
   const [token, setToken] = useState(null);
-  const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
+  const [usuario, setUsuario] = useState(() => {
+    const bruto = localStorage.getItem("usuario");
+    return bruto ? JSON.parse(bruto) : null;
   });
-  const [loading, setLoading] = useState(true);
+  const [carregando, setCarregando] = useState(true);
 
-  const clearSession = useCallback(() => {
-    setAccessToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("name");
+  const limparSessao = useCallback(() => {
+    definirToken(null);
+    localStorage.removeItem("usuario");
     setToken(null);
-    setUser(null);
+    setUsuario(null);
   }, []);
 
-  // Limpa a sessão local primeiro para a UI reagir na hora; a revogação no
-  // servidor segue em paralelo. Se ela falhar, o refresh token expira sozinho.
-  const logout = useCallback(() => {
-    clearSession();
-    api.post("/users/logout").catch(() => {});
-  }, [clearSession]);
-
-  // Restaura a sessão no boot: o cookie httpOnly de refresh, se ainda válido,
-  // devolve um access token novo sem pedir login de novo.
+  // Restaura a sessão no boot: o cookie httpOnly, se ainda válido, devolve um
+  // token novo sem pedir login de novo.
   useEffect(() => {
-    let active = true;
+    let ativo = true;
 
-    async function restore() {
-      try {
-        const data = await refreshSession();
-        if (!active) return;
+    renovarSessao()
+      .then((dados) => {
+        if (!ativo) return;
+        setToken(dados.token);
+        setUsuario(dados.usuario);
+        localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+      })
+      .catch(() => {
+        if (ativo) limparSessao();
+      })
+      .finally(() => {
+        if (ativo) setCarregando(false);
+      });
 
-        setToken(data.token);
-        if (data.user) {
-          setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
-
-        // Busca o perfil completo (o refresh devolve só o resumo).
-        try {
-          const { data: profile } = await api.get("/users/profile");
-          if (active && profile?.user) {
-            setUser(profile.user);
-            localStorage.setItem("user", JSON.stringify(profile.user));
-          }
-        } catch {
-          // Perfil é complemento; a sessão em si já está de pé.
-        }
-      } catch {
-        if (active) clearSession();
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-
-    restore();
     return () => {
-      active = false;
+      ativo = false;
     };
-  }, [clearSession]);
+  }, [limparSessao]);
 
-  // O interceptor avisa quando o refresh falhou de vez.
+  // O interceptor avisa quando a renovação falhou de vez.
   useEffect(() => {
-    function onExpired() {
-      clearSession();
-    }
-    window.addEventListener("mh:session-expired", onExpired);
-    return () => window.removeEventListener("mh:session-expired", onExpired);
-  }, [clearSession]);
+    window.addEventListener("mh:sessao-expirada", limparSessao);
+    return () => window.removeEventListener("mh:sessao-expirada", limparSessao);
+  }, [limparSessao]);
 
-  const login = useCallback((data) => {
-    setAccessToken(data.token);
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem("user", JSON.stringify(data.user));
+  const entrar = useCallback((dados) => {
+    definirToken(dados.token);
+    setToken(dados.token);
+    setUsuario(dados.usuario);
+    localStorage.setItem("usuario", JSON.stringify(dados.usuario));
   }, []);
 
-  const setUserData = useCallback((u) => {
-    setUser(u);
-    localStorage.setItem("user", JSON.stringify(u));
+  // Limpa o estado local na hora para a interface reagir sem esperar; a
+  // revogação no servidor segue em paralelo. Se falhar, o refresh expira só.
+  const sair = useCallback(() => {
+    limparSessao();
+    api.post("/auth/sair").catch(() => {});
+  }, [limparSessao]);
+
+  const atualizarUsuario = useCallback((novo) => {
+    setUsuario(novo);
+    localStorage.setItem("usuario", JSON.stringify(novo));
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ token, user, loading, login, logout, setUserData, isAuthenticated: !!token }}
+      value={{
+        token,
+        usuario,
+        carregando,
+        entrar,
+        sair,
+        atualizarUsuario,
+        autenticado: !!token,
+      }}
     >
       {children}
     </AuthContext.Provider>

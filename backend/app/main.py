@@ -1,9 +1,7 @@
 """
 Ponto de entrada da API Mais Horas.
 
-**Fatia 0 — Fundação.** Ainda não há rotas de negócio: elas entram fatia a
-fatia, conforme docs/plano-execucao.md. Este arquivo já traz a checagem de
-ambiente, os cabeçalhos de segurança, o CORS e os handlers de erro.
+As rotas entram fatia a fatia, conforme docs/plano-execucao.md.
 """
 
 from __future__ import annotations
@@ -20,6 +18,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import config
 from app.core.errors import registrar_handlers
 from app.db.session import engine
+from app.routers import auth
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("mais_horas")
@@ -125,8 +124,9 @@ async def saude() -> dict[str, str]:
 
 
 # ===== Rotas de negócio =====
-# Entram fatia a fatia:
-#   Fatia 1  /api/v1/auth
+app.include_router(auth.router, prefix=PREFIXO)
+
+# A entrar nas próximas fatias:
 #   Fatia 2  /api/v1/perfil
 #   Fatia 3  /api/v1/atividades
 #   Fatia 4  /api/v1/inscricoes
