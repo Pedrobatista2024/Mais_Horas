@@ -71,57 +71,65 @@ frontend/src/
   theme.js             paleta Mantine (brand, navy, clay, ink)
   index.css            classes utilitárias .mh-*
   config/api.js        base URL da API (VITE_API_URL)
-  services/api.js      axios + access token em memória + renovação no 401
-  context/AuthContext  sessão do usuário (login, logout, isAuthenticated)
-  routes/PrivateRoute  guarda de rota por autenticação e role
+  services/api.js      axios + access token em memória + renovação compartilhada
+                       no 401; mensagemDoErro / codigoDoErro
+  context/AuthContext  sessão do usuário (entrar, sair, autenticado, carregando)
+  routes/
+    RotaPrivada.jsx    guarda por autenticação e papel
+    destinos.js        para onde cada papel vai depois de entrar
   hooks/useFetch       GET com { data, loading, error, refetch, setData }
   components/
-    layout/            AppLayout (AppShell logado), AuthLayout, PublicPage
-    ui/                PageHeader, StatCard, ActivityCard, ActionCard, InfoItem,
-                       StatusBadge, EmptyState, Loading, BackButton, BrandMark,
+    layout/            PainelLayout (área logada), AuthLayout, PublicPage
+    atividade/         CartaoAtividade, SituacaoBadge, situacoes.js
+    perfil/            FotoPerfil
+    ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, StatCard,
+                       ActionCard, InfoItem, StatusBadge, BackButton, BrandMark,
                        BrandIcon, ClockGlyph, WelcomeBanner
-    forms/             ActivityForm (compartilhado entre criar e editar)
   pages/
-    public/            Landing, VerifyCertificate, OrgPublicProfile, StudentPublicProfile
-    auth/              Login, Register
-    student/           Dashboard, Activities, ActivityDetails, MyActivities,
-                       MyCertificates, EditProfile
-    org/               Dashboard, MyActivities, CreateActivity, EditActivity,
-                       ActivityDetails, Participants, Profile, EditProfile
+    auth/              Entrar, CriarConta, EsqueciSenha, RedefinirSenha
+    perfil/            MeuPerfil (serve aos dois papéis)
+    estudante/         Vitrine, DetalheAtividade
+    ong/               MinhasAtividades, FormularioAtividade, GerenciarAtividade
+    public/            Landing (+ telas antigas ainda não migradas)
+    EmConstrucao.jsx   ocupa as rotas de painel até as fatias correspondentes
   utils/
-    format.js          formatDate, resolveImage, initials
+    format.js          formatDate, formatDateLong, resolveImage, initials
     notify.js          notifySuccess / notifyError (toasts Mantine)
 ```
+
+`pages/student/`, `pages/org/` e parte de `pages/public/` ainda guardam telas da versão
+Node/Express. Não estão roteadas e falam com uma API que não existe mais — cada fatia
+apaga as que substitui.
 
 As convenções de UI (paleta, componentes reutilizáveis, responsividade) estão em
 [`.claude/skills/frontend-maishoras/SKILL.md`](../.claude/skills/frontend-maishoras/SKILL.md).
 
 ## Rotas de tela
 
-| Rota | Acesso | Página |
-|---|---|---|
-| `/` | público | Landing (redireciona logado p/ `/dashboard` ou `/org`) |
-| `/login` | público | Login |
-| `/register` | público | Register |
-| `/verificar/:code` | público | Verificação de certificado por QR Code |
-| `/org/:id/public` | público | Perfil público da ONG |
-| `/student/:id/public` | público | Perfil público do aluno |
-| `/dashboard` | aluno | Painel do aluno |
-| `/activities` | aluno | Buscar atividades |
-| `/student/activity/:id` | aluno | Detalhes da atividade |
-| `/my-activities` | aluno | Minhas inscrições |
-| `/my-certificates` | aluno | Meus certificados |
-| `/edit-student-profile` | aluno | Editar perfil |
-| `/org` | ONG | Painel da ONG |
-| `/org/my-activities` | ONG | Atividades publicadas |
-| `/org/create-activity` | ONG | Criar atividade |
-| `/org/activity/:id` | ONG | Detalhes da atividade |
-| `/org/activity/:id/edit` | ONG | Editar atividade |
-| `/org/activity/:id/participants` | ONG | Participantes e validação de presença |
-| `/org/profile` | ONG | Perfil |
-| `/org/profile/edit` | ONG | Editar perfil |
+As telas entram fatia a fatia. Rota de fatia não entregue **não é registrada**: chamaria
+endpoint inexistente, e tela quebrada é pior que tela ausente.
 
-Qualquer rota não encontrada cai em `/login`.
+| Rota | Acesso | Tela |
+|---|---|---|
+| `/` | público | Landing (redireciona quem já entrou ao painel do papel) |
+| `/entrar` | público | Entrar |
+| `/criar-conta` | público | Criar conta |
+| `/esqueci-senha` | público | Pedir redefinição |
+| `/redefinir-senha` | público | Definir nova senha |
+| `/perfil` | autenticado | `E7`/`O8` Meu perfil |
+| `/painel` | aluno | `E1` Painel *(em construção)* |
+| `/atividades` | aluno | `E2` Vitrine |
+| `/atividades/:id` | aluno | `E3` Detalhe da atividade |
+| `/ong` | ONG | `O1` Painel *(em construção)* |
+| `/ong/atividades` | ONG | `O2` Minhas atividades |
+| `/ong/atividades/nova` | ONG | `O3` Criar atividade |
+| `/ong/atividades/:id` | ONG | `O4` Gerenciar atividade |
+| `/ong/atividades/:id/editar` | ONG | `O3` Editar atividade |
+| `/admin` | superadmin | `A1` Visão geral *(em construção)* |
+
+Papel errado não dá erro: o usuário é levado ao painel dele. Ele não fez nada de errado,
+só digitou o endereço de outro. Rota inexistente cai em `/`. Os endereços da versão
+anterior (`/login`, `/dashboard`, `/activities`...) redirecionam para os novos.
 
 ## Banco de dados
 

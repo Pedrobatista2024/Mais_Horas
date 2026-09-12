@@ -9,6 +9,11 @@ pydantic==2.10.4
 pydantic-settings==2.7.1
 email-validator==2.2.0
 
+# Fuso horário
+# O Windows não traz o banco de fusos IANA, e a imagem do servidor pode não
+# trazer. Sem isto, ZoneInfo("America/Sao_Paulo") falha no boot (RN-53).
+tzdata==2024.2
+
 # Banco
 sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0

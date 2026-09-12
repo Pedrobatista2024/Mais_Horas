@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import {
-  Alert, Anchor, Button, Card, Divider, Group, SimpleGrid, Stack, Text,
+  Alert, Button, Card, Divider, Group, SimpleGrid, Stack, Text,
   TextInput, Textarea, Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconAlertTriangle, IconArrowLeft, IconCheck } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCheck } from "@tabler/icons-react";
 
 import FotoPerfil from "../../components/perfil/FotoPerfil";
-import PublicPage from "../../components/layout/PublicPage";
 import Loading from "../../components/ui/Loading";
 import { useAuth } from "../../context/AuthContext";
-import { painelDe } from "../../routes/destinos";
 import { api, mensagemDoErro } from "../../services/api";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
@@ -90,17 +87,7 @@ export default function MeuPerfil() {
   const faltantes = perfil?.camposFaltantes ?? [];
 
   return (
-    <PublicPage>
-      <Stack gap="lg" maw={720} mx="auto" w="100%">
-        <Group justify="space-between" wrap="wrap" gap="xs">
-          <Anchor component={Link} to={painelDe(usuario?.papel)} size="sm">
-            <Group gap={4}>
-              <IconArrowLeft size={15} />
-              Voltar ao painel
-            </Group>
-          </Anchor>
-        </Group>
-
+    <Stack gap="lg" maw={720}>
         <Stack gap={4}>
           <Text tt="uppercase" c="brand.7" fw={700} size="xs">
             {eOng ? "Perfil da organização" : "Meu perfil"}
@@ -201,7 +188,6 @@ export default function MeuPerfil() {
             </Stack>
           </form>
         </Card>
-      </Stack>
-    </PublicPage>
+    </Stack>
   );
 }

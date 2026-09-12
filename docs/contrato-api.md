@@ -181,7 +181,7 @@ inscrição ou manda preencher o perfil antes.
 |---|---|:---:|---|
 | `GET` | `/atividades` | 🌐 | **Vitrine.** Paginada, filtrada no servidor |
 | `GET` | `/atividades/{id}` | 🌐 | Detalhe público |
-| `GET` | `/atividades/minhas` | 🏢 | Atividades da ONG logada. Paginada |
+| `GET` | `/atividades/minhas` | 🏢 | Atividades da ONG logada. Paginada. Filtro `situacao` |
 | `POST` | `/atividades` | 🏢 | Cria como rascunho |
 | `PUT` | `/atividades/{id}` | 🏢 | Edita (travas da RN-12) |
 | `POST` | `/atividades/{id}/publicar` | 🏢 | Rascunho → publicada |
@@ -189,6 +189,11 @@ inscrição ou manda preencher o perfil antes.
 | `POST` | `/atividades/{id}/finalizar` | 🏢 | Valida presenças e emite certificados |
 | `DELETE` | `/atividades/{id}` | 🏢 | **Só rascunho** (RN-18) |
 | `GET` | `/atividades/{id}/inscricoes` | 🏢 | Lista de inscritos. Paginada |
+
+**`GET /atividades/minhas`** — filtro `situacao`, uma das seis situações, incluindo as
+duas calculadas (`em_andamento`, `aguardando_validacao`). São as abas de `O2`, e a
+separação acontece **no servidor**: filtrar no navegador daria total e paginação errados.
+Valor desconhecido não filtra nada, em vez de devolver lista vazia.
 
 **`GET /atividades`** — filtros: `busca` · `cidade` · `cargaMin` · `cargaMax` · `comVaga`
 

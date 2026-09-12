@@ -8,33 +8,29 @@ Mais Horas — plataforma que conecta estudantes e ONGs para horas de extensão,
 certificado validável por QR Code. Monorepo simples: `backend/` (FastAPI + Postgres) e
 `frontend/` (React + Vite + Mantine).
 
-## ⚠️ Leia isto antes de escrever código
+O sistema foi **desenhado antes de ser codado**. A fonte da verdade é a documentação, não
+o código: quando os dois discordarem, o código é que está atrasado.
 
-**O código de hoje e o sistema projetado são coisas diferentes.** Existe uma especificação
-completa e aprovada, e o código ainda não foi reescrito para ela.
+| Antes de mexer em | Leia |
+|---|---|
+| qualquer coisa | [docs/plano-execucao.md](docs/plano-execucao.md) — o que já existe e o que vem |
+| comportamento, tela, botão | [docs/especificacao.md](docs/especificacao.md) — 25 decisões, 56 regras, 27 telas |
+| caminho de uso | [docs/fluxos.md](docs/fluxos.md) — 47 fluxos |
+| tabela, coluna | [docs/modelo-dados.md](docs/modelo-dados.md) |
+| endpoint | [docs/contrato-api.md](docs/contrato-api.md) |
+| login, token, sessão | [docs/autenticacao.md](docs/autenticacao.md) |
 
-| | Descreve | Use para |
-|---|---|---|
-| [especificacao.md](docs/especificacao.md) · [fluxos.md](docs/fluxos.md) · [modelo-dados.md](docs/modelo-dados.md) · [contrato-api.md](docs/contrato-api.md) | **O alvo** — o que construir | **Escrever código novo** |
-| [requisitos.md](docs/requisitos.md) · [arquitetura.md](docs/arquitetura.md) · [api.md](docs/api.md) | O código **como está hoje** | Entender o que existe |
+## Estado atual
 
-**Onde os dois divergem, o alvo manda.** Divergências conhecidas:
+A construção é por **fatias verticais**: cada uma entrega backend, frontend e testes de um
+pedaço que funciona ponta a ponta. Fatias 0 a 3 estão concluídas (fundação, acesso, perfil,
+atividades). As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
+propósito: chamariam endpoints que não existem, e tela quebrada é pior que tela ausente.
 
-| Assunto | Código hoje | Alvo |
-|---|---|---|
-| Identificador na API | `_id` (herança do MongoDB) | `id` (D29) |
-| Formato de erro | `{ message, details }` | `{ codigo, mensagem, detalhes }` |
-| Tabelas | inglês (`participations`) | português (`inscricoes`) |
-| Rotas | `/api/activities` | `/api/v1/atividades` |
-| Situações da atividade | 2 em uso | 4 gravadas + 2 calculadas |
-
-A seção "Backend — padrões obrigatórios" abaixo vale para **os dois**: são regras de
-estrutura, não de nomenclatura.
-
-**A travessia é por fatia vertical** — uma funcionalidade completa por vez, do banco à
-tela, mantendo o sistema sempre utilizável. A ordem das fatias e a definição de pronto
-estão em [plano-execucao.md](docs/plano-execucao.md). Consulte antes de começar qualquer
-implementação.
+Restam no frontend alguns arquivos da versão anterior (Node/Express) em `pages/org/`,
+`pages/student/` e `pages/public/` que ainda não foram migrados. Eles não estão roteados e
+falam com uma API que não existe mais — não os use como referência de padrão. Cada fatia
+apaga os que substitui.
 
 ## Comandos
 
@@ -42,86 +38,89 @@ implementação.
 docker compose up -d                          # Postgres local na porta 5433
 cd backend && alembic upgrade head            # aplica migrations
 cd backend && uvicorn app.main:app --reload --port 3000
-cd backend && pytest                          # suíte de testes
+cd backend && pytest -q                       # suíte completa
 cd frontend && npm run dev                    # SPA em :5173
 cd frontend && npm run build                  # precisa passar limpo antes de finalizar
-cd frontend && npm run lint                   # eslint, precisa passar sem erros
+cd frontend && npx eslint src                 # precisa passar sem erros
 ```
 
 O backend usa venv em `backend/.venv`. Ative antes, ou chame o Python de lá direto.
 
-**Primeira vez no projeto:**
-
-```bash
-cd backend && cp .env.example .env && python -m app.cli gerar-segredos && python -m app.cli gerar-chave
-```
-
-Cole os valores no `.env`. Sem `JWT_SECRET` e `CHECKIN_SECRET` a API se recusa a subir; sem
-`CHAVE_ASSINATURA` ela sobe, mas não emite certificado.
-
-Os testes usam **banco separado** (`DATABASE_URL_TESTE`), criado com:
-
-```bash
-docker exec mais-horas-pg psql -U postgres -c "CREATE DATABASE mais_horas_teste;"
-```
+Os testes usam um banco separado (`mais_horas_teste`), recriado no começo da sessão. Cada
+teste roda numa transação revertida ao final, então a ordem não importa.
 
 ## Idioma
 
-Código e documentação em **português**: nomes de variáveis de domínio, comentários,
-mensagens de erro da API e textos de interface. Nomes técnicos consagrados ficam em inglês
-(`create_activity`, `require_role`, `status: "present"`).
+Código e documentação em **português**: nomes de variáveis, funções, comentários, mensagens
+de erro da API e textos de interface. Nomes técnicos consagrados ficam em inglês
+(`access_token`, `request`, `router`).
 
 ## Backend — padrões obrigatórios
 
 O fluxo de toda requisição é fixo. Não pule etapas:
 
 ```
-rota -> Depends(get_current_user) -> Depends(require_role) -> Pydantic -> service -> SQLAlchemy
+rota -> Depends(usuario_atual) -> Depends(exigir_papel) -> Pydantic -> service -> SQLAlchemy
 ```
 
 1. **Validação sempre em `app/schemas/` com Pydantic**, declarada como type hint do
    endpoint. Nunca validar dentro do handler com `if not campo`.
 
-2. **Autorização sempre na assinatura da rota**, via `OrgUser` / `StudentUser` / `CurrentUser`
-   de `app/core/deps.py`. Checagem de dono (ownership) fica em helper do service.
+2. **Autorização sempre na assinatura da rota**, via `Estudante` / `Ong` / `Admin` /
+   `UsuarioAtual` de `app/core/deps.py`. Checagem de dono (ownership) fica em helper do
+   service — foi exatamente a falta dela que criou a falha L2 registrada em
+   [docs/requisitos.md](docs/requisitos.md).
 
 3. **Routers são finos.** Recebem, chamam o service, respondem. Se um handler passou de
    ~20 linhas, a regra pertence a `app/services/`.
 
-4. **Nunca `try/except` para virar resposta HTTP.** Lance `AppError` e deixe o handler
+4. **Nunca `try/except` para virar resposta HTTP.** Lance `ErroDeNegocio` e deixe o handler
    central formatar:
 
    ```python
-   raise AppError("Atividade não encontrada", status.HTTP_404_NOT_FOUND)
+   raise ErroDeNegocio("nao_encontrado", "Atividade não encontrada",
+                       status.HTTP_404_NOT_FOUND)
    ```
 
-5. **Toda resposta de erro sai pelos handlers de `app/core/errors.py`.** Nunca monte
-   formato novo no router. *(Hoje o formato é `{ message, details }`; no alvo passa a ser
-   `{ codigo, mensagem, detalhes }` — ver contrato-api.md.)*
+5. **Toda resposta de erro sai como `{ codigo, mensagem, detalhes? }`** — os handlers em
+   `app/core/errors.py` cuidam disso, inclusive normalizando o 422 do FastAPI para
+   `400 dados_invalidos`. O `422` fica reservado a erro semântico (`perfil_incompleto`).
+   Não invente formatos novos.
 
-6. **O formato de saída é responsabilidade de `app/utils/serialize.py`.** A tradução entre
-   o banco e o JSON mora lá e em nenhum outro lugar. *(Hoje traduz para `_id` e camelCase;
-   no alvo o campo é `id`.)*
+6. **Toda listagem devolve `Pagina`** (`app/schemas/comum.py`): `itens`, `pagina`,
+   `tamanho`, `total`, `paginas`. Um formato só, o frontend trata um só.
 
-7. **Nada de SQL cru.** Use SQLAlchemy. Se precisar de SQL literal numa migration, passe
-   por `run_script()` — o asyncpg recusa múltiplos comandos num prepared statement.
+7. **Filtro é do servidor.** Não devolva a lista inteira para o navegador peneirar — nem
+   quando o filtro depende de estado calculado.
 
-8. **Não adicione `print` de debug.** Log de erro real é do `errorHandler`.
+8. **Toda ação relevante passa por `auditoria.registrar()`.** O catálogo de ações é
+   fechado: ação fora dele levanta `ValueError` em vez de gravar lixo. `registrar()` não
+   dá commit — entra na transação de quem chamou, então ou tudo grava ou nada grava.
+
+9. **Nada de SQL cru.** Use SQLAlchemy. Se precisar de SQL literal numa migration, passe
+   por `executar_script()` de `app/db/migration_utils.py` — o asyncpg recusa múltiplos
+   comandos num prepared statement.
+
+10. **Não adicione `print` de debug.**
 
 ## Frontend — padrões obrigatórios
 
 **Antes de criar ou editar qualquer tela, leia a skill
 [`.claude/skills/frontend-maishoras/SKILL.md`](.claude/skills/frontend-maishoras/SKILL.md).**
-Ela tem a paleta, o catálogo de componentes reutilizáveis e as regras de responsividade.
+Ela tem a paleta, o catálogo de componentes e as regras de responsividade.
 
 O resumo curto:
 
 - **Sempre Mantine.** Sem Tailwind, sem HTML cru estilizado com `style` inline solto.
-- **Reaproveite `src/components/ui/`** antes de criar componente novo (`PageHeader`,
-  `StatCard`, `ActivityCard`, `EmptyState`, `Loading`, `StatusBadge`, `InfoItem`...).
-- **GET com `useFetch`**, mutations com o `api` de `src/services/api`.
-- **Sempre trate `loading` com `<Loading />`** e lista vazia com `<EmptyState />`.
-- **Feedback com `notifySuccess` / `notifyError`.** Nunca `alert()`.
+- **Reaproveite `src/components/`** antes de criar componente novo — `PageHeader`,
+  `EmptyState`, `Loading`, `ConfirmarAcao`, `CartaoAtividade`, `SituacaoBadge`.
+- **Erros da API com `mensagemDoErro(erro, padrão)`** de `services/api`, exibidos com
+  `notifyError`. Nunca `alert()`.
+- **Sempre trate `carregando` com `<Loading />`** e lista vazia com `<EmptyState />`.
+- **Data pura (`"2026-09-20"`) só com `formatDate`/`formatDateLong`** de `utils/format`.
+  `new Date()` direto lê como UTC e mostra o dia anterior no Brasil.
+- **Constante exportada não mora em arquivo de componente** — quebra o recarregamento
+  rápido do Vite. Veja `routes/destinos.js` e `components/atividade/situacoes.js`.
 - **Responsivo é obrigatório** — a maioria dos alunos acessa por celular. Teste em 375px.
 
 ## Sessão — não quebre estas regras
@@ -131,76 +130,62 @@ Leia [docs/autenticacao.md](docs/autenticacao.md) antes de mexer em qualquer coi
 - **O access token nunca vai para o `localStorage`.** Ele vive em memória, em
   `services/api.js`. Persistir o token desfaz a proteção contra XSS.
 - **O refresh token nunca aparece no corpo da resposta.** Só no cookie `httpOnly`.
-- **Só um refresh em voo por vez.** Use `refreshSession()`, que compartilha a promessa.
-  Chamar `/users/refresh` direto, em paralelo, derruba a sessão do usuário — o backend
-  rotaciona e trata reapresentação como possível roubo.
+- **Só um refresh em voo por vez.** Use `renovarSessao()`, que compartilha a promessa.
+  Chamar `/auth/renovar` direto, em paralelo, derrubava a sessão do usuário: o backend
+  rotaciona e trata reapresentação como possível roubo. Há uma janela de tolerância de 15s
+  no servidor para a corrida legítima — ela não substitui a promessa compartilhada.
 - **`withCredentials: true`** é obrigatório no axios, senão o cookie não viaja.
 
 ## Banco de dados
 
-Schema versionado com **Alembic** em `backend/alembic/versions/`.
+Schema versionado com **Alembic** em `backend/alembic/versions/`. Dez tabelas, nomes em
+português, restrições declaradas no banco e não só no código.
 
-Ao mudar o schema: gere a migration, e lembre que as existentes usam
-`CREATE TABLE IF NOT EXISTS` para funcionarem tanto em banco novo quanto num que já rodou
-o backend Node antigo.
+Invariantes que não podem ser quebradas:
 
-**Invariantes que não podem ser quebradas** — valem no código atual e no alvo, só mudam
-de nome (hoje em inglês, no alvo em português):
-
-- A tabela de inscrição é a **fonte única de verdade**. Nunca crie array de participantes
-  dentro da atividade.
-- **Uma inscrição por aluno e atividade**, garantida por `UNIQUE` no banco.
-- **Um certificado por inscrição**, garantido por `UNIQUE` no banco.
-- Atividade **não finaliza** com participação sem decisão de presença.
-- A tabela de refresh guarda **hash**, nunca o token em claro.
-
-O alvo acrescenta: certificado sempre assinado, auditoria somente de inserção, e só
-rascunho pode ser excluído. Ver [modelo-dados.md](docs/modelo-dados.md).
+- `inscricoes` é a fonte única de verdade da inscrição. Não crie array de participantes
+  dentro de `atividades`.
+- `UNIQUE(atividade_id, usuario_id)` em `inscricoes` — sem inscrição duplicada.
+- `inscricao_id UNIQUE` em `certificados` — um certificado por inscrição.
+- `certificados` copia nome, organização, título e data **no momento da emissão**. Não
+  troque por JOIN: a assinatura Ed25519 cobre esse texto, e ler o valor atual invalidaria
+  todo certificado antigo assim que uma ONG se renomeasse.
+- `registros_auditoria` **não tem FK para `usuarios`**, de propósito: um CASCADE apagaria
+  justamente a trilha do usuário sob investigação.
+- `tokens_sessao` guarda **hash**, nunca o token em claro.
+- Atividade não finaliza com inscrição `pendente`.
+- Situação de atividade **não tem processo em segundo plano**. `em_andamento` e
+  `aguardando_validacao` são calculadas na leitura, comparando data e hora com o relógio.
+  Não crie scheduler para isso.
 
 ## Antes de finalizar
 
-- `cd backend && pytest` — tudo verde.
-- `cd frontend && npm run build && npm run lint` — ambos limpos.
+- `cd backend && pytest -q` — tudo verde.
+- `cd frontend && npm run build && npx eslint src` — ambos limpos.
+- Verifique no navegador o que dá para verificar.
 
 ## Documentação
 
 Ao mudar algo estrutural, atualize o doc correspondente:
 
-**Desenho do alvo** — atualize ao decidir algo novo:
-
 | Mudou | Atualize |
 |---|---|
-| Ordem de implementação, fatia | [plano-execucao.md](docs/plano-execucao.md) |
-| Comportamento, tela, botão, estado | [especificacao.md](docs/especificacao.md) |
-| Caminho de uso, erro tratado, cenário | [fluxos.md](docs/fluxos.md) |
-| Tabela, coluna, restrição, índice | [modelo-dados.md](docs/modelo-dados.md) |
-| Endpoint, payload, código de erro | [contrato-api.md](docs/contrato-api.md) |
+| Fatia entregue, decisão de implementação | [docs/plano-execucao.md](docs/plano-execucao.md) |
+| Comportamento novo, tela, botão, estado | [docs/especificacao.md](docs/especificacao.md) |
+| Caminho de uso, erro tratado, cenário | [docs/fluxos.md](docs/fluxos.md) |
+| Tabela, coluna, restrição, índice | [docs/modelo-dados.md](docs/modelo-dados.md) |
+| Endpoint, payload, código de erro | [docs/contrato-api.md](docs/contrato-api.md) |
+| Pastas, componentes, rotas de tela | [docs/arquitetura.md](docs/arquitetura.md) |
+| Login, token, sessão | [docs/autenticacao.md](docs/autenticacao.md) |
+| Env, build, deploy | [docs/deploy.md](docs/deploy.md) |
+| Estratégia de certificado ou presença | [docs/desafio-tecnico.md](docs/desafio-tecnico.md) |
 
-**Retrato do código atual** — atualize ao mexer no que já existe:
-
-| Mudou | Atualize |
-|---|---|
-| Pastas, componentes, rotas de tela | [arquitetura.md](docs/arquitetura.md) |
-| Endpoint existente | [api.md](docs/api.md) |
-| Regra ou lacuna do sistema atual | [requisitos.md](docs/requisitos.md) |
-
-**Transversais** — valem para os dois:
-
-| Mudou | Atualize |
-|---|---|
-| Login, token, sessão | [autenticacao.md](docs/autenticacao.md) |
-| Env, build, deploy | [deploy.md](docs/deploy.md) |
-| Padrão do backend, dívida técnica | [backend-refactor.md](docs/backend-refactor.md) |
-| Estratégia de certificado ou presença | [desafio-tecnico.md](docs/desafio-tecnico.md) |
-
-O PDF entregue na faculdade é gerado por [docs/requisitos-abnt/](docs/requisitos-abnt/).
-Ao mudar uma regra de negócio, atualize o script de lá também.
+`docs/api.md` e `docs/backend-refactor.md` são **históricos** — descrevem o backend
+anterior ao redesenho. Quem manda hoje é `contrato-api.md`.
 
 ## Dívida técnica conhecida
 
-Registrada em [docs/backend-refactor.md](docs/backend-refactor.md) — não são regressões,
-são pendências mapeadas: cobertura de teste rasa (só smoke test, sem pytest), uploads
-efêmeros em produção e rate limit em memória por processo.
-
-A maior pendência, porém, é a distância entre o código atual e o desenho aprovado — ver o
-aviso no topo deste arquivo.
+- Uploads gravados em disco local — somem a cada deploy em serviço efêmero.
+- Rate limit em memória, por processo: não vale para mais de uma instância.
+- E-mail em modo console; não há envio real configurado.
+- Telas da versão anterior ainda não migradas, descritas em "Estado atual".

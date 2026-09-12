@@ -97,13 +97,30 @@ preencher, e a foto sobe, é servida pela API e renderiza.
 
 ---
 
-### Fatia 3 — Atividades
+### Fatia 3 — Atividades ✅ concluída
 
 **Backend:** CRUD, rascunho, publicar, cancelar, vitrine paginada e filtrada no servidor
 **Frontend:** `E2` Vitrine · `E3` Detalhe · `O2` Minhas atividades · `O3` Criar/editar · `O4` Gerenciar
 **Fluxos:** FE-01, FO-01 a FO-04, FO-10 · **Regras:** RN-05 a RN-11, RN-20, RN-47 a RN-49
 
-**Pronto quando:** a ONG publica uma atividade e o aluno a encontra na vitrine.
+**Pronto quando:** a ONG publica uma atividade e o aluno a encontra na vitrine. ✅
+
+Entregue: `app/schemas/atividade.py`, `app/services/atividade_service.py`,
+`app/routers/atividades.py`, 57 testes em `tests/test_atividades.py`; no frontend,
+`components/atividade/`, `components/layout/PainelLayout.jsx`,
+`components/ui/ConfirmarAcao.jsx` e as cinco telas.
+
+Três decisões tomadas durante a implementação:
+
+- **As abas derivadas de `O2` filtram no servidor.** "Acontecendo" e "A validar" não
+  existem no banco, mas separá-las no navegador daria total e paginação errados — a
+  consulta compara `data`/`hora` contra o relógio do Brasil, calculado em Python para não
+  depender do fuso configurado no Postgres.
+- **`tzdata` entrou nas dependências.** Sem ele, `ZoneInfo("America/Sao_Paulo")` falha no
+  boot em Windows e em imagens enxutas de servidor.
+- **Data pura ganhou formatação própria no frontend.** `new Date("2026-09-20")` é lido
+  como meia-noite UTC e no Brasil renderiza o dia 19; toda atividade apareceria um dia
+  antes.
 
 ---
 
