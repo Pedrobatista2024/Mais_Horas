@@ -85,9 +85,9 @@ gravação em disco por um storage externo (Cloudinary, S3 ou R2) em
 `backend/app/services/user_service.py`. Está registrado como dívida técnica em
 [backend-refactor.md](backend-refactor.md).
 
-> Hoje as fotos em `backend/uploads/` estão **versionadas no git** — é o único motivo de
-> as imagens já existentes sobreviverem a um redeploy. O `backend/.gitignore` explica a
-> situação e o que fazer quando o storage externo entrar.
+> As fotos em `backend/uploads/` **não são versionadas**. Houve um período em que ficaram
+> no git por acidente — um padrão errado no `.gitignore` — mas eram imagens órfãs da versão
+> em MongoDB, sem nenhum usuário apontando para elas, e foram removidas.
 
 ## Nota sobre o plano free
 

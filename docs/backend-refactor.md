@@ -160,13 +160,13 @@ Levantada durante a organização da documentação, ainda não resolvida:
 - **Cobertura de teste é rasa.** O `smoke_test.py` cobre o caminho feliz e as travas
   principais dos 25 endpoints, mas não é suíte unitária: não há teste de borda por service,
   nem runner (pytest) configurado.
-- **Uploads efêmeros** em produção (item 8). Hoje as fotos ficam versionadas no git, que é
-  o único motivo de sobreviverem a um redeploy — ver `backend/.gitignore`.
+- **Uploads efêmeros** em produção (item 8). As fotos gravadas em disco somem a cada
+  redeploy no plano free do Render. A correção é storage externo (Cloudinary/S3/R2).
 - **Rate limit em memória, por processo.** Com mais de um worker o limite vira "20 por
   worker". Corrigir exige contador compartilhado (Redis).
 - **Refresh tokens expirados não são limpos** da tabela. Convém uma rotina periódica.
-- **`frontend/.env`** está versionado no git. Hoje só contém `VITE_API_URL`, mas o padrão
-  convida a vazar segredo depois.
+- ~~`frontend/.env` versionado~~ — resolvido: removido do índice e coberto pelo
+  `.gitignore` da raiz.
 
 Resolvidos na migração para FastAPI: ausência de migrations, ausência de testes,
 `backend/.gitignore` com padrão que não ignorava nada, e o arquivo órfão `backend/cod.js`.

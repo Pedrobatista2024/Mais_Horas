@@ -1,0 +1,45 @@
+# ===== Mais Horas — ignorados em todo o repositório =====
+#
+# Cada subprojeto tem o seu próprio .gitignore com o que é específico dele:
+#   backend/.gitignore   — Python
+#   frontend/.gitignore  — Node e Vite
+# Aqui fica o que vale para o repositório inteiro.
+
+# ===== Segredos =====
+# Nunca versionar. Os modelos ficam em *.env.example, esses sim versionados.
+.env
+.env.local
+.env.*.local
+
+# ===== Dependências =====
+node_modules/
+.venv/
+venv/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ===== Ferramentas de IA e áreas de trabalho temporárias =====
+.codex-temp/
+.claude/worktrees/
+
+# ===== Sistema operacional =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Editores =====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
+
+# ===== Saídas de build e log =====
+dist/
+build/
+*.log

@@ -1,25 +1,23 @@
+# ===== Backend (Python / FastAPI) =====
+# O que vale para o repositório inteiro está no .gitignore da raiz.
+
+# Ambiente virtual
+.venv/
+venv/
+
 # Python
 __pycache__/
 *.py[cod]
-.venv/
-venv/
 .pytest_cache/
 .ruff_cache/
 
-# Ambiente
+# Segredos
 .env
 
-# Uploads
+# Uploads de usuário
 #
-# ATENÇÃO: as fotos de perfil em uploads/ estão versionadas de propósito.
-# O disco do plano free do Render é efêmero, então hoje o repositório é o
-# único lugar onde essas imagens sobrevivem a um redeploy. Versionar upload
-# de usuário é ruim (incha o repo), mas ignorá-las agora quebraria as fotos
-# já em uso.
-#
-# A correção de verdade é trocar o disco por storage externo (Cloudinary/S3/R2)
-# em app/services/user_service.py. Quando isso for feito, descomente a linha
-# abaixo e remova os arquivos do índice com:
-#   git rm -r --cached backend/uploads
-#
-# uploads/
+# Ficam fora do git. O disco do plano free do Render é efêmero, então em
+# produção estas imagens somem a cada redeploy — a correção é storage externo
+# (Cloudinary/S3/R2) em app/services/user_service.py, registrada como dívida
+# técnica em docs/backend-refactor.md.
+uploads/
