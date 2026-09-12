@@ -6,7 +6,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   IconBuildingCommunity, IconCalendarEvent, IconChevronRight,
-  IconLayoutDashboard, IconLogout, IconPlus, IconSearch, IconUser,
+  IconLayoutDashboard, IconLogout, IconPlus, IconSearch, IconTicket, IconUser,
 } from "@tabler/icons-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -23,6 +23,7 @@ import BrandMark from "../ui/BrandMark";
 const MENU_ESTUDANTE = [
   { rotulo: "Painel", para: "/painel", icone: IconLayoutDashboard, exato: true },
   { rotulo: "Buscar atividades", para: "/atividades", icone: IconSearch },
+  { rotulo: "Minhas inscrições", para: "/minhas-inscricoes", icone: IconTicket },
 ];
 
 const MENU_ONG = [

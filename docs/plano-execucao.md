@@ -124,14 +124,32 @@ Três decisões tomadas durante a implementação:
 
 ---
 
-### Fatia 4 — Inscrições
+### Fatia 4 — Inscrições ✅ concluída
 
 **Backend:** inscrever, cancelar, aprovar, recusar, listar
 **Frontend:** `E4` Minhas inscrições · `O5` Inscrições
 **Fluxos:** FE-02 a FE-04, FE-06, FO-05, FO-06 · **Regras:** RN-01, RN-12, RN-14, RN-19
 
 **Pronto quando:** o aluno se inscreve, a ONG aprova, e o limite de 5 inscrições barra
-quem passar do teto.
+quem passar do teto. ✅
+
+Entregue: `app/schemas/inscricao.py`, `app/services/inscricao_service.py`,
+`app/routers/inscricoes.py`, 50 testes em `tests/test_inscricoes.py`; no frontend,
+`components/atividade/BotaoInscricao.jsx` e as duas telas.
+
+Quatro decisões tomadas durante a implementação:
+
+- **A inscrição trava a linha da atividade (`SELECT ... FOR UPDATE`).** Duas pessoas
+  clicando na última vaga ao mesmo tempo leriam as duas "resta 1" e as duas entrariam. A
+  restrição de unicidade não pega esse caso, porque são alunos diferentes.
+- **Reinscrever reaproveita a linha.** O par (atividade, aluno) é único no banco, então
+  quem cancelou e volta atrás (FE-04 A3) tem a mesma inscrição reativada, não uma nova.
+- **`aprovar-lote` recebe os ids, não "todas as pendentes".** "Aprovar todas" aprova o que
+  a ONG viu na tela; quem se inscreveu entre o carregamento e o clique fica de fora, que é
+  o certo. O lote devolve um placar em vez de tudo-ou-nada: uma inscrição cancelada no
+  meio do caminho não pode derrubar as aprovações válidas nem sumir em silêncio.
+- **O teto da RN-46 conta só o que ainda vai acontecer.** Contar inscrição de atividade
+  passada travaria o aluno para sempre depois de cinco participações.
 
 ---
 

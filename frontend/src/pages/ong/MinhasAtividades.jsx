@@ -4,7 +4,8 @@ import {
   Button, Center, Group, Pagination, SimpleGrid, Stack, Tabs,
 } from "@mantine/core";
 import {
-  IconCalendarPlus, IconEdit, IconPlus, IconSettings, IconTrash, IconX,
+  IconCalendarPlus, IconEdit, IconPlus, IconSettings, IconTrash,
+  IconUsersGroup, IconX,
 } from "@tabler/icons-react";
 
 import CartaoAtividade from "../../components/atividade/CartaoAtividade";
@@ -127,6 +128,14 @@ export default function MinhasAtividades() {
             Gerenciar
           </Button>
         </Group>
+
+        {situacao !== "rascunho" && (
+          <Button size="compact-sm" variant="subtle"
+                  leftSection={<IconUsersGroup size={14} />}
+                  onClick={() => navegar(`/ong/atividades/${id}/inscricoes`)}>
+            Inscrições ({atividade.vagasOcupadas})
+          </Button>
+        )}
 
         {situacao === "rascunho" && (
           <Button size="compact-sm" variant="subtle" color="red"

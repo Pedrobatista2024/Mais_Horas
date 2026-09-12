@@ -25,6 +25,11 @@ const MinhasAtividades = lazy(() => import("./pages/ong/MinhasAtividades"));
 const FormularioAtividade = lazy(() => import("./pages/ong/FormularioAtividade"));
 const GerenciarAtividade = lazy(() => import("./pages/ong/GerenciarAtividade"));
 
+// Inscrições — Fatia 4
+const MinhasInscricoes = lazy(() => import("./pages/estudante/MinhasInscricoes"));
+const InscricoesDaAtividade = lazy(() =>
+  import("./pages/ong/InscricoesDaAtividade"));
+
 /**
  * As rotas entram fatia a fatia (docs/plano-execucao.md). As telas das fatias
  * seguintes ainda não estão listadas aqui porque chamariam endpoints que não
@@ -69,6 +74,7 @@ export default function App() {
             <Route path="/painel" element={<EmConstrucao />} />
             <Route path="/atividades" element={<Vitrine />} />
             <Route path="/atividades/:id" element={<DetalheAtividade />} />
+            <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
           </Route>
 
           {/* Organização */}
@@ -78,6 +84,8 @@ export default function App() {
             <Route path="/ong/atividades/nova" element={<FormularioAtividade />} />
             <Route path="/ong/atividades/:id" element={<GerenciarAtividade />} />
             <Route path="/ong/atividades/:id/editar" element={<FormularioAtividade />} />
+            <Route path="/ong/atividades/:id/inscricoes"
+                   element={<InscricoesDaAtividade />} />
           </Route>
 
           {/* Administração */}
@@ -90,6 +98,8 @@ export default function App() {
           <Route path="/register" element={<Navigate to="/criar-conta" replace />} />
           <Route path="/dashboard" element={<Navigate to="/painel" replace />} />
           <Route path="/activities" element={<Navigate to="/atividades" replace />} />
+          <Route path="/my-activities"
+                 element={<Navigate to="/minhas-inscricoes" replace />} />
           <Route path="/org/my-activities" element={<Navigate to="/ong/atividades" replace />} />
           <Route path="/org/create-activity"
                  element={<Navigate to="/ong/atividades/nova" replace />} />

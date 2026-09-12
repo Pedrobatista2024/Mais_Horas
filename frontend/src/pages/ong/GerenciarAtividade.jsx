@@ -5,7 +5,7 @@ import {
 } from "@mantine/core";
 import {
   IconAlertTriangle, IconArrowLeft, IconCalendar, IconClock, IconEdit,
-  IconEye, IconMapPin, IconTrash, IconUsers, IconX,
+  IconEye, IconMapPin, IconTrash, IconUsers, IconUsersGroup, IconX,
 } from "@tabler/icons-react";
 
 import SituacaoBadge from "../../components/atividade/SituacaoBadge";
@@ -206,6 +206,13 @@ export default function GerenciarAtividade() {
               <Button variant="light" leftSection={<IconEdit size={16} />}
                       onClick={() => navegar(`/ong/atividades/${id}/editar`)}>
                 Editar
+              </Button>
+            )}
+            {!eRascunho && (
+              <Button variant="light" leftSection={<IconUsersGroup size={16} />}
+                      onClick={() => navegar(`/ong/atividades/${id}/inscricoes`)}>
+                Ver inscrições
+                {atividade.vagasOcupadas > 0 && ` (${atividade.vagasOcupadas})`}
               </Button>
             )}
             {!eRascunho && (

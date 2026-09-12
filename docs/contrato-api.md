@@ -257,6 +257,16 @@ para visitante e para quem não se inscreveu — é o que define qual botão o c
 | `POST` | `/inscricoes/aprovar-lote` | 🏢 | Aprova várias de uma vez |
 | `PUT` | `/inscricoes/{id}/presenca` | 🏢 | Marca presente ou ausente |
 
+**`GET /inscricoes/minhas`** — filtro `grupo`: `proximas` · `aguardando` · `historico`.
+São as abas de `E4`, separadas **no servidor** pelo mesmo motivo das abas de `O2`.
+`historico` inclui a confirmada cuja atividade já passou.
+
+**`POST /inscricoes/aprovar-lote`** → `{ "ids": ["...", "..."] }` →
+`{ "aprovadas": 2, "ignoradas": [{ "id": "...", "motivo": "..." }] }`
+
+A ONG manda **quais** aprovar, não "todas as pendentes": quem se inscreveu entre o
+carregamento da tela e o clique fica de fora, porque a ONG não decidiu sobre quem não viu.
+
 **`POST /inscricoes`** → `{ "atividadeId": "..." }`
 
 | Código de erro | Situação |
@@ -267,6 +277,10 @@ para visitante e para quem não se inscreveu — é o que define qual botão o c
 | `perfil_incompleto` | `422` (RN-45) — o corpo diz quais campos faltam |
 | `limite_de_inscricoes` | `422` (RN-46) |
 | `cancelamento_fora_do_prazo` | `400` (RN-20) |
+| `atividade_cancelada` | `400` — a atividade caiu entre a tela e o clique |
+
+> **A inscrição serializa por atividade.** O serviço trava a linha da atividade antes de
+> contar as vagas: sem isso, dois cliques simultâneos na última vaga passariam os dois.
 
 **`PUT /inscricoes/{id}/presenca`** → `{ "situacao": "presente" }`
 

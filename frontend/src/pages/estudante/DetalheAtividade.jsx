@@ -8,6 +8,7 @@ import {
   IconMapPin, IconShare, IconUsers,
 } from "@tabler/icons-react";
 
+import BotaoInscricao from "../../components/atividade/BotaoInscricao";
 import SituacaoBadge from "../../components/atividade/SituacaoBadge";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
@@ -171,10 +172,7 @@ export default function DetalheAtividade() {
         <Divider my="lg" />
 
         <Group gap="sm" wrap="wrap">
-          {/* O botão de inscrição chega na próxima fatia, com as regras de vaga. */}
-          <Button disabled title="Disponível em breve">
-            {atividade.lotada ? "Vagas esgotadas" : "Inscrever-se"}
-          </Button>
+          <BotaoInscricao atividade={atividade} aoMudar={buscar} />
           {atividade.local && (
             <Button component="a" href={mapa} target="_blank" rel="noreferrer"
                     variant="light" leftSection={<IconMapPin size={16} />}>

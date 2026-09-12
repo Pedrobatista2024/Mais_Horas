@@ -23,8 +23,8 @@ o código: quando os dois discordarem, o código é que está atrasado.
 ## Estado atual
 
 A construção é por **fatias verticais**: cada uma entrega backend, frontend e testes de um
-pedaço que funciona ponta a ponta. Fatias 0 a 3 estão concluídas (fundação, acesso, perfil,
-atividades). As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
+pedaço que funciona ponta a ponta. Fatias 0 a 4 estão concluídas (fundação, acesso, perfil,
+atividades, inscrições). As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
 propósito: chamariam endpoints que não existem, e tela quebrada é pior que tela ausente.
 
 Restam no frontend alguns arquivos da versão anterior (Node/Express) em `pages/org/`,
@@ -154,6 +154,11 @@ Invariantes que não podem ser quebradas:
   justamente a trilha do usuário sob investigação.
 - `tokens_sessao` guarda **hash**, nunca o token em claro.
 - Atividade não finaliza com inscrição `pendente`.
+- `UNIQUE(atividade_id, usuario_id)` significa que **reinscrever reaproveita a linha**.
+  Não insira uma segunda: quem cancelou e voltou atrás tem a mesma inscrição reativada.
+- Contagem de vaga em operação de escrita exige travar a linha da atividade
+  (`with_for_update`). Contar sem travar deixa dois cliques simultâneos ocuparem a mesma
+  última vaga.
 - Situação de atividade **não tem processo em segundo plano**. `em_andamento` e
   `aguardando_validacao` são calculadas na leitura, comparando data e hora com o relógio.
   Não crie scheduler para isso.

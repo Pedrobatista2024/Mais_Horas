@@ -12,7 +12,8 @@ from app.schemas.atividade import (
     AtividadeEdicao, AtividadeEntrada, AtividadeSaida, MotivoEntrada,
 )
 from app.schemas.comum import Pagina
-from app.services import atividade_service
+from app.schemas.inscricao import InscricaoSaida
+from app.services import atividade_service, inscricao_service
 
 router = APIRouter(prefix="/atividades", tags=["atividades"])
 
@@ -70,6 +71,20 @@ async def detalhe(
     atividade_id: uuid.UUID, sessao: Sessao, usuario: Opcional
 ) -> dict:
     return await atividade_service.detalhar(sessao, atividade_id, usuario=usuario)
+
+
+@router.get("/{atividade_id}/inscricoes", response_model=Pagina[InscricaoSaida])
+async def inscritos(
+    atividade_id: uuid.UUID, ong: Ong, sessao: Sessao,
+    situacao: str | None = None,
+    pagina: int = Query(1, ge=1),
+    tamanho: int = Query(50, ge=1, le=200),
+) -> Pagina:
+    """Tela `O5`. Os nomes só aparecem para a ONG dona da atividade (RN-47)."""
+    itens, total = await inscricao_service.listar_da_atividade(
+        sessao, ong, atividade_id, situacao=situacao, pagina=pagina, tamanho=tamanho
+    )
+    return Pagina.montar(itens, total, pagina, tamanho)
 
 
 @router.post("", response_model=AtividadeSaida, status_code=status.HTTP_201_CREATED)

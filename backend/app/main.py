@@ -18,7 +18,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import config
 from app.core.errors import registrar_handlers
 from app.db.session import engine
-from app.routers import atividades, auth, perfil
+from app.routers import atividades, auth, inscricoes, perfil
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("mais_horas")
@@ -127,6 +127,7 @@ async def saude() -> dict[str, str]:
 app.include_router(auth.router, prefix=PREFIXO)
 app.include_router(perfil.router, prefix=PREFIXO)
 app.include_router(atividades.router, prefix=PREFIXO)
+app.include_router(inscricoes.router, prefix=PREFIXO)
 
 # A entrar nas próximas fatias:
 #   Fatia 4  /api/v1/inscricoes

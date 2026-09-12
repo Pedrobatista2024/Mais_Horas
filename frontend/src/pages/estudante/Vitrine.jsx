@@ -7,6 +7,7 @@ import {
 import { useDebouncedValue } from "@mantine/hooks";
 import { IconFilterOff, IconSearch, IconSearchOff } from "@tabler/icons-react";
 
+import BotaoInscricao from "../../components/atividade/BotaoInscricao";
 import CartaoAtividade from "../../components/atividade/CartaoAtividade";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
@@ -159,10 +160,14 @@ export default function Vitrine() {
                 atividade={atividade}
                 aoClicar={() => navegar(`/atividades/${atividade.id}`)}
                 rodape={
-                  <Button variant="light" fullWidth
-                          onClick={() => navegar(`/atividades/${atividade.id}`)}>
-                    Ver detalhes
-                  </Button>
+                  <Stack gap={6} onClick={(e) => e.stopPropagation()}>
+                    <BotaoInscricao atividade={atividade} aoMudar={buscar}
+                                    tamanho="compact-sm" largo />
+                    <Button variant="subtle" size="compact-sm" fullWidth
+                            onClick={() => navegar(`/atividades/${atividade.id}`)}>
+                      Ver detalhes
+                    </Button>
+                  </Stack>
                 }
               />
             ))}
