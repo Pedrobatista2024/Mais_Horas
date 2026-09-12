@@ -8,7 +8,28 @@ Mais Horas — plataforma que conecta estudantes e ONGs para horas de extensão,
 certificado validável por QR Code. Monorepo simples: `backend/` (FastAPI + Postgres) e
 `frontend/` (React + Vite + Mantine).
 
-Antes de mexer em qualquer coisa, vale ler [docs/arquitetura.md](docs/arquitetura.md).
+## ⚠️ Leia isto antes de escrever código
+
+**O código de hoje e o sistema projetado são coisas diferentes.** Existe uma especificação
+completa e aprovada, e o código ainda não foi reescrito para ela.
+
+| | Descreve | Use para |
+|---|---|---|
+| [especificacao.md](docs/especificacao.md) · [fluxos.md](docs/fluxos.md) · [modelo-dados.md](docs/modelo-dados.md) · [contrato-api.md](docs/contrato-api.md) | **O alvo** — o que construir | **Escrever código novo** |
+| [requisitos.md](docs/requisitos.md) · [arquitetura.md](docs/arquitetura.md) · [api.md](docs/api.md) | O código **como está hoje** | Entender o que existe |
+
+**Onde os dois divergem, o alvo manda.** Divergências conhecidas:
+
+| Assunto | Código hoje | Alvo |
+|---|---|---|
+| Identificador na API | `_id` (herança do MongoDB) | `id` (D29) |
+| Formato de erro | `{ message, details }` | `{ codigo, mensagem, detalhes }` |
+| Tabelas | inglês (`participations`) | português (`inscricoes`) |
+| Rotas | `/api/activities` | `/api/v1/atividades` |
+| Situações da atividade | 2 em uso | 4 gravadas + 2 calculadas |
+
+A seção "Backend — padrões obrigatórios" abaixo vale para **os dois**: são regras de
+estrutura, não de nomenclatura.
 
 ## Comandos
 
@@ -54,11 +75,13 @@ rota -> Depends(get_current_user) -> Depends(require_role) -> Pydantic -> servic
    raise AppError("Atividade não encontrada", status.HTTP_404_NOT_FOUND)
    ```
 
-5. **Toda resposta de erro sai como `{ message, details? }`** — os handlers em
-   `app/core/errors.py` cuidam disso. Não invente formatos novos.
+5. **Toda resposta de erro sai pelos handlers de `app/core/errors.py`.** Nunca monte
+   formato novo no router. *(Hoje o formato é `{ message, details }`; no alvo passa a ser
+   `{ codigo, mensagem, detalhes }` — ver contrato-api.md.)*
 
-6. **O formato de saída é responsabilidade de `app/utils/serialize.py`.** O frontend espera
-   `_id` e camelCase; a tradução mora lá e em nenhum outro lugar.
+6. **O formato de saída é responsabilidade de `app/utils/serialize.py`.** A tradução entre
+   o banco e o JSON mora lá e em nenhum outro lugar. *(Hoje traduz para `_id` e camelCase;
+   no alvo o campo é `id`.)*
 
 7. **Nada de SQL cru.** Use SQLAlchemy. Se precisar de SQL literal numa migration, passe
    por `run_script()` — o asyncpg recusa múltiplos comandos num prepared statement.
@@ -101,16 +124,18 @@ Ao mudar o schema: gere a migration, e lembre que as existentes usam
 `CREATE TABLE IF NOT EXISTS` para funcionarem tanto em banco novo quanto num que já rodou
 o backend Node antigo.
 
-Invariantes que não podem ser quebradas:
+**Invariantes que não podem ser quebradas** — valem no código atual e no alvo, só mudam
+de nome (hoje em inglês, no alvo em português):
 
-- `participations` é a fonte única de verdade da inscrição. Não crie array de participantes
-  dentro de `activities`.
-- `UNIQUE(activity_id, user_id)` em `participations` — sem inscrição duplicada.
-- `participation_id UNIQUE` em `certificates` — um certificado por participação.
-- Atividade não finaliza com participação `pending`.
-- `refresh_tokens` guarda **hash**, nunca o token em claro.
+- A tabela de inscrição é a **fonte única de verdade**. Nunca crie array de participantes
+  dentro da atividade.
+- **Uma inscrição por aluno e atividade**, garantida por `UNIQUE` no banco.
+- **Um certificado por inscrição**, garantido por `UNIQUE` no banco.
+- Atividade **não finaliza** com participação sem decisão de presença.
+- A tabela de refresh guarda **hash**, nunca o token em claro.
 
-A API expõe o `id` também como `"_id"` (alias, herança do MongoDB). Manter, o frontend depende.
+O alvo acrescenta: certificado sempre assinado, auditoria somente de inserção, e só
+rascunho pode ser excluído. Ver [modelo-dados.md](docs/modelo-dados.md).
 
 ## Antes de finalizar
 
@@ -121,22 +146,40 @@ A API expõe o `id` também como `"_id"` (alias, herança do MongoDB). Manter, o
 
 Ao mudar algo estrutural, atualize o doc correspondente:
 
+**Desenho do alvo** — atualize ao decidir algo novo:
+
 | Mudou | Atualize |
 |---|---|
-| Comportamento novo, tela, botão, estado | [docs/especificacao.md](docs/especificacao.md) |
-| Caminho de uso, erro tratado, cenário | [docs/fluxos.md](docs/fluxos.md) |
-| Tabela, coluna, restrição, índice | [docs/modelo-dados.md](docs/modelo-dados.md) |
-| Endpoint, payload, código de erro | [docs/contrato-api.md](docs/contrato-api.md) |
-| Regra de negócio, permissão de perfil, fluxo | [docs/requisitos.md](docs/requisitos.md) |
-| Pastas, componentes, rotas de tela, schema | [docs/arquitetura.md](docs/arquitetura.md) |
-| Endpoint, payload, regra de acesso | [docs/api.md](docs/api.md) |
-| Login, token, sessão | [docs/autenticacao.md](docs/autenticacao.md) |
-| Env, build, deploy | [docs/deploy.md](docs/deploy.md) |
-| Padrão do backend, dívida técnica | [docs/backend-refactor.md](docs/backend-refactor.md) |
-| Estratégia de certificado ou presença | [docs/desafio-tecnico.md](docs/desafio-tecnico.md) |
+| Comportamento, tela, botão, estado | [especificacao.md](docs/especificacao.md) |
+| Caminho de uso, erro tratado, cenário | [fluxos.md](docs/fluxos.md) |
+| Tabela, coluna, restrição, índice | [modelo-dados.md](docs/modelo-dados.md) |
+| Endpoint, payload, código de erro | [contrato-api.md](docs/contrato-api.md) |
+
+**Retrato do código atual** — atualize ao mexer no que já existe:
+
+| Mudou | Atualize |
+|---|---|
+| Pastas, componentes, rotas de tela | [arquitetura.md](docs/arquitetura.md) |
+| Endpoint existente | [api.md](docs/api.md) |
+| Regra ou lacuna do sistema atual | [requisitos.md](docs/requisitos.md) |
+
+**Transversais** — valem para os dois:
+
+| Mudou | Atualize |
+|---|---|
+| Login, token, sessão | [autenticacao.md](docs/autenticacao.md) |
+| Env, build, deploy | [deploy.md](docs/deploy.md) |
+| Padrão do backend, dívida técnica | [backend-refactor.md](docs/backend-refactor.md) |
+| Estratégia de certificado ou presença | [desafio-tecnico.md](docs/desafio-tecnico.md) |
+
+O PDF entregue na faculdade é gerado por [docs/requisitos-abnt/](docs/requisitos-abnt/).
+Ao mudar uma regra de negócio, atualize o script de lá também.
 
 ## Dívida técnica conhecida
 
 Registrada em [docs/backend-refactor.md](docs/backend-refactor.md) — não são regressões,
 são pendências mapeadas: cobertura de teste rasa (só smoke test, sem pytest), uploads
-efêmeros em produção, rate limit em memória por processo, e `frontend/.env` versionado.
+efêmeros em produção e rate limit em memória por processo.
+
+A maior pendência, porém, é a distância entre o código atual e o desenho aprovado — ver o
+aviso no topo deste arquivo.
