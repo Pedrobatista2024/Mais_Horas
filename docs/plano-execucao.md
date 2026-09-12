@@ -34,7 +34,7 @@ nunca quebrado.
 
 ## 3. As fatias
 
-### Fatia 0 — Fundação
+### Fatia 0 — Fundação ✅ concluída
 
 Única que não é vertical: não tem tela, mas nada existe sem ela.
 
@@ -44,7 +44,17 @@ nunca quebrado.
 - `pytest` configurado, com banco de teste isolado
 - Geração e carga da chave de assinatura
 
-**Pronto quando:** `alembic upgrade head` cria as 10 tabelas e o pytest roda vazio sem erro.
+**Pronto quando:** `alembic upgrade head` cria as 10 tabelas e o pytest roda sem erro.
+
+**Entregue:** migration única criando as 10 tabelas em português mais a view
+`atividades_com_situacao`, que calcula `em_andamento` e `aguardando_validacao` a partir do
+relógio (D22) · modelos SQLAlchemy com as restrições declaradas no banco · `core/security`
+com Argon2id, JWT, refresh, assinatura Ed25519 e token de check-in derivado do tempo ·
+`core/errors` no formato `{ codigo, mensagem, detalhes }` · `app/cli.py` para gerar chaves e
+criar o primeiro administrador · **45 testes em pytest**, com banco isolado.
+
+O código antigo que dependia do schema em inglês foi removido — routers, services, schemas,
+utils e o `smoke_test.py`. Volta fatia a fatia, no contrato novo.
 
 ---
 

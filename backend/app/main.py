@@ -1,8 +1,9 @@
 """
 Ponto de entrada da API Mais Horas.
 
-Equivalente ao server.js do backend Node: checagem de ambiente, segurança,
-CORS, arquivos estáticos, rotas e tratamento central de erro.
+**Fatia 0 — Fundação.** Ainda não há rotas de negócio: elas entram fatia a
+fatia, conforme docs/plano-execucao.md. Este arquivo já traz a checagem de
+ambiente, os cabeçalhos de segurança, o CORS e os handlers de erro.
 """
 
 from __future__ import annotations
@@ -16,112 +17,120 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.core.config import settings
-from app.core.errors import register_error_handlers
+from app.core.config import config
+from app.core.errors import registrar_handlers
 from app.db.session import engine
-from app.routers import activities, certificates, dashboard, participations, users
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("mais_horas")
+log = logging.getLogger("mais_horas")
+
+PREFIXO = "/api/v1"
 
 # ===== Checagens de ambiente =====
-if not settings.jwt_secret:
+# Falhar no boot é melhor que descobrir em produção que o segredo não existe.
+
+if not config.jwt_secret:
     raise SystemExit(
-        "JWT_SECRET não definido. Configure no .env antes de iniciar."
+        "JWT_SECRET não definido. Gere com: python -m app.cli gerar-segredos"
     )
 
-if settings.is_production and not settings.cors_origins:
+if not config.checkin_secret:
     raise SystemExit(
-        "CORS_ORIGIN não definido em produção. Defina a URL do frontend antes de subir."
+        "CHECKIN_SECRET não definido. Gere com: python -m app.cli gerar-segredos"
     )
 
+if config.producao:
+    if not config.cors_origens:
+        raise SystemExit(
+            "CORS_ORIGIN não definido em produção. Informe a URL do frontend."
+        )
+    if not config.chave_assinatura:
+        raise SystemExit(
+            "CHAVE_ASSINATURA não definida. Sem ela não há como emitir certificado. "
+            "Gere com: python -m app.cli gerar-chave"
+        )
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+
+class CabecalhosDeSeguranca(BaseHTTPMiddleware):
     """Equivalente enxuto ao helmet do Express."""
 
     async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        response.headers.setdefault("X-Content-Type-Options", "nosniff")
-        response.headers.setdefault("X-Frame-Options", "DENY")
-        response.headers.setdefault("Referrer-Policy", "no-referrer")
-        response.headers.setdefault(
-            "Cross-Origin-Resource-Policy", "cross-origin"
-        )
-        response.headers.setdefault(
+        resposta = await call_next(request)
+        resposta.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resposta.headers.setdefault("X-Frame-Options", "DENY")
+        resposta.headers.setdefault("Referrer-Policy", "no-referrer")
+        resposta.headers.setdefault("Cross-Origin-Resource-Policy", "cross-origin")
+        resposta.headers.setdefault(
             "Permissions-Policy", "geolocation=(), microphone=(), camera=()"
         )
-        if settings.is_production:
-            response.headers.setdefault(
+        if config.producao:
+            resposta.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
             )
-        return response
+        return resposta
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
-    logger.info("API Mais Horas iniciando (ambiente: %s)", settings.environment)
+async def ciclo_de_vida(_: FastAPI):
+    log.info("API Mais Horas iniciando (ambiente: %s)", config.ambiente)
+    if not config.chave_assinatura:
+        log.warning(
+            "CHAVE_ASSINATURA ausente — emissão de certificado indisponível. "
+            "Gere com: python -m app.cli gerar-chave"
+        )
     yield
     await engine.dispose()
-    logger.info("Conexões do banco encerradas.")
+    log.info("Conexões do banco encerradas.")
 
 
 app = FastAPI(
     title="Mais Horas API",
     description=(
         "API da plataforma que conecta estudantes e ONGs para horas de extensão, "
-        "com certificado validável por QR Code."
+        "com certificado verificável por QR Code."
     ),
-    version="2.0.0",
-    lifespan=lifespan,
+    version="1.0.0",
+    lifespan=ciclo_de_vida,
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# ===== Segurança =====
-app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CabecalhosDeSeguranca)
 
-# CORS: em produção exige lista explícita (checada no boot); em dev libera tudo.
 # `allow_credentials` é obrigatório para o cookie de refresh atravessar origens.
-if settings.cors_origins:
+# Em produção a lista explícita é exigida no boot; fora dela, libera para o dev.
+if config.cors_origens:
     app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        CORSMiddleware, allow_origins=config.cors_origens, allow_credentials=True,
+        allow_methods=["*"], allow_headers=["*"],
     )
 else:
     app.add_middleware(
-        CORSMiddleware,
-        allow_origin_regex=".*",
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        CORSMiddleware, allow_origin_regex=".*", allow_credentials=True,
+        allow_methods=["*"], allow_headers=["*"],
     )
 
-# ===== Erros =====
-register_error_handlers(app)
+registrar_handlers(app)
 
-# ===== Uploads estáticos =====
-upload_path = Path(settings.upload_dir)
-upload_path.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=upload_path), name="uploads")
-
-
-# ===== Rotas de serviço =====
-@app.get("/", tags=["servico"])
-async def root() -> dict[str, str]:
-    return {"message": "API Mais Horas rodando e conectada ao PostgreSQL!"}
+# Uploads servidos estaticamente. Em produção o disco é efêmero — ver
+# docs/deploy.md.
+pasta_uploads = Path(config.upload_dir)
+pasta_uploads.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=pasta_uploads), name="uploads")
 
 
-@app.get("/health", tags=["servico"])
-async def health() -> dict[str, str]:
+@app.get("/saude", tags=["servico"])
+async def saude() -> dict[str, str]:
     return {"status": "ok"}
 
 
 # ===== Rotas de negócio =====
-app.include_router(users.router, prefix="/api")
-app.include_router(activities.router, prefix="/api")
-app.include_router(participations.router, prefix="/api")
-app.include_router(certificates.router, prefix="/api")
-app.include_router(dashboard.router, prefix="/api")
+# Entram fatia a fatia:
+#   Fatia 1  /api/v1/auth
+#   Fatia 2  /api/v1/perfil
+#   Fatia 3  /api/v1/atividades
+#   Fatia 4  /api/v1/inscricoes
+#   Fatia 5  /api/v1/checkin
+#   Fatia 6  /api/v1/certificados
+#   Fatia 7  /api/v1/notificacoes
+#   Fatia 8  /api/v1/admin

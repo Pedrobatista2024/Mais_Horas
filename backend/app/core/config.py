@@ -1,12 +1,16 @@
 """Configuração da aplicação, lida do ambiente (.env)."""
 
+from __future__ import annotations
+
 from functools import lru_cache
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+FUSO = "America/Sao_Paulo"  # RN-53
 
-class Settings(BaseSettings):
+
+class Configuracao(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -16,22 +20,35 @@ class Settings(BaseSettings):
 
     # ===== Servidor =====
     port: int = 3000
-    environment: str = Field(default="development")
+    ambiente: str = Field(default="desenvolvimento")
 
     # ===== Banco =====
     database_url: str = Field(
         default="postgresql+asyncpg://postgres:postgres@localhost:5433/mais_horas"
     )
+    database_url_teste: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5433/mais_horas_teste"
+    )
     pgssl: bool = False
 
-    # ===== Segurança =====
+    # ===== Sessão =====
     jwt_secret: str = Field(default="")
-    jwt_algorithm: str = "HS256"
+    jwt_algoritmo: str = "HS256"
+    access_token_minutos: int = 15
+    refresh_token_dias: int = 7
+    # Janela em que reapresentar um refresh já usado conta como corrida benigna,
+    # e não como roubo — ver docs/autenticacao.md.
+    refresh_graca_segundos: int = 15
 
-    # Access token curto: se vazar, a janela de abuso é pequena.
-    access_token_expire_minutes: int = 15
-    # Refresh token longo: fica em cookie httpOnly e rotaciona a cada uso.
-    refresh_token_expire_days: int = 7
+    # ===== Assinatura do certificado (D4) =====
+    # Chave privada Ed25519 em PEM, base64. NUNCA vai para o banco nem para o git.
+    # Gere com: python -m app.cli gerar-chave
+    chave_assinatura: str = Field(default="")
+
+    # ===== Check-in por QR (D31) =====
+    # Segredo próprio: comprometer o QR não deve comprometer a sessão.
+    checkin_secret: str = Field(default="")
+    checkin_janela_segundos: int = 30
 
     # ===== URLs públicas =====
     app_url: str = "http://localhost:3000"
@@ -40,12 +57,22 @@ class Settings(BaseSettings):
 
     # ===== Uploads =====
     upload_dir: str = "uploads"
-    max_upload_bytes: int = 2 * 1024 * 1024  # 2MB
+    upload_max_bytes: int = 2 * 1024 * 1024
 
-    @field_validator("database_url")
+    # ===== E-mail (D39) =====
+    # "console" escreve no terminal; qualquer outro valor exige provedor configurado.
+    email_modo: str = "console"
+
+    # ===== Limites =====
+    rate_limit_tentativas: int = 20
+    rate_limit_janela_minutos: int = 15
+    inscricoes_ativas_max: int = 5           # RN-46
+    verificacao_por_minuto: int = 60         # RN-52
+
+    @field_validator("database_url", "database_url_teste")
     @classmethod
-    def _normalize_database_url(cls, v: str) -> str:
-        """Aceita a URL no formato do Render/psycopg e converte para asyncpg."""
+    def _normalizar_url(cls, v: str) -> str:
+        """Aceita a URL no formato do Render e converte para o driver assíncrono."""
         if v.startswith("postgres://"):
             v = v.replace("postgres://", "postgresql://", 1)
         if v.startswith("postgresql://"):
@@ -53,34 +80,33 @@ class Settings(BaseSettings):
         return v
 
     @property
-    def is_production(self) -> bool:
-        return self.environment.lower() == "production"
+    def producao(self) -> bool:
+        return self.ambiente.lower() in ("producao", "production")
 
     @property
-    def cors_origins(self) -> list[str]:
-        """Origens permitidas. Vazio libera todas — só aceitável em dev."""
+    def cors_origens(self) -> list[str]:
+        """Origens permitidas. Vazio libera todas — só aceitável fora de produção."""
         if not self.cors_origin.strip():
             return []
         return [o.strip() for o in self.cors_origin.split(",") if o.strip()]
 
     @property
     def cookie_secure(self) -> bool:
-        """Cookie de refresh só viaja em HTTPS quando em produção."""
-        return self.is_production
+        return self.producao
 
     @property
     def cookie_samesite(self) -> str:
         """
-        Em produção o front (mais-horas-web) e a API (mais-horas-api) ficam em
-        domínios diferentes, então o cookie precisa de SameSite=None.
-        Em dev, 'lax' já resolve e evita exigir HTTPS.
+        Em produção o site e a API ficam em domínios diferentes, então o cookie
+        de refresh precisa de SameSite=None. Em desenvolvimento, 'lax' basta e
+        evita exigir HTTPS.
         """
-        return "none" if self.is_production else "lax"
+        return "none" if self.producao else "lax"
 
 
 @lru_cache
-def get_settings() -> Settings:
-    return Settings()
+def obter_configuracao() -> Configuracao:
+    return Configuracao()
 
 
-settings = get_settings()
+config = obter_configuracao()

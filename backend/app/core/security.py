@@ -1,18 +1,26 @@
 """
-Hash de senha e emissão de tokens.
+Senha, sessão, assinatura do certificado e token de check-in.
 
-Senhas: Argon2id para hashes novos, bcrypt aceito só para verificar os hashes
-antigos vindos do backend Node (bcryptjs). No primeiro login bem-sucedido de um
-usuário legado, a senha é re-hasheada em Argon2id automaticamente.
+Quatro mecanismos independentes, de propósito: cada um tem seu próprio segredo,
+para que comprometer um não comprometa os outros.
 
-Tokens: access token JWT curto (stateless) + refresh token opaco e revogável,
-guardado no banco apenas como hash SHA-256.
+| Mecanismo        | Segredo             | Protege contra                        |
+|------------------|---------------------|---------------------------------------|
+| Senha            | (hash próprio)      | Vazamento do banco                    |
+| Access token     | `jwt_secret`        | Forjar identidade                     |
+| Refresh token    | (hash no banco)     | Roubo de sessão persistente           |
+| Assinatura       | `chave_assinatura`  | Escrita fraudulenta direto no banco   |
+| Token de QR      | `checkin_secret`    | Registrar presença sem estar no local |
 """
 
 from __future__ import annotations
 
+import base64
 import hashlib
+import hmac
+import math
 import secrets
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -21,121 +29,240 @@ import bcrypt
 import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey,
+    Ed25519PublicKey,
+)
+from cryptography.exceptions import InvalidSignature
 
-from app.core.config import settings
+from app.core.config import config
 
 _ph = PasswordHasher()
-
-_BCRYPT_PREFIXES = ("$2a$", "$2b$", "$2y$")
+_PREFIXOS_BCRYPT = ("$2a$", "$2b$", "$2y$")
 
 
 # ===================== Senhas =====================
 
 
-def hash_password(password: str) -> str:
-    """Gera hash Argon2id da senha."""
-    return _ph.hash(password)
+def gerar_hash_senha(senha: str) -> str:
+    """Argon2id — recomendação atual da OWASP (RNF-03)."""
+    return _ph.hash(senha)
 
 
-def verify_password(password: str, stored_hash: str) -> bool:
+def conferir_senha(senha: str, hash_guardado: str) -> bool:
     """
-    Verifica a senha contra o hash guardado, aceitando Argon2id (novo) e
-    bcrypt (legado, gerado pelo backend Node).
+    Aceita Argon2id e também bcrypt, este último só para contas herdadas do
+    backend Node. O hash legado é convertido no primeiro login bem-sucedido.
     """
-    if not stored_hash:
+    if not hash_guardado:
         return False
 
-    if stored_hash.startswith(_BCRYPT_PREFIXES):
+    if hash_guardado.startswith(_PREFIXOS_BCRYPT):
         try:
-            return bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8"))
+            return bcrypt.checkpw(senha.encode(), hash_guardado.encode())
         except (ValueError, TypeError):
             return False
 
     try:
-        return _ph.verify(stored_hash, password)
+        return _ph.verify(hash_guardado, senha)
     except (VerifyMismatchError, InvalidHashError, ValueError):
         return False
 
 
-def needs_rehash(stored_hash: str) -> bool:
-    """
-    True quando o hash guardado deve ser regravado: hash bcrypt legado, ou
-    Argon2 com parâmetros defasados em relação aos atuais.
-    """
-    if not stored_hash:
+def precisa_regravar(hash_guardado: str) -> bool:
+    """True para hash bcrypt legado ou Argon2 com parâmetros defasados."""
+    if not hash_guardado:
         return False
-    if stored_hash.startswith(_BCRYPT_PREFIXES):
+    if hash_guardado.startswith(_PREFIXOS_BCRYPT):
         return True
     try:
-        return _ph.check_needs_rehash(stored_hash)
+        return _ph.check_needs_rehash(hash_guardado)
     except (InvalidHashError, ValueError):
         return False
 
 
-# ===================== Access token (JWT) =====================
+# ===================== Access token =====================
 
 
-def create_access_token(user_id: uuid.UUID | str, role: str) -> tuple[str, int]:
+def criar_access_token(usuario_id: uuid.UUID | str, papel: str) -> tuple[str, int]:
     """
-    Emite o access token. Retorna (token, segundos_ate_expirar).
+    Emite o access token. Retorna (token, segundos até expirar).
 
-    O payload carrega o papel do usuário para que a checagem de role não
-    precise ir ao banco em toda requisição.
+    O papel viaja no payload para que a checagem de permissão não precise ir ao
+    banco em toda requisição.
     """
-    now = datetime.now(timezone.utc)
-    expires_delta = timedelta(minutes=settings.access_token_expire_minutes)
-    expire = now + expires_delta
+    agora = datetime.now(timezone.utc)
+    duracao = timedelta(minutes=config.access_token_minutos)
 
     payload: dict[str, Any] = {
-        "sub": str(user_id),
-        "role": role,
-        "type": "access",
-        "iat": now,
-        "exp": expire,
+        "sub": str(usuario_id),
+        "papel": papel,
+        "tipo": "acesso",
+        "iat": agora,
+        "exp": agora + duracao,
         "jti": secrets.token_urlsafe(16),
     }
-    token = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
-    return token, int(expires_delta.total_seconds())
+    token = jwt.encode(payload, config.jwt_secret, algorithm=config.jwt_algoritmo)
+    return token, int(duracao.total_seconds())
 
 
-def decode_access_token(token: str) -> dict[str, Any] | None:
+def ler_access_token(token: str) -> dict[str, Any] | None:
     """Valida assinatura e expiração. Retorna o payload, ou None se inválido."""
     try:
-        payload = jwt.decode(
-            token,
-            settings.jwt_secret,
-            algorithms=[settings.jwt_algorithm],
-        )
+        payload = jwt.decode(token, config.jwt_secret, algorithms=[config.jwt_algoritmo])
     except jwt.PyJWTError:
         return None
-
-    if payload.get("type") != "access":
-        return None
-    if not payload.get("sub"):
+    if payload.get("tipo") != "acesso" or not payload.get("sub"):
         return None
     return payload
 
 
-# ===================== Refresh token (opaco) =====================
+# ===================== Refresh token =====================
 
 
-def generate_refresh_token() -> str:
-    """
-    Gera o refresh token em claro — é entregue ao cliente e nunca guardado
-    assim no banco.
-    """
+def gerar_refresh_token() -> str:
+    """Token opaco, entregue ao cliente e nunca gravado em claro."""
     return secrets.token_urlsafe(48)
 
 
 def hash_refresh_token(token: str) -> str:
     """
-    Hash determinístico do refresh token, para permitir busca por igualdade.
-
-    SHA-256 basta aqui (diferente de senha): o token tem 384 bits de entropia
-    aleatória, então não há o que atacar por dicionário ou força bruta.
+    SHA-256 basta aqui, ao contrário de senha: o token tem 384 bits de entropia
+    aleatória, então não há dicionário nem força bruta a temer. O hash precisa
+    ser determinístico para permitir busca por igualdade.
     """
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
-def refresh_token_expiry() -> datetime:
-    return datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+def expiracao_refresh() -> datetime:
+    return datetime.now(timezone.utc) + timedelta(days=config.refresh_token_dias)
+
+
+# ===================== Assinatura do certificado (D4) =====================
+
+
+def gerar_par_de_chaves() -> tuple[str, str]:
+    """Cria um par Ed25519. Retorna (privada_pem_b64, publica_pem)."""
+    privada = Ed25519PrivateKey.generate()
+    pem_privada = privada.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    pem_publica = privada.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    return base64.b64encode(pem_privada).decode(), pem_publica.decode()
+
+
+def _carregar_privada() -> Ed25519PrivateKey:
+    if not config.chave_assinatura:
+        raise RuntimeError(
+            "chave_assinatura não configurada. "
+            "Gere com: python -m app.cli gerar-chave"
+        )
+    pem = base64.b64decode(config.chave_assinatura)
+    return serialization.load_pem_private_key(pem, password=None)
+
+
+def chave_publica_pem() -> str:
+    """PEM da chave pública, para auditoria independente."""
+    return _carregar_privada().public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    ).decode()
+
+
+def impressao_digital_chave() -> str:
+    """Identifica a chave em uso sem expor nada dela."""
+    return hashlib.sha256(chave_publica_pem().encode()).hexdigest()[:16]
+
+
+def texto_canonico_certificado(
+    codigo: str, nome_aluno: str, titulo_atividade: str,
+    horas: int, emitido_em: datetime,
+) -> str:
+    """
+    Monta o texto assinado. A ordem e o separador são parte do contrato: mudá-los
+    invalida toda assinatura já emitida.
+
+    Os valores vêm das colunas congeladas do certificado, nunca de junção — se
+    a ONG mudar de nome depois, a assinatura continua conferindo.
+    """
+    return "|".join([
+        codigo,
+        nome_aluno,
+        titulo_atividade,
+        str(horas),
+        emitido_em.astimezone(timezone.utc).isoformat(timespec="seconds"),
+    ])
+
+
+def assinar_certificado(texto: str) -> str:
+    return base64.b64encode(_carregar_privada().sign(texto.encode())).decode()
+
+
+def conferir_assinatura(texto: str, assinatura_b64: str) -> bool:
+    """False quando o registro foi alterado depois da emissão (FV-01 E3)."""
+    try:
+        publica: Ed25519PublicKey = _carregar_privada().public_key()
+        publica.verify(base64.b64decode(assinatura_b64), texto.encode())
+        return True
+    except (InvalidSignature, ValueError, TypeError, RuntimeError):
+        return False
+
+
+# ===================== Token de check-in (D31) =====================
+#
+# Derivado do tempo, nada é gravado. O servidor recalcula e compara, como nos
+# aplicativos de código de banco. O "vale uma vez" não vem daqui: vem de a
+# inscrição aceitar um único check-in.
+
+
+def _janela_atual(agora: float | None = None) -> int:
+    segundos = agora if agora is not None else time.time()
+    return int(segundos // config.checkin_janela_segundos)
+
+
+def gerar_token_checkin(atividade_id: uuid.UUID | str, janela: int | None = None) -> str:
+    if not config.checkin_secret:
+        raise RuntimeError("checkin_secret não configurado")
+    j = _janela_atual() if janela is None else janela
+    mensagem = f"{atividade_id}:{j}".encode()
+    resumo = hmac.new(config.checkin_secret.encode(), mensagem, hashlib.sha256).digest()
+    return f"MH1.{base64.urlsafe_b64encode(resumo[:18]).decode().rstrip('=')}"
+
+
+def segundos_ate_proximo_token() -> int:
+    """
+    Quanto falta para o QR trocar. Nunca devolve zero: arredondar para baixo no
+    último instante da janela faria a contagem exibir "0s" e o cliente poderia
+    não buscar o token seguinte.
+    """
+    janela = config.checkin_janela_segundos
+    return max(1, math.ceil(janela - (time.time() % janela)))
+
+
+def conferir_token_checkin(token: str, atividade_id: uuid.UUID | str) -> bool:
+    """
+    Aceita a janela atual e a imediatamente anterior.
+
+    A tolerância de uma janela cobre o intervalo entre o aluno enxergar o código
+    na tela e a requisição chegar ao servidor. Sem ela, quem escaneasse no
+    último segundo seria recusado sem ter feito nada de errado.
+    """
+    atual = _janela_atual()
+    for janela in (atual, atual - 1):
+        if hmac.compare_digest(token, gerar_token_checkin(atividade_id, janela)):
+            return True
+    return False
+
+
+# ===================== Código de verificação =====================
+
+
+def gerar_codigo_verificacao() -> str:
+    """16 caracteres hexadecimais — o que vai dentro do QR do certificado."""
+    return secrets.token_hex(8)

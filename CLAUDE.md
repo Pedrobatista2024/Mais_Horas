@@ -42,13 +42,28 @@ implementação.
 docker compose up -d                          # Postgres local na porta 5433
 cd backend && alembic upgrade head            # aplica migrations
 cd backend && uvicorn app.main:app --reload --port 3000
-cd backend && python smoke_test.py            # 68 verificações ponta a ponta
+cd backend && pytest                          # suíte de testes
 cd frontend && npm run dev                    # SPA em :5173
 cd frontend && npm run build                  # precisa passar limpo antes de finalizar
 cd frontend && npm run lint                   # eslint, precisa passar sem erros
 ```
 
 O backend usa venv em `backend/.venv`. Ative antes, ou chame o Python de lá direto.
+
+**Primeira vez no projeto:**
+
+```bash
+cd backend && cp .env.example .env && python -m app.cli gerar-segredos && python -m app.cli gerar-chave
+```
+
+Cole os valores no `.env`. Sem `JWT_SECRET` e `CHECKIN_SECRET` a API se recusa a subir; sem
+`CHAVE_ASSINATURA` ela sobe, mas não emite certificado.
+
+Os testes usam **banco separado** (`DATABASE_URL_TESTE`), criado com:
+
+```bash
+docker exec mais-horas-pg psql -U postgres -c "CREATE DATABASE mais_horas_teste;"
+```
 
 ## Idioma
 
@@ -144,7 +159,7 @@ rascunho pode ser excluído. Ver [modelo-dados.md](docs/modelo-dados.md).
 
 ## Antes de finalizar
 
-- `cd backend && python smoke_test.py` — as 68 verificações precisam passar.
+- `cd backend && pytest` — tudo verde.
 - `cd frontend && npm run build && npm run lint` — ambos limpos.
 
 ## Documentação
