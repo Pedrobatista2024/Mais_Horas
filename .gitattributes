@@ -1,0 +1,18 @@
+# Texto: o git normaliza para LF no repositório.
+* text=auto
+
+# Binários: nunca converter fim de linha. Um PDF com LF trocado por CRLF tem a
+# tabela de offsets quebrada e deixa de abrir.
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+
+# Scripts de shell precisam de LF mesmo quando clonados no Windows.
+*.sh    text eol=lf
