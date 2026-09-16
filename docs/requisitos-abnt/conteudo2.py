@@ -307,6 +307,10 @@ def seguranca():
                    "assinatura além de localizar o registro. Quem obtenha acesso de "
                    "escrita ao banco não consegue produzir assinatura válida, e a "
                    "adulteração passa a ser detectável."))
+    itens.append(p("A assinatura cobre todos os dados exibidos na verificação: "
+                   "participante, organização, atividade, carga horária, data da "
+                   "atividade e data de emissão. A alteração de qualquer um deles, "
+                   "mesmo do nome da organização, invalida a assinatura."))
     dados = [
         ["Camada", "Ameaça tratada", "Mecanismo"],
         ["Verificação pública", "Edição do arquivo PDF entregue",

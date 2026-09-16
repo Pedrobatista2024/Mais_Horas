@@ -26,6 +26,7 @@ from app.core import auditoria, security
 from app.core.config import config
 from app.core.errors import ErroDeNegocio
 from app.db.models import Atividade, Inscricao, PerfilEstudante, Usuario
+from app.services import certificado_service
 from app.services.atividade_service import agora, situacao_real
 from app.services.inscricao_service import _serializar_aluno
 
@@ -400,13 +401,16 @@ async def definir_presencas_em_lote(sessao: AsyncSession, ong: Usuario,
 async def finalizar(sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
                     *, request: Request | None = None) -> dict:
     """
-    Fecha a atividade e credita as horas de quem esteve presente (RN-14).
+    Fecha a atividade, credita as horas e emite os certificados (RN-14, D4).
 
-    A emissão dos certificados entra na Fatia 6 e será **atômica com este
-    passo** (RN-41): ou todos saem assinados, ou nada é gravado.
+    Tudo numa transação só (RN-41): se uma assinatura falhar, nenhum
+    certificado sai e a atividade continua aberta para nova tentativa. Um
+    certificado pela metade seria pior que nenhum — o aluno o apresentaria e a
+    verificação o acusaria.
     """
     atividade = await _exigir_atividade_da_ong(sessao, ong, atividade_id)
     _exigir_janela_de_validacao(atividade)
+    certificado_service.exigir_chave()
 
     if not atividade.carga_horaria or atividade.carga_horaria <= 0:
         raise ErroDeNegocio("carga_horaria_invalida",
@@ -424,23 +428,24 @@ async def finalizar(sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
                       for i in pendentes],
         )
 
-    presentes = 0
+    presentes = [i for i in inscritos if i.situacao == "presente"]
     for inscricao in inscritos:
-        if inscricao.situacao == "presente":
-            inscricao.carga_horaria_creditada = atividade.carga_horaria
-            presentes += 1
-        else:
-            inscricao.carga_horaria_creditada = 0
+        inscricao.carga_horaria_creditada = (
+            atividade.carga_horaria if inscricao.situacao == "presente" else 0)
 
     atividade.situacao = "finalizada"
     atividade.finalizada_em = agora()
+
+    emitidos = await certificado_service.emitir_para_atividade(
+        sessao, ong, atividade, presentes, request=request)
 
     await auditoria.registrar(
         sessao, "atividade.finalizada", ator_id=ong.id, ator_papel=ong.papel,
         entidade="atividade", entidade_id=atividade.id,
         antes={"situacao": "aguardando_validacao"},
-        depois={"situacao": "finalizada", "presentes": presentes,
-                "ausentes": len(inscritos) - presentes},
+        depois={"situacao": "finalizada", "presentes": len(presentes),
+                "ausentes": len(inscritos) - len(presentes),
+                "certificados": emitidos},
         request=request,
     )
     await sessao.commit()
@@ -448,7 +453,8 @@ async def finalizar(sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
     return {
         "id": str(atividade.id),
         "situacao": "finalizada",
-        "presentes": presentes,
-        "ausentes": len(inscritos) - presentes,
+        "presentes": len(presentes),
+        "ausentes": len(inscritos) - len(presentes),
+        "certificadosEmitidos": emitidos,
         "cargaHoraria": atividade.carga_horaria,
     }

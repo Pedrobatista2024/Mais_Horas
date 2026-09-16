@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import auditoria
+from app.core.config import config
 from app.core.errors import ErroDeNegocio
 from app.db.models import Atividade, Inscricao, PerfilEstudante, PerfilOng, Usuario
 from app.services import atividade_service
@@ -31,7 +32,7 @@ from app.services.atividade_service import (
 # o que o cancelamento da atividade derruba.
 SITUACOES_ATIVAS = ("pendente", "confirmada")
 
-LIMITE_DE_INSCRICOES_ATIVAS = 5
+LIMITE_DE_INSCRICOES_ATIVAS = config.inscricoes_ativas_max
 
 # Campos do perfil exigidos antes da primeira inscrição (RN-45). Vive aqui e em
 # perfil_service pela mesma razão: é a mesma regra vista dos dois lados.

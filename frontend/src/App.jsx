@@ -35,6 +35,11 @@ const Checkin = lazy(() => import("./pages/estudante/Checkin"));
 const PainelCheckin = lazy(() => import("./pages/ong/PainelCheckin"));
 const ValidarPresencas = lazy(() => import("./pages/ong/ValidarPresencas"));
 
+// Certificado — Fatia 6
+const MeusCertificados = lazy(() => import("./pages/estudante/MeusCertificados"));
+const VerificarCertificado = lazy(() =>
+  import("./pages/public/VerificarCertificado"));
+
 /**
  * As rotas entram fatia a fatia (docs/plano-execucao.md). As telas das fatias
  * seguintes ainda não estão listadas aqui porque chamariam endpoints que não
@@ -68,6 +73,9 @@ export default function App() {
           <Route path="/criar-conta" element={<CriarConta />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
           <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+          {/* Destino do QR do certificado: nunca exige login */}
+          <Route path="/verificar" element={<VerificarCertificado />} />
+          <Route path="/verificar/:codigo" element={<VerificarCertificado />} />
 
           {/* Qualquer papel */}
           <Route element={<Area />}>
@@ -81,6 +89,7 @@ export default function App() {
             <Route path="/atividades/:id" element={<DetalheAtividade />} />
             <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
             <Route path="/check-in" element={<Checkin />} />
+            <Route path="/meus-certificados" element={<MeusCertificados />} />
           </Route>
 
           {/* Organização */}
@@ -107,6 +116,8 @@ export default function App() {
           <Route path="/register" element={<Navigate to="/criar-conta" replace />} />
           <Route path="/dashboard" element={<Navigate to="/painel" replace />} />
           <Route path="/activities" element={<Navigate to="/atividades" replace />} />
+          <Route path="/my-certificates"
+                 element={<Navigate to="/meus-certificados" replace />} />
           <Route path="/my-activities"
                  element={<Navigate to="/minhas-inscricoes" replace />} />
           <Route path="/org/my-activities" element={<Navigate to="/ong/atividades" replace />} />

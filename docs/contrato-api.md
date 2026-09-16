@@ -350,7 +350,7 @@ A rota exige atividade `em_andamento` e devolve `403 checkin_fora_da_janela` for
 
 | Método | Rota | Acesso | Descrição |
 |---|---|:---:|---|
-| `GET` | `/certificados/meus` | 🎓 | Certificados do aluno. Paginada |
+| `GET` | `/certificados/meus` | 🎓 | Certificados do aluno. Paginada, com `horasValidas` |
 | `GET` | `/certificados/{id}/pdf` | 🔒 | PDF do próprio certificado |
 | `GET` | `/certificados/verificar/{codigo}` | 🌐 | **Verificação pública.** 60/min por IP (RN-52) |
 | `GET` | `/certificados/verificar/{codigo}/pdf` | 🌐 | PDF oficial pelo código |
@@ -374,6 +374,20 @@ A rota exige atividade `em_andamento` e devolve `403 checkin_fora_da_janela` for
 ```
 
 Os três selos são independentes e a interface mostra os três.
+
+**`GET /certificados/meus`** — além da página, traz `horasValidas`: a soma das horas dos
+certificados **não revogados** (RN-16).
+
+**PDFs** — `GET /certificados/{id}/pdf` serve o dono e o superadmin (certificado alheio
+responde `404`, para não confirmar que o id existe). `GET .../verificar/{codigo}/pdf` é o
+"PDF oficial" da página pública e só sai de certificado válido: revogado responde
+`409 certificado_revogado`. Nos dois, registro adulterado responde
+`409 certificado_nao_confere` — imprimir um registro alterado com o timbre da Mais Horas
+entregaria ao fraudador o documento que ele queria.
+
+**`POST /atividades/{id}/finalizar`** passa a emitir os certificados na mesma transação e
+devolve `certificadosEmitidos`. Sem chave de assinatura configurada, responde
+`503 emissao_indisponivel` **antes** de alterar qualquer coisa.
 
 **A resposta carrega o texto pronto para a tela.** O servidor devolve `desfecho`, `titulo` e
 `mensagem`, e a página exibe o que veio — nunca monta texto genérico por conta própria:

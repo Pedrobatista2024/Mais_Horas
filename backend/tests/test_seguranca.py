@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import pytest
 
@@ -111,11 +111,15 @@ def _chave(monkeypatch):
     monkeypatch.setattr(config, "chave_assinatura", privada)
 
 
-def _texto(codigo="a1b2c3d4e5f60718"):
-    return seg.texto_canonico_certificado(
-        codigo, "Maria Silva", "Mutirão de limpeza", 4,
-        datetime(2026, 6, 15, 19, 0, tzinfo=timezone.utc),
+def _texto(**troca):
+    campos = dict(
+        codigo="a1b2c3d4e5f60718", nome_aluno="Maria Silva",
+        organizacao="ONG Verde Vida", titulo_atividade="Mutirão de limpeza",
+        horas=4, data_atividade=date(2026, 6, 15),
+        emitido_em=datetime(2026, 6, 15, 19, 0, tzinfo=timezone.utc),
     )
+    campos.update(troca)
+    return seg.texto_canonico_certificado(**campos)
 
 
 def test_assinatura_propria_confere():
@@ -126,12 +130,27 @@ def test_assinatura_propria_confere():
 def test_dado_alterado_invalida_a_assinatura():
     """O caso que a assinatura existe para pegar: escrita direta no banco."""
     assinatura = seg.assinar_certificado(_texto())
-    adulterado = seg.texto_canonico_certificado(
-        "a1b2c3d4e5f60718", "Maria Silva", "Mutirão de limpeza",
-        40,  # horas infladas
-        datetime(2026, 6, 15, 19, 0, tzinfo=timezone.utc),
-    )
-    assert not seg.conferir_assinatura(adulterado, assinatura)
+    assert not seg.conferir_assinatura(_texto(horas=40), assinatura)
+
+
+@pytest.mark.parametrize("campo,valor", [
+    ("organizacao", "ONG Fantasma"),
+    ("data_atividade", date(2026, 6, 16)),
+    ("nome_aluno", "Outra Pessoa"),
+    ("titulo_atividade", "Outra atividade"),
+    ("codigo", "ffffffffffffffff"),
+])
+def test_todo_campo_exibido_esta_coberto(campo, valor):
+    """Cada campo que a verificação pública mostra precisa quebrar a assinatura."""
+    assinatura = seg.assinar_certificado(_texto())
+    assert not seg.conferir_assinatura(_texto(**{campo: valor}), assinatura)
+
+
+def test_separador_no_nome_nao_desloca_campos():
+    """Com texto separado por `|`, "A|B"+"C" e "A"+"B|C" dariam o mesmo texto."""
+    um = _texto(nome_aluno="Maria|ONG X", organizacao="Y")
+    outro = _texto(nome_aluno="Maria", organizacao="ONG X|Y")
+    assert um != outro
 
 
 def test_assinatura_de_outra_chave_nao_confere(monkeypatch):
@@ -152,7 +171,8 @@ def test_assinatura_corrompida_nao_derruba():
 def test_texto_canonico_e_estavel():
     """A ordem faz parte do contrato: mudá-la invalida todo certificado emitido."""
     assert _texto() == (
-        "a1b2c3d4e5f60718|Maria Silva|Mutirão de limpeza|4|2026-06-15T19:00:00+00:00"
+        '["MHC1","a1b2c3d4e5f60718","Maria Silva","ONG Verde Vida",'
+        '"Mutirão de limpeza",4,"2026-06-15","2026-06-15T19:00:00+00:00"]'
     )
 
 

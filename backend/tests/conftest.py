@@ -45,12 +45,18 @@ async def sessao(schema) -> AsyncGenerator[AsyncSession, None]:
 
     O rollback é o que garante isolamento sem recriar as tabelas a cada caso —
     inclusive quando o próprio teste provoca um erro de integridade.
+
+    `create_savepoint` faz a sessão se comportar como em produção: cada
+    `commit()` fica valendo até o fim do teste, e um `rollback()` desfaz só o
+    que ainda não foi commitado. Sem isso, um rollback apagava o teste inteiro
+    — e um teste de atomicidade passava por vacuidade, sem provar nada.
     """
     motor = create_async_engine(config.database_url_teste, echo=False)
     try:
         async with motor.connect() as conexao:
             transacao = await conexao.begin()
-            criar = async_sessionmaker(bind=conexao, expire_on_commit=False)
+            criar = async_sessionmaker(bind=conexao, expire_on_commit=False,
+                                       join_transaction_mode="create_savepoint")
             async with criar() as s:
                 yield s
             if transacao.is_active:

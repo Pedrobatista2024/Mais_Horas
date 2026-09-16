@@ -103,4 +103,5 @@ class FinalizacaoSaida(BaseModel):
     situacao: str
     presentes: int
     ausentes: int
+    certificadosEmitidos: int
     cargaHoraria: int

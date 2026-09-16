@@ -18,11 +18,12 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import json
 import math
 import secrets
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, NamedTuple
 
 import bcrypt
@@ -180,24 +181,42 @@ def impressao_digital_chave() -> str:
     return hashlib.sha256(chave_publica_pem().encode()).hexdigest()[:16]
 
 
+VERSAO_TEXTO_CERTIFICADO = "MHC1"
+
+
 def texto_canonico_certificado(
-    codigo: str, nome_aluno: str, titulo_atividade: str,
-    horas: int, emitido_em: datetime,
+    *, codigo: str, nome_aluno: str, organizacao: str, titulo_atividade: str,
+    horas: int, data_atividade: date, emitido_em: datetime,
 ) -> str:
     """
-    Monta o texto assinado. A ordem e o separador são parte do contrato: mudá-los
-    invalida toda assinatura já emitida.
+    Monta o texto assinado. O formato é parte do contrato: mudá-lo invalida toda
+    assinatura já emitida — por isso leva versão na frente.
 
-    Os valores vêm das colunas congeladas do certificado, nunca de junção — se
-    a ONG mudar de nome depois, a assinatura continua conferindo.
+    Cobre **todo campo que a verificação pública exibe**. Deixar a organização ou
+    a data de fora permitiria a quem escrevesse no banco trocar o nome da ONG e
+    ainda ver o certificado "válido".
+
+    É uma lista JSON, não texto separado por `|`: com separador, um nome contendo
+    `|` poderia deslocar conteúdo de um campo para o vizinho sem mudar o texto
+    assinado.
+
+    Os valores vêm das colunas congeladas do certificado, nunca de junção — se a
+    ONG mudar de nome depois, a assinatura continua conferindo.
     """
-    return "|".join([
-        codigo,
-        nome_aluno,
-        titulo_atividade,
-        str(horas),
-        emitido_em.astimezone(timezone.utc).isoformat(timespec="seconds"),
-    ])
+    return json.dumps(
+        [
+            VERSAO_TEXTO_CERTIFICADO,
+            codigo,
+            nome_aluno,
+            organizacao,
+            titulo_atividade,
+            int(horas),
+            data_atividade.isoformat(),
+            emitido_em.astimezone(timezone.utc).isoformat(timespec="seconds"),
+        ],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
 
 
 def assinar_certificado(texto: str) -> str:

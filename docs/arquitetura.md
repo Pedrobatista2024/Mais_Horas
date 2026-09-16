@@ -89,13 +89,16 @@ frontend/src/
   pages/
     auth/              Entrar, CriarConta, EsqueciSenha, RedefinirSenha
     perfil/            MeuPerfil (serve aos dois papéis)
-    estudante/         Vitrine, DetalheAtividade, MinhasInscricoes, Checkin
+    estudante/         Vitrine, DetalheAtividade, MinhasInscricoes, Checkin,
+                       MeusCertificados
     ong/               MinhasAtividades, FormularioAtividade, GerenciarAtividade,
                        InscricoesDaAtividade, PainelCheckin, ValidarPresencas
-    public/            Landing (+ telas antigas ainda não migradas)
+    public/            Landing, VerificarCertificado
+                       (+ telas antigas ainda não migradas)
     EmConstrucao.jsx   ocupa as rotas de painel até as fatias correspondentes
   utils/
     format.js          formatDate, formatDateLong, resolveImage, initials
+    baixar.js          baixa arquivo autenticado (o token não vai em link)
     notify.js          notifySuccess / notifyError (toasts Mantine)
 ```
 
@@ -118,12 +121,15 @@ endpoint inexistente, e tela quebrada é pior que tela ausente.
 | `/criar-conta` | público | Criar conta |
 | `/esqueci-senha` | público | Pedir redefinição |
 | `/redefinir-senha` | público | Definir nova senha |
+| `/verificar` | público | `T6` Verificar certificado — campo de código |
+| `/verificar/:codigo` | público | `T6` Verificar certificado — destino do QR |
 | `/perfil` | autenticado | `E7`/`O8` Meu perfil |
 | `/painel` | aluno | `E1` Painel *(em construção)* |
 | `/atividades` | aluno | `E2` Vitrine |
 | `/atividades/:id` | aluno | `E3` Detalhe da atividade |
 | `/minhas-inscricoes` | aluno | `E4` Minhas inscrições |
 | `/check-in` | aluno | `E5` Check-in por QR |
+| `/meus-certificados` | aluno | `E6` Meus certificados |
 | `/ong` | ONG | `O1` Painel *(em construção)* |
 | `/ong/atividades` | ONG | `O2` Minhas atividades |
 | `/ong/atividades/nova` | ONG | `O3` Criar atividade |

@@ -5,7 +5,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  IconBuildingCommunity, IconCalendarEvent, IconChevronRight,
+  IconBuildingCommunity, IconCalendarEvent, IconCertificate, IconChevronRight,
   IconLayoutDashboard, IconLogout, IconPlus, IconSearch, IconTicket, IconUser,
 } from "@tabler/icons-react";
 
@@ -24,6 +24,7 @@ const MENU_ESTUDANTE = [
   { rotulo: "Painel", para: "/painel", icone: IconLayoutDashboard, exato: true },
   { rotulo: "Buscar atividades", para: "/atividades", icone: IconSearch },
   { rotulo: "Minhas inscrições", para: "/minhas-inscricoes", icone: IconTicket },
+  { rotulo: "Certificados", para: "/meus-certificados", icone: IconCertificate },
 ];
 
 const MENU_ONG = [

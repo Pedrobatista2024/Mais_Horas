@@ -155,8 +155,8 @@ export default function ValidarPresencas() {
     try {
       const { data } = await api.post(`/atividades/${id}/finalizar`);
       notifySuccess(
-        `Atividade finalizada: ${data.presentes} presente(s), ` +
-        `${data.ausentes} ausente(s).`,
+        `Atividade finalizada: ${data.certificadosEmitidos} certificado(s) ` +
+        `emitido(s), ${data.ausentes} ausente(s).`,
       );
       navegar(`/ong/atividades/${id}`);
     } catch (erro) {
@@ -280,7 +280,7 @@ export default function ValidarPresencas() {
                   </Button>
                   <Button disabled={semDecisao > 0} loading={salvando}
                           onClick={() => setConfirmando(true)}>
-                    Confirmar presenças e finalizar
+                    Confirmar e emitir certificados
                   </Button>
                 </Group>
               </Stack>
@@ -293,7 +293,7 @@ export default function ValidarPresencas() {
         aberto={confirmando}
         aoFechar={() => setConfirmando(false)}
         titulo="Finalizar atividade"
-        mensagem={`${presentes} participante(s) receberão ${dados.atividade.cargaHoraria}h. Esta ação não pode ser desfeita.`}
+        mensagem={`Serão emitidos ${presentes} certificado(s) de ${dados.atividade.cargaHoraria} hora(s), assinados digitalmente. Esta ação não pode ser desfeita.`}
         rotuloConfirmar="Finalizar"
         cor="brand"
         aoConfirmar={finalizar}

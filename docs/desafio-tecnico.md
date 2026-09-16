@@ -34,6 +34,13 @@ Qualquer pessoa — coordenação do curso, faculdade, empregador — escaneia e
 hora se o certificado é válido, de quem é, de qual atividade e quantas horas.
 **A verificação não depende do PDF**, que pode ser editado; ela consulta o banco.
 
+**A consulta sozinha não basta.** Ela resolve o PDF editado, mas não quem escreve direto
+no banco: um registro inserido ali "existe" e passaria. Por isso cada certificado é
+**assinado com Ed25519** na emissão, com a chave privada fora do banco, e a verificação
+confere a assinatura além de achar o registro. O texto assinado cobre todos os campos que a
+página exibe — aluno, organização, atividade, horas, data da atividade e data de emissão —
+então alterar qualquer um deles faz a página responder "Este certificado não confere".
+
 Detalhe de implementação relevante: a página de verificação é uma rota do **frontend**
 (React), não HTML montado por string no backend. Isso elimina o risco de injeção que a
 versão anterior tinha e permite uma página apresentável no celular de quem escaneia.

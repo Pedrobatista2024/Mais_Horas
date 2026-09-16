@@ -1152,8 +1152,14 @@ QR na tela  ──escaneado──►  aluno envia o token
 Na emissão, o servidor assina os dados canônicos com **Ed25519**:
 
 ```
-assinatura = Ed25519(chave_privada, "codigo|aluno|atividade|horas|emitido_em")
+assinatura = Ed25519(chave_privada,
+    ["MHC1", codigo, aluno, organizacao, atividade, horas, data_atividade, emitido_em])
 ```
+
+O texto assinado é uma lista JSON e cobre **todo campo que a verificação pública exibe**.
+Deixar a organização ou a data de fora permitiria trocar o nome da ONG direto no banco sem
+quebrar a assinatura. A versão na frente (`MHC1`) permite mudar o formato no futuro sem
+invalidar o que já foi emitido.
 
 A chave privada vive **em variável de ambiente** — nunca no banco, nunca no repositório.
 A pública pode ser divulgada para auditoria independente.

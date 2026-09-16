@@ -208,7 +208,44 @@ retroativamente.
 
 **Pronto quando:** o ciclo fecha — atividade finalizada emite certificado assinado, e a
 página pública mostra os três selos. **É aqui que o sistema vira demonstrável de ponta a
-ponta.**
+ponta.** ✅
+
+Entregue: `app/services/certificado_service.py`, `app/routers/certificados.py`,
+`app/routers/admin.py` (só a revogação, por enquanto), 38 testes em
+`tests/test_certificados.py`; no frontend, `pages/estudante/MeusCertificados.jsx`,
+`pages/public/VerificarCertificado.jsx` e `utils/baixar.js`.
+
+Verificado no navegador: ciclo completo pela API real, página pública válida, e um
+certificado adulterado direto no banco (`horas = 30`) acusado com o alerta vermelho e sem
+botão de PDF.
+
+Decisões tomadas durante a implementação:
+
+- **O texto assinado passou a cobrir todos os campos exibidos.** O da Fatia 0 assinava
+  código, aluno, título, horas e emissão — mas não a organização nem a data da atividade,
+  que a verificação pública mostra. Quem escrevesse no banco podia trocar o nome da ONG e o
+  certificado seguia "válido". Agora é uma lista JSON versionada (`MHC1`) com os sete
+  campos. JSON em vez de texto separado por `|` porque, com separador, um nome contendo `|`
+  poderia deslocar conteúdo de um campo para o vizinho sem mudar o texto assinado. Nenhum
+  certificado tinha sido emitido ainda, então a troca não invalidou nada.
+- **A chave é conferida antes de mexer em qualquer coisa.** Sem ela a finalização devolve
+  `503 emissao_indisponivel` e a atividade fica intacta. Falha no meio da emissão reverte
+  tudo, inclusive os certificados já assinados na mesma rodada (RN-41).
+- **PDF só sai de registro íntegro.** Imprimir um registro adulterado com o timbre da Mais
+  Horas daria ao invasor exatamente o documento que ele queria. O PDF oficial público sai
+  só de certificado válido; o aluno mantém o do revogado, com marca d'água "REVOGADO".
+- **Só a adulteração vai para a auditoria** (`integridade.verificada`). As verificações
+  comuns são públicas e frequentes, e registrá-las afogaria o evento que importa.
+- **A revogação entrou já nesta fatia**, em `/admin/certificados/{id}/revogar`, porque sem
+  ela o desfecho "revogado" não existiria. O restante do console fica para a Fatia 8.
+- **A fixture de teste foi corrigida.** A sessão de teste não imitava a produção: um
+  `rollback()` desfazia o teste inteiro, e o teste de atomicidade passava por vacuidade —
+  "nenhum certificado" era verdade porque nem a atividade existia mais. Com
+  `join_transaction_mode="create_savepoint"`, `commit` vale até o fim do teste e `rollback`
+  desfaz só o que não foi commitado. O teste agora confere que a atividade continua lá.
+
+**Resolvido o pendente da Fatia 5:** a finalização agora emite os certificados, na mesma
+transação.
 
 ---
 

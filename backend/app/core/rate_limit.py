@@ -20,6 +20,8 @@ from fastapi import Request, status
 from app.core.config import config
 from app.core.errors import ErroDeNegocio
 
+# Uma chave por (balde, ip): o limite da verificação pública não pode consumir
+# o do login, nem o contrário.
 _tentativas: dict[str, list[float]] = defaultdict(list)
 _ultima_limpeza = 0.0
 _INTERVALO_LIMPEZA = 300
@@ -48,24 +50,37 @@ def _limpar(agora: float, janela: float) -> None:
         del _tentativas[ip]
 
 
-async def limite_de_autenticacao(request: Request) -> None:
-    """Barra o excesso de tentativas em cadastro e login."""
-    janela = config.rate_limit_janela_minutos * 60
+def _contar(balde: str, request: Request, maximo: int, janela: float,
+            mensagem: str) -> None:
     agora = time.monotonic()
     _limpar(agora, janela)
 
-    ip = _ip(request)
+    chave = f"{balde}:{_ip(request)}"
     corte = agora - janela
-    recentes = [m for m in _tentativas[ip] if m > corte]
+    recentes = [m for m in _tentativas[chave] if m > corte]
     recentes.append(agora)
-    _tentativas[ip] = recentes
+    _tentativas[chave] = recentes
 
-    if len(recentes) > config.rate_limit_tentativas:
-        raise ErroDeNegocio(
-            "muitas_tentativas",
-            "Muitas tentativas. Tente novamente em alguns minutos.",
-            status.HTTP_429_TOO_MANY_REQUESTS,
-        )
+    if len(recentes) > maximo:
+        raise ErroDeNegocio("muitas_tentativas", mensagem,
+                            status.HTTP_429_TOO_MANY_REQUESTS)
+
+
+async def limite_de_autenticacao(request: Request) -> None:
+    """Barra o excesso de tentativas em cadastro e login."""
+    _contar("auth", request, config.rate_limit_tentativas,
+            config.rate_limit_janela_minutos * 60,
+            "Muitas tentativas. Tente novamente em alguns minutos.")
+
+
+async def limite_de_verificacao(request: Request) -> None:
+    """
+    RN-52 — a verificação é pública e sem login, então é o alvo natural de quem
+    quisesse varrer códigos. 60 por minuto sobra para uma coordenação conferindo
+    uma pilha de certificados e torna a varredura de 2^64 códigos inútil.
+    """
+    _contar("verificacao", request, config.verificacao_por_minuto, 60,
+            "Muitas verificações seguidas. Aguarde um minuto e tente de novo.")
 
 
 def zerar() -> None:

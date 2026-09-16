@@ -18,7 +18,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import config
 from app.core.errors import registrar_handlers
 from app.db.session import engine
-from app.routers import atividades, auth, checkin, inscricoes, perfil
+from app.routers import (
+    admin, atividades, auth, certificados, checkin, inscricoes, perfil,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("mais_horas")
@@ -102,11 +104,15 @@ if config.cors_origens:
     app.add_middleware(
         CORSMiddleware, allow_origins=config.cors_origens, allow_credentials=True,
         allow_methods=["*"], allow_headers=["*"],
+        # Sem expor, o navegador esconde o nome do PDF de quem baixa por outra origem.
+        expose_headers=["Content-Disposition"],
     )
 else:
     app.add_middleware(
         CORSMiddleware, allow_origin_regex=".*", allow_credentials=True,
         allow_methods=["*"], allow_headers=["*"],
+        # Sem expor, o navegador esconde o nome do PDF de quem baixa por outra origem.
+        expose_headers=["Content-Disposition"],
     )
 
 registrar_handlers(app)
@@ -129,6 +135,8 @@ app.include_router(perfil.router, prefix=PREFIXO)
 app.include_router(atividades.router, prefix=PREFIXO)
 app.include_router(inscricoes.router, prefix=PREFIXO)
 app.include_router(checkin.router, prefix=PREFIXO)
+app.include_router(certificados.router, prefix=PREFIXO)
+app.include_router(admin.router, prefix=PREFIXO)
 
 # A entrar nas próximas fatias:
 #   Fatia 4  /api/v1/inscricoes

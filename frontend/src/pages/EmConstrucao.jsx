@@ -19,6 +19,7 @@ const ATALHOS = {
     { para: "/atividades", rotulo: "Buscar atividades" },
     { para: "/minhas-inscricoes", rotulo: "Minhas inscrições" },
     { para: "/check-in", rotulo: "Fazer check-in numa atividade em andamento" },
+    { para: "/meus-certificados", rotulo: "Meus certificados" },
     { para: "/perfil", rotulo: "Meu perfil" },
   ],
   ong: [
@@ -30,7 +31,6 @@ const ATALHOS = {
 };
 
 const PROXIMAS = [
-  { fatia: 6, titulo: "Certificado", detalhe: "Emissão assinada e verificação pública" },
   { fatia: 7, titulo: "Notificações", detalhe: "Aviso no sistema a cada decisão" },
   { fatia: 8, titulo: "Console do admin", detalhe: "Auditoria e controle da plataforma" },
   { fatia: 9, titulo: "Portal", detalhe: "Página pública de apresentação" },

@@ -23,8 +23,8 @@ o código: quando os dois discordarem, o código é que está atrasado.
 ## Estado atual
 
 A construção é por **fatias verticais**: cada uma entrega backend, frontend e testes de um
-pedaço que funciona ponta a ponta. Fatias 0 a 5 estão concluídas (fundação, acesso, perfil,
-atividades, inscrições, presença). As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
+pedaço que funciona ponta a ponta. Fatias 0 a 6 estão concluídas (fundação, acesso, perfil,
+atividades, inscrições, presença, certificado) — o ciclo inteiro já é demonstrável. As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
 propósito: chamariam endpoints que não existem, e tela quebrada é pior que tela ausente.
 
 Restam no frontend alguns arquivos da versão anterior (Node/Express) em `pages/org/`,
@@ -48,6 +48,11 @@ O backend usa venv em `backend/.venv`. Ative antes, ou chame o Python de lá dir
 
 Os testes usam um banco separado (`mais_horas_teste`), recriado no começo da sessão. Cada
 teste roda numa transação revertida ao final, então a ordem não importa.
+
+A sessão de teste usa `join_transaction_mode="create_savepoint"`: `commit()` vale até o fim
+do teste e `rollback()` desfaz só o que não foi commitado, como em produção. Ao testar
+atomicidade, **confira que o que deveria sobreviver sobreviveu** — "nada foi gravado" é
+verdade também quando tudo foi apagado.
 
 ## Idioma
 
@@ -152,6 +157,9 @@ Invariantes que não podem ser quebradas:
   todo certificado antigo assim que uma ONG se renomeasse.
 - `registros_auditoria` **não tem FK para `usuarios`**, de propósito: um CASCADE apagaria
   justamente a trilha do usuário sob investigação.
+- O texto assinado do certificado (`texto_canonico_certificado`) cobre **todo campo que a
+  verificação pública exibe**. Campo novo na página exige campo novo no texto — e versão
+  nova (`MHC2`), porque mudar o formato invalida o que já foi emitido.
 - `tokens_sessao` guarda **hash**, nunca o token em claro.
 - Atividade não finaliza com inscrição `pendente`.
 - `UNIQUE(atividade_id, usuario_id)` significa que **reinscrever reaproveita a linha**.
