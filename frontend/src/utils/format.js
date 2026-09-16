@@ -51,3 +51,17 @@ export function initials(name = "") {
     .map((w) => w[0]?.toUpperCase() || "")
     .join("");
 }
+
+/** "agora", "há 5 min", "há 3 h", "há 2 dias" — para avisos e listas ao vivo. */
+export function formatRelativo(iso) {
+  if (!iso) return "";
+  const segundos = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (segundos < 60) return "agora";
+  const minutos = Math.floor(segundos / 60);
+  if (minutos < 60) return `há ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `há ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  if (dias < 30) return `há ${dias} ${dias === 1 ? "dia" : "dias"}`;
+  return new Date(iso).toLocaleDateString("pt-BR");
+}

@@ -23,8 +23,9 @@ o código: quando os dois discordarem, o código é que está atrasado.
 ## Estado atual
 
 A construção é por **fatias verticais**: cada uma entrega backend, frontend e testes de um
-pedaço que funciona ponta a ponta. Fatias 0 a 6 estão concluídas (fundação, acesso, perfil,
-atividades, inscrições, presença, certificado) — o ciclo inteiro já é demonstrável. As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
+pedaço que funciona ponta a ponta. Fatias 0 a 7 estão concluídas (fundação, acesso, perfil,
+atividades, inscrições, presença, certificado, notificações) — o ciclo inteiro já é
+demonstrável. As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
 propósito: chamariam endpoints que não existem, e tela quebrada é pior que tela ausente.
 
 Restam no frontend alguns arquivos da versão anterior (Node/Express) em `pages/org/`,
@@ -98,15 +99,19 @@ rota -> Depends(usuario_atual) -> Depends(exigir_papel) -> Pydantic -> service -
 7. **Filtro é do servidor.** Não devolva a lista inteira para o navegador peneirar — nem
    quando o filtro depende de estado calculado.
 
-8. **Toda ação relevante passa por `auditoria.registrar()`.** O catálogo de ações é
+8. **Aviso ao usuário passa por `notificacao_service`**, que também não dá commit e tem
+   catálogo fechado. Texto novo mora lá, junto das regras de silêncio (recusa sem motivo,
+   cancelamento sem o motivo da ONG).
+
+9. **Toda ação relevante passa por `auditoria.registrar()`.** O catálogo de ações é
    fechado: ação fora dele levanta `ValueError` em vez de gravar lixo. `registrar()` não
    dá commit — entra na transação de quem chamou, então ou tudo grava ou nada grava.
 
-9. **Nada de SQL cru.** Use SQLAlchemy. Se precisar de SQL literal numa migration, passe
+10. **Nada de SQL cru.** Use SQLAlchemy. Se precisar de SQL literal numa migration, passe
    por `executar_script()` de `app/db/migration_utils.py` — o asyncpg recusa múltiplos
    comandos num prepared statement.
 
-10. **Não adicione `print` de debug.**
+11. **Não adicione `print` de debug.**
 
 ## Frontend — padrões obrigatórios
 

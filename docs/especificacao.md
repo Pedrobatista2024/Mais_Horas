@@ -223,7 +223,7 @@ Aviso dentro do sistema (D16). Sino no cabeçalho, com contador de não lidas.
 | Campo | Conteúdo |
 |---|---|
 | `destinatario_id` | Quem recebe |
-| `tipo` | `inscricao.aprovada`, `inscricao.recusada`, `atividade.cancelada`, `certificado.emitido`, `certificado.revogado` |
+| `tipo` | `inscricao.aprovada`, `inscricao.recusada`, `atividade.cancelada`, `certificado.emitido`, `certificado.revogado`, `certificado.restabelecido` |
 | `titulo` / `mensagem` | Texto exibido |
 | `link` | Para onde leva ao clicar |
 | `lida_em` | Nulo enquanto não lida |

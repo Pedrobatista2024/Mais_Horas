@@ -83,12 +83,14 @@ frontend/src/
     atividade/         CartaoAtividade, SituacaoBadge, situacoes.js,
                        BotaoInscricao
     perfil/            FotoPerfil
+    notificacao/       Sino (cabeçalho), ItemDeAviso, eventos.js
     ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, StatCard,
                        ActionCard, InfoItem, StatusBadge, BackButton, BrandMark,
                        BrandIcon, ClockGlyph, WelcomeBanner
   pages/
     auth/              Entrar, CriarConta, EsqueciSenha, RedefinirSenha
     perfil/            MeuPerfil (serve aos dois papéis)
+    Notificacoes.jsx   todos os avisos, com filtro de não lidas
     estudante/         Vitrine, DetalheAtividade, MinhasInscricoes, Checkin,
                        MeusCertificados
     ong/               MinhasAtividades, FormularioAtividade, GerenciarAtividade,
@@ -97,7 +99,8 @@ frontend/src/
                        (+ telas antigas ainda não migradas)
     EmConstrucao.jsx   ocupa as rotas de painel até as fatias correspondentes
   utils/
-    format.js          formatDate, formatDateLong, resolveImage, initials
+    format.js          formatDate, formatDateLong, formatRelativo, resolveImage,
+                       initials
     baixar.js          baixa arquivo autenticado (o token não vai em link)
     notify.js          notifySuccess / notifyError (toasts Mantine)
 ```
@@ -124,6 +127,7 @@ endpoint inexistente, e tela quebrada é pior que tela ausente.
 | `/verificar` | público | `T6` Verificar certificado — campo de código |
 | `/verificar/:codigo` | público | `T6` Verificar certificado — destino do QR |
 | `/perfil` | autenticado | `E7`/`O8` Meu perfil |
+| `/notificacoes` | autenticado | Todos os avisos (FE-10) |
 | `/painel` | aluno | `E1` Painel *(em construção)* |
 | `/atividades` | aluno | `E2` Vitrine |
 | `/atividades/:id` | aluno | `E3` Detalhe da atividade |

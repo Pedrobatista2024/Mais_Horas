@@ -13,7 +13,7 @@ import QRCode from "qrcode";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
 import { api, mensagemDoErro } from "../../services/api";
-import { initials, resolveImage } from "../../utils/format";
+import { formatRelativo, initials, resolveImage } from "../../utils/format";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
 /** De quanto em quanto tempo a lista de quem chegou é rebuscada. */
@@ -21,15 +21,6 @@ const INTERVALO_DA_LISTA = 5000;
 
 /** Quanto tempo "Pausar rotação" congela o código. */
 const PAUSA_SEGUNDOS = 60;
-
-function comoAgora(iso) {
-  if (!iso) return "";
-  const minutos = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (minutos < 1) return "agora";
-  if (minutos === 1) return "há 1 min";
-  if (minutos < 60) return `há ${minutos} min`;
-  return `há ${Math.floor(minutos / 60)} h`;
-}
 
 /**
  * O6 — Painel de check-in.
@@ -276,7 +267,7 @@ export default function PainelCheckin() {
                   )}
                 </Group>
                 <Text size="sm" c="dimmed" style={{ flexShrink: 0 }}>
-                  {comoAgora(item.checkinEm)}
+                  {formatRelativo(item.checkinEm)}
                 </Text>
               </Group>
             ))}

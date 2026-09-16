@@ -25,6 +25,7 @@ from app.core import auditoria
 from app.core.config import FUSO
 from app.core.errors import ErroDeNegocio
 from app.db.models import Atividade, Inscricao, PerfilOng, Usuario
+from app.services import notificacao_service
 
 TZ = ZoneInfo(FUSO)
 
@@ -421,6 +422,9 @@ async def cancelar(
     for inscricao in inscricoes:
         inscricao.situacao = "cancelada"
         inscricao.cancelada_em = agora()
+        # Sem o motivo: ele é da trilha de auditoria, não do aluno (D10).
+        await notificacao_service.atividade_cancelada(
+            sessao, inscricao.usuario_id, atividade.titulo)
 
     await auditoria.registrar(
         sessao, "atividade.cancelada", ator_id=ong.id, ator_papel=ong.papel,

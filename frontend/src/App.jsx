@@ -40,6 +40,9 @@ const MeusCertificados = lazy(() => import("./pages/estudante/MeusCertificados")
 const VerificarCertificado = lazy(() =>
   import("./pages/public/VerificarCertificado"));
 
+// Notificações — Fatia 7
+const Notificacoes = lazy(() => import("./pages/Notificacoes"));
+
 /**
  * As rotas entram fatia a fatia (docs/plano-execucao.md). As telas das fatias
  * seguintes ainda não estão listadas aqui porque chamariam endpoints que não
@@ -80,6 +83,7 @@ export default function App() {
           {/* Qualquer papel */}
           <Route element={<Area />}>
             <Route path="/perfil" element={<MeuPerfil />} />
+            <Route path="/notificacoes" element={<Notificacoes />} />
           </Route>
 
           {/* Estudante */}

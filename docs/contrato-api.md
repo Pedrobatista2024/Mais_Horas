@@ -447,6 +447,13 @@ devolve `certificadosEmitidos`. Sem chave de assinatura configurada, responde
 | `POST` | `/notificacoes/{id}/lida` | 🔒 | Marca uma como lida |
 | `POST` | `/notificacoes/lidas` | 🔒 | Marca todas |
 
+Cada item: `{ id, tipo, titulo, mensagem, link, lida, criadoEm }`, do mais recente para o
+mais antigo. `link` é sempre um caminho interno (`/meus-certificados`) ou `null` — URL
+externa é descartada na gravação, para o sino não virar redirecionamento aberto.
+
+`GET /notificacoes/contador` → `{ "naoLidas": 2 }` · `POST /notificacoes/lidas` →
+`{ "marcadas": 2 }`. Aviso de outro usuário responde `404`.
+
 ---
 
 ## 11. Painéis — `/painel`

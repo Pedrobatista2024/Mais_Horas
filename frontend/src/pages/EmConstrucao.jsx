@@ -31,7 +31,6 @@ const ATALHOS = {
 };
 
 const PROXIMAS = [
-  { fatia: 7, titulo: "Notificações", detalhe: "Aviso no sistema a cada decisão" },
   { fatia: 8, titulo: "Console do admin", detalhe: "Auditoria e controle da plataforma" },
   { fatia: 9, titulo: "Portal", detalhe: "Página pública de apresentação" },
 ];

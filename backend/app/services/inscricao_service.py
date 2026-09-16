@@ -23,7 +23,7 @@ from app.core import auditoria
 from app.core.config import config
 from app.core.errors import ErroDeNegocio
 from app.db.models import Atividade, Inscricao, PerfilEstudante, PerfilOng, Usuario
-from app.services import atividade_service
+from app.services import atividade_service, notificacao_service
 from app.services.atividade_service import (
     SITUACOES_QUE_OCUPAM, agora, contar_ocupadas, hoje, situacao_real,
 )
@@ -311,6 +311,8 @@ async def _responder(sessao: AsyncSession, ong: Usuario, inscricao: Inscricao,
         antes={"situacao": "pendente"}, depois={"situacao": inscricao.situacao},
         request=request,
     )
+    await notificacao_service.inscricao_respondida(
+        sessao, inscricao.usuario_id, inscricao.atividade.titulo, aprovar)
     return inscricao
 
 

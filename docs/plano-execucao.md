@@ -249,10 +249,40 @@ transação.
 
 ---
 
-### Fatia 7 — Notificações
+### Fatia 7 — Notificações ✅ concluída
 
 **Backend:** `/notificacoes` · **Frontend:** sino no cabeçalho
 **Fluxos:** FE-10 · **Regras:** D16
+
+Entregue: `app/services/notificacao_service.py`, `app/routers/notificacoes.py`, 20 testes
+em `tests/test_notificacoes.py`; no frontend, `components/notificacao/` (sino, item e o
+evento de sincronização) e `pages/Notificacoes.jsx`.
+
+Verificado no navegador: aprovação e cancelamento reais geraram dois avisos, o sino mostrou
+2, abrir um aviso marcou como lido e levou a "Minhas inscrições", e "marcar todas" na
+página zerou o sino.
+
+Decisões tomadas durante a implementação:
+
+- **`notificar()` não dá commit**, como `auditoria.registrar()`. O aviso entra na transação
+  de quem aprova, cancela ou emite: se a operação cai, o aviso cai junto. Há teste que
+  derruba a emissão no meio e confere que nenhum aviso de certificado ficou — e que a
+  atividade continua existindo, para o teste não passar por vacuidade.
+- **Os textos moram num lugar só**, e é lá que ficam as regras de silêncio: a recusa não
+  sugere motivo (D8) e o cancelamento não repete o motivo que a ONG escreveu para a
+  auditoria (D10). O motivo da **revogação** aparece, porque já é público na verificação.
+- **Catálogo de tipos fechado**, como o da auditoria. Entrou um sexto tipo,
+  `certificado.restabelecido`: sem ele, quem teve a revogação desfeita ficaria com o
+  último aviso dizendo que o certificado não vale.
+- **Link só interno.** O frontend navega para o link do aviso; aceitar URL externa faria do
+  sino um redirecionamento aberto. O servidor descarta, e o cliente confere de novo.
+- **`criado_em` vem do Python, não do `NOW()` do banco.** No Postgres, `NOW()` é a hora do
+  início da transação: avisos criados juntos (o cancelamento avisa todos os inscritos de
+  uma vez) empatariam, e a ordem na lista viraria sorteio.
+- **Só o contador roda sozinho** — ao montar, a cada troca de tela, a cada minuto com a aba
+  visível e quando a janela volta ao foco. A lista só é buscada quando o painel abre.
+- **A página avisa o sino por evento.** Os dois não compartilham estado, e "marcar todas"
+  na página deixava o sino com o número antigo até a próxima troca de tela.
 
 ---
 

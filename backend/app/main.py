@@ -19,7 +19,8 @@ from app.core.config import config
 from app.core.errors import registrar_handlers
 from app.db.session import engine
 from app.routers import (
-    admin, atividades, auth, certificados, checkin, inscricoes, perfil,
+    admin, atividades, auth, certificados, checkin, inscricoes, notificacoes,
+    perfil,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -137,6 +138,7 @@ app.include_router(inscricoes.router, prefix=PREFIXO)
 app.include_router(checkin.router, prefix=PREFIXO)
 app.include_router(certificados.router, prefix=PREFIXO)
 app.include_router(admin.router, prefix=PREFIXO)
+app.include_router(notificacoes.router, prefix=PREFIXO)
 
 # A entrar nas próximas fatias:
 #   Fatia 4  /api/v1/inscricoes

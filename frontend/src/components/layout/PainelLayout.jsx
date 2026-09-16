@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { painelDe } from "../../routes/destinos";
 import { initials } from "../../utils/format";
+import Sino from "../notificacao/Sino";
 import BrandMark from "../ui/BrandMark";
 
 /**
@@ -116,6 +117,8 @@ export default function PainelLayout() {
             <BrandMark compact onClick={() => ir(painelDe(papel))} />
           </Group>
 
+          <Group gap="xs" wrap="nowrap">
+          <Sino />
           <Menu shadow="md" width={220} position="bottom-end">
             <Menu.Target>
               <UnstyledButton aria-label="Abrir menu do usuário">
@@ -146,6 +149,7 @@ export default function PainelLayout() {
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
+          </Group>
         </Group>
       </AppShell.Header>
 

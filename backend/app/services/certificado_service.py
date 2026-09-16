@@ -29,6 +29,7 @@ from app.core.errors import ErroDeNegocio
 from app.db.models import (
     Atividade, Certificado, Inscricao, PerfilEstudante, PerfilOng, Usuario,
 )
+from app.services import notificacao_service
 from app.services.atividade_service import TZ, agora
 
 MESES = ("janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
@@ -139,6 +140,8 @@ async def emitir_para_atividade(
                     "aluno_id": str(cert.usuario_id)},
             request=request,
         )
+        await notificacao_service.certificado_emitido(
+            sessao, cert.usuario_id, cert.titulo_atividade, cert.horas)
 
     return len(presentes)
 
@@ -475,6 +478,8 @@ async def revogar(sessao: AsyncSession, admin: Usuario, certificado_id: uuid.UUI
         depois={"motivo": cert.motivo_revogacao, "codigo": cert.codigo_verificacao},
         request=request,
     )
+    await notificacao_service.certificado_revogado(
+        sessao, cert.usuario_id, cert.titulo_atividade, cert.motivo_revogacao)
     await sessao.commit()
     return serializar(cert)
 
@@ -497,5 +502,7 @@ async def reverter_revogacao(sessao: AsyncSession, admin: Usuario,
         ator_papel=admin.papel, entidade="certificado", entidade_id=cert.id,
         antes=antes, request=request,
     )
+    await notificacao_service.certificado_restabelecido(
+        sessao, cert.usuario_id, cert.titulo_atividade)
     await sessao.commit()
     return serializar(cert)

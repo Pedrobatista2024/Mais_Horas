@@ -495,6 +495,11 @@ notificação". Este é o fluxo em que ele efetivamente toma conhecimento.
 | `atividade.cancelada` | FO-04, FS-05 |
 | `certificado.emitido` | FO-09 |
 | `certificado.revogado` | FS-09 |
+| `certificado.restabelecido` | FS-09, quando a revogação é desfeita |
+
+A recusa **não** traz motivo (D8), e o aviso de cancelamento **não** repete o motivo que a
+ONG registrou — esse é da auditoria (D10). O da revogação aparece, porque já é público na
+verificação.
 
 **Exceções**
 
