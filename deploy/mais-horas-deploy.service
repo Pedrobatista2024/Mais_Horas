@@ -1,9 +1,0 @@
-[Unit]
-Description=Mais Horas - publica o main quando o CI passa
-After=network-online.target docker.service
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-User=__USUARIO__
-ExecStart=__PASTA__/deploy/auto-deploy.sh

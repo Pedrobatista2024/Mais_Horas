@@ -1,7 +1,7 @@
-# Testes de todo push e pull request. O servidor só publica um commit do main
-# depois que estes jobs passam (deploy/auto-deploy.sh consulta o resultado).
-# Sem filtro de caminho de propósito: commit sem CI nunca seria publicado.
-name: CI
+# Testes de todo push e pull request e, no main, publicação na VM quando os
+# testes passam. Sem filtro de caminho de propósito: todo commit do main é
+# testado antes de ir ao ar.
+name: CI / Deploy
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
+  # Push novo cancela o anterior ainda em teste; o mais recente é que publica.
   cancel-in-progress: true
 
 jobs:
@@ -61,3 +62,43 @@ jobs:
       - run: npm ci
       - run: npx eslint src
       - run: npm run build
+
+  deploy:
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: producao
+      url: https://maishoras.northcentralus.cloudapp.azure.com
+    env:
+      SERVIDOR: maishoras.northcentralus.cloudapp.azure.com
+      # Identidade da VM fixada aqui: sem ela, um servidor impostor receberia a
+      # conexão. Muda só se a VM for recriada (ssh-keyscan de novo).
+      IDENTIDADE_DO_SERVIDOR: >-
+        maishoras.northcentralus.cloudapp.azure.com
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX4QQYphS2tZRlLj0pTDTpwghaJRuO7Lq6ico5yWnvL
+    steps:
+      - name: Publicar na VM
+        env:
+          CHAVE: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$CHAVE" ]; then
+            echo "::error::Segredo DEPLOY_SSH_KEY ausente (docs/deploy.md)"
+            exit 1
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$CHAVE" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$IDENTIDADE_DO_SERVIDOR" > ~/.ssh/known_hosts
+          # A chave só consegue rodar deploy/publicar.sh; o SHA vira o argumento.
+          ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "maishoras@$SERVIDOR" "$GITHUB_SHA"
+
+      - name: Conferir que o site respondeu
+        run: |
+          for i in $(seq 1 20); do
+            curl -fsS "https://$SERVIDOR/saude" && exit 0
+            sleep 3
+          done
+          echo "::error::A API não respondeu depois da publicação"
+          exit 1

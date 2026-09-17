@@ -1,9 +1,0 @@
-[Unit]
-Description=Mais Horas - confere o GitHub a cada 2 minutos
-
-[Timer]
-OnBootSec=1min
-OnUnitActiveSec=2min
-
-[Install]
-WantedBy=timers.target

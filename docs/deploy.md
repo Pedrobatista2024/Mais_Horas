@@ -13,7 +13,8 @@ Tudo mora em [`deploy/`](../deploy):
 | `docker-compose.yml` | Postgres, API e Caddy. O banco não expõe porta |
 | `Caddyfile` | HTTPS automático, entrega o site e repassa `/api`, `/uploads` e `/saude` |
 | `instalar.sh` | Prepara o Ubuntu (Docker, swap, cron), gera os segredos e sobe |
-| `atualizar.sh` | `git pull` + rebuild do que mudou |
+| `publicar.sh` | Publica um commit do `main` — único comando da chave do pipeline |
+| `atualizar.sh` | `git pull` + rebuild, para publicar na mão |
 | `backup.sh` | `pg_dump` diário em `~/backups`, guardando 14 dias |
 | `.env.exemplo` | Modelo do `deploy/.env` (este nunca vai para o git) |
 
@@ -53,21 +54,38 @@ cd deploy && sudo docker compose exec api python -m app.cli criar-admin
 
 ### Publicação automática
 
-**Todo push no `main` com CI verde entra no ar sozinho, em até ~2 minutos.**
+**Todo push no `main` passa pelo pipeline e, com os testes verdes, entra no ar.**
 
-- [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) roda os testes do backend
-  (com Postgres) e o lint + build do frontend em todo push e pull request.
-- Na VM, o timer `mais-horas-deploy` roda `deploy/auto-deploy.sh` a cada 2 minutos: se o
-  `main` andou, consulta o resultado do CI daquele commit pela API pública do GitHub e,
-  estando verde, chama `atualizar.sh`. Commit reprovado fica anotado e não é tentado de
-  novo — o próximo commit corrigido é publicado normalmente.
-- **A VM puxa, o GitHub não entra.** Não há chave do servidor guardada no GitHub, e o
-  repositório não precisa de permissão de admin para configurar segredo.
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml):
+
+1. `backend` — pytest com Postgres de serviço;
+2. `frontend` — lint e build;
+3. `deploy` — só em push no `main` e só se os dois passaram. Entra na VM por SSH e
+   manda o SHA testado; em seguida confere `/saude`. Aparece no GitHub como ambiente
+   `producao`, com o link do site.
+
+Push novo cancela o pipeline anterior ainda em andamento: o mais recente é que publica.
+
+**A chave do pipeline só sabe fazer uma coisa.** Em `~/.ssh/authorized_keys` da VM ela
+está como `command="…/deploy/publicar.sh",restrict`: sem shell, sem túnel, e o que o
+pipeline envia vira só o argumento. [`publicar.sh`](../deploy/publicar.sh) aceita um SHA
+de 40 caracteres, confere que ele está no `main`, avança até ele e recompila. Vazar o
+segredo permite, no pior caso, republicar um commit que já está no `main`.
+
+A identidade da VM (chave de host) está fixada no workflow: se a VM for recriada,
+atualize com `ssh-keyscan -t ed25519 <endereco>`.
+
+Para (re)criar a chave de deploy:
 
 ```bash
-journalctl -u mais-horas-deploy -f                    # acompanhar as publicações
-~/Mais_Horas/deploy/atualizar.sh                      # publicar na mão, sem esperar o CI
+ssh-keygen -t ed25519 -N "" -C github-actions-deploy -f deploy_gh
+# na VM, uma linha em ~/.ssh/authorized_keys:
+#   command="/home/maishoras/Mais_Horas/deploy/publicar.sh",restrict <conteúdo de deploy_gh.pub>
+gh secret set DEPLOY_SSH_KEY < deploy_gh
+rm deploy_gh deploy_gh.pub
 ```
+
+Publicar na mão, sem pipeline: `~/Mais_Horas/deploy/atualizar.sh` na VM.
 
 ### Operar
 
