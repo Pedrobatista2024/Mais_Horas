@@ -51,10 +51,27 @@ cd deploy && sudo docker compose exec api python -m app.cli criar-admin
 > **Copie `deploy/.env` para fora do servidor** logo após instalar. Ele tem a
 > `CHAVE_ASSINATURA`: perdê-la invalida todo certificado emitido, e trocá-la também.
 
-### Atualizar e operar
+### Publicação automática
+
+**Todo push no `main` com CI verde entra no ar sozinho, em até ~2 minutos.**
+
+- [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) roda os testes do backend
+  (com Postgres) e o lint + build do frontend em todo push e pull request.
+- Na VM, o timer `mais-horas-deploy` roda `deploy/auto-deploy.sh` a cada 2 minutos: se o
+  `main` andou, consulta o resultado do CI daquele commit pela API pública do GitHub e,
+  estando verde, chama `atualizar.sh`. Commit reprovado fica anotado e não é tentado de
+  novo — o próximo commit corrigido é publicado normalmente.
+- **A VM puxa, o GitHub não entra.** Não há chave do servidor guardada no GitHub, e o
+  repositório não precisa de permissão de admin para configurar segredo.
 
 ```bash
-~/Mais_Horas/deploy/atualizar.sh                      # publica o main
+journalctl -u mais-horas-deploy -f                    # acompanhar as publicações
+~/Mais_Horas/deploy/atualizar.sh                      # publicar na mão, sem esperar o CI
+```
+
+### Operar
+
+```bash
 cd ~/Mais_Horas/deploy && sudo docker compose logs -f api
 sudo docker compose exec -T banco pg_restore -U maishoras -d mais_horas --clean < ~/backups/<arquivo>.dump
 ```
