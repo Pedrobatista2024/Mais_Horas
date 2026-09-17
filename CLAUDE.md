@@ -25,7 +25,7 @@ o código: quando os dois discordarem, o código é que está atrasado.
 A construção é por **fatias verticais**: cada uma entrega backend, frontend e testes de um
 pedaço que funciona ponta a ponta. Fatias 0 a 7 estão concluídas (fundação, acesso, perfil,
 atividades, inscrições, presença, certificado, notificações) — o ciclo inteiro já é
-demonstrável. As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
+demonstrável. Da Fatia 8, o console administrativo está pronto; falta o "entrar como". As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
 propósito: chamariam endpoints que não existem, e tela quebrada é pior que tela ausente.
 
 Restam no frontend alguns arquivos da versão anterior (Node/Express) em `pages/org/`,
@@ -166,6 +166,8 @@ Invariantes que não podem ser quebradas:
   verificação pública exibe**. Campo novo na página exige campo novo no texto — e versão
   nova (`MHC2`), porque mudar o formato invalida o que já foi emitido.
 - `tokens_sessao` guarda **hash**, nunca o token em claro.
+- Os poderes do admin são limitados **pela ausência de rota**: não há como definir senha,
+  trocar e-mail, emitir certificado nem alterar a auditoria. Não crie essas rotas.
 - Atividade não finaliza com inscrição `pendente`.
 - `UNIQUE(atividade_id, usuario_id)` significa que **reinscrever reaproveita a linha**.
   Não insira uma segunda: quem cancelou e voltou atrás tem a mesma inscrição reativada.

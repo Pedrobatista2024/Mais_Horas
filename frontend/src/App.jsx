@@ -43,6 +43,16 @@ const VerificarCertificado = lazy(() =>
 // Notificações — Fatia 7
 const Notificacoes = lazy(() => import("./pages/Notificacoes"));
 
+// Console administrativo — Fatia 8
+const AdminVisaoGeral = lazy(() => import("./pages/admin/VisaoGeral"));
+const AdminAuditoria = lazy(() => import("./pages/admin/Auditoria"));
+const AdminUsuarios = lazy(() => import("./pages/admin/Usuarios"));
+const AdminDetalheUsuario = lazy(() => import("./pages/admin/DetalheUsuario"));
+const AdminOngs = lazy(() => import("./pages/admin/Ongs"));
+const AdminAtividades = lazy(() => import("./pages/admin/Atividades"));
+const AdminCertificados = lazy(() => import("./pages/admin/Certificados"));
+const AdminSistema = lazy(() => import("./pages/admin/Sistema"));
+
 /**
  * As rotas entram fatia a fatia (docs/plano-execucao.md). As telas das fatias
  * seguintes ainda não estão listadas aqui porque chamariam endpoints que não
@@ -112,7 +122,14 @@ export default function App() {
 
           {/* Administração */}
           <Route element={<Area papel="superadmin" />}>
-            <Route path="/admin" element={<EmConstrucao />} />
+            <Route path="/admin" element={<AdminVisaoGeral />} />
+            <Route path="/admin/auditoria" element={<AdminAuditoria />} />
+            <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+            <Route path="/admin/usuarios/:id" element={<AdminDetalheUsuario />} />
+            <Route path="/admin/ongs" element={<AdminOngs />} />
+            <Route path="/admin/atividades" element={<AdminAtividades />} />
+            <Route path="/admin/certificados" element={<AdminCertificados />} />
+            <Route path="/admin/sistema" element={<AdminSistema />} />
           </Route>
 
           {/* Endereços da versão anterior continuam levando a algum lugar */}

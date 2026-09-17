@@ -7,10 +7,10 @@ import { api } from "../services/api";
  * cookie ou localStorage (ver docs/autenticacao.md). Buscar como blob mantém a
  * autenticação e ainda deixa o erro da API legível para a tela.
  */
-export async function baixarArquivo(caminho, nomePadrao = "arquivo.pdf") {
+export async function baixarArquivo(caminho, nomePadrao = "arquivo.pdf", params) {
   let resposta;
   try {
-    resposta = await api.get(caminho, { responseType: "blob" });
+    resposta = await api.get(caminho, { responseType: "blob", params });
   } catch (erro) {
     // O corpo do erro também veio como blob; sem converter, a mensagem da API
     // se perderia e a tela mostraria só "falhou".

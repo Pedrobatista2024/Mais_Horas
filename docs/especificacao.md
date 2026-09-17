@@ -907,9 +907,12 @@ filtrada por aquele usuário.
 | **Entrar como** | conta ativa, não admin | Abre a sessão espelho somente leitura (D13) |
 | Encerrar sessões | há sessão ativa | Revoga todos os refresh tokens da pessoa |
 | Suspender / Reativar | conforme situação | Alterna e audita |
-| Editar dados de contato | sempre | Corrige e-mail ou telefone errado |
 | Ver auditoria deste usuário | sempre | Abre A2 filtrada |
 
+> **Por que não existe "editar e-mail":** trocar o e-mail de alguém e, em seguida,
+> disparar a redefinição entregaria o link ao próprio admin. Seria "definir senha" por
+> outro caminho.
+>
 > **Por que não existe "definir senha":** um admin capaz de definir a senha de alguém é um
 > admin capaz de se passar por essa pessoa — e o log registraria as ações como se fossem
 > dela. Disparando a redefinição, o problema do usuário é resolvido e ninguém perde a

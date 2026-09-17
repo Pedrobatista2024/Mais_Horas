@@ -125,6 +125,14 @@ export default function DetalheAtividade() {
         </Group>
       </Stack>
 
+      {atividade.editadaPorAdminEm && (
+        <Alert color="orange" variant="light" icon={<IconAlertTriangle size={18} />}>
+          Esta atividade foi editada pela administração da plataforma em{" "}
+          {new Date(atividade.editadaPorAdminEm).toLocaleDateString("pt-BR")}. Confira
+          data, horário e local antes de ir.
+        </Alert>
+      )}
+
       {atividade.situacao === "cancelada" && (
         <Alert color="red" variant="light" icon={<IconAlertTriangle size={18} />}>
           Esta atividade foi cancelada pela organização.

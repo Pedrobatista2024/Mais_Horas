@@ -295,6 +295,40 @@ Decisões tomadas durante a implementação:
 > A auditoria é escrita desde a Fatia 1 — o console só a lê. Adiar a escrita significaria
 > voltar em todas as fatias depois.
 
+**Parte 1 ✅ — console (A1 a A8).** Entregue: `admin_painel_service.py`,
+`admin_contas_service.py`, `admin_conteudo_service.py`, 25 rotas em `routers/admin.py`,
+57 testes em `tests/test_admin.py` e as oito telas em `pages/admin/`. Verificado no
+navegador: visão geral com alertas reais, integridade das assinaturas, suspensão com motivo
+obrigatório e reativação, e a trilha registrando cada passo — inclusive as leituras.
+
+**Parte 2 — "entrar como" (A4b, FS-04):** a sessão espelho somente leitura. Fica
+separada por ser a peça mais sensível do sistema.
+
+Decisões da parte 1:
+
+- **Suspender ONG cancela as atividades que ainda não começaram (RN-51), e reativar não
+  as reabre.** O FS-05 dizia que "as atividades voltam", o que contradiz a RN-51 —
+  cancelamento avisa e libera os inscritos, e não há como desfazer. As que já começaram
+  ficam como estão (cancelar negaria o certificado de quem foi), saem da vitrine (RN-36) e
+  podem ter a validação forçada.
+- **Não há "editar e-mail" no console.** A4 previa corrigir o contato, mas trocar o e-mail
+  e em seguida disparar a redefinição entregaria o link ao próprio admin, que entraria como
+  a pessoa — exatamente o que a D12 proíbe. Correção de e-mail fica para um fluxo com
+  confirmação no endereço novo.
+- **Forçar validação aplica a política só a quem está sem decisão.** O que a ONG já tiver
+  marcado é respeitado. A finalização reaproveita o mesmo caminho da ONG (`concluir`), com
+  o admin como ator: a emissão continua atômica.
+- **Editar como admin dispensa a trava da RN-12, não as de coerência.** Vagas abaixo dos
+  inscritos, horário invertido e data no passado continuam barrados.
+- **Leitura sensível é auditada** (RN-32): abrir o detalhe de alguém gera
+  `usuario.consultado`; exportar a auditoria gera `auditoria.exportada`. Consultar a
+  auditoria é registrado só na primeira página, para paginar não parecer nova consulta.
+- **CSV da auditoria neutraliza fórmula.** Célula começando com `=`, `+`, `-` ou `@` vira
+  fórmula ao abrir na planilha, e nomes e títulos vêm de qualquer usuário.
+- **A RN-44 não chega a disparar pela API** — quem suspende é um admin ativo e não pode ser
+  o alvo. A trava fica no serviço como defesa em profundidade, testada diretamente.
+- **A CLI passou a auditar** `admin.criado` com `origem: cli` (FS-01).
+
 ---
 
 ### Fatia 9 — Portal institucional

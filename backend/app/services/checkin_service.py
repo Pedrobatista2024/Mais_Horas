@@ -15,7 +15,7 @@ visível — é justamente o que se quer poder auditar.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import Request, status
 from sqlalchemy import func, select
@@ -23,7 +23,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import auditoria, security
-from app.core.config import config
 from app.core.errors import ErroDeNegocio
 from app.db.models import Atividade, Inscricao, PerfilEstudante, Usuario
 from app.services import certificado_service
@@ -398,17 +397,17 @@ async def definir_presencas_em_lote(sessao: AsyncSession, ong: Usuario,
     return {"alteradas": alteradas}
 
 
-async def finalizar(sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
-                    *, request: Request | None = None) -> dict:
+async def concluir(sessao: AsyncSession, atividade: Atividade, ator: Usuario,
+                   *, request: Request | None = None) -> dict:
     """
     Fecha a atividade, credita as horas e emite os certificados (RN-14, D4).
+    Usada pela ONG e pelo admin ao forçar a validação (FS-08).
 
     Tudo numa transação só (RN-41): se uma assinatura falhar, nenhum
     certificado sai e a atividade continua aberta para nova tentativa. Um
     certificado pela metade seria pior que nenhum — o aluno o apresentaria e a
     verificação o acusaria.
     """
-    atividade = await _exigir_atividade_da_ong(sessao, ong, atividade_id)
     _exigir_janela_de_validacao(atividade)
     certificado_service.exigir_chave()
 
@@ -416,7 +415,7 @@ async def finalizar(sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
         raise ErroDeNegocio("carga_horaria_invalida",
                             "Defina a carga horária antes de finalizar")
 
-    inscritos = await _inscritos(sessao, atividade_id)
+    inscritos = await _inscritos(sessao, atividade.id)
     pendentes = [i for i in inscritos if i.situacao not in ("presente", "ausente")]
     if pendentes:
         # RN-03. Finalizar com alguém sem decisão deixaria a pessoa num limbo:
@@ -437,10 +436,10 @@ async def finalizar(sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
     atividade.finalizada_em = agora()
 
     emitidos = await certificado_service.emitir_para_atividade(
-        sessao, ong, atividade, presentes, request=request)
+        sessao, ator, atividade, presentes, request=request)
 
     await auditoria.registrar(
-        sessao, "atividade.finalizada", ator_id=ong.id, ator_papel=ong.papel,
+        sessao, "atividade.finalizada", ator_id=ator.id, ator_papel=ator.papel,
         entidade="atividade", entidade_id=atividade.id,
         antes={"situacao": "aguardando_validacao"},
         depois={"situacao": "finalizada", "presentes": len(presentes),
@@ -458,3 +457,9 @@ async def finalizar(sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
         "certificadosEmitidos": emitidos,
         "cargaHoraria": atividade.carga_horaria,
     }
+
+
+async def finalizar(sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
+                    *, request: Request | None = None) -> dict:
+    atividade = await _exigir_atividade_da_ong(sessao, ong, atividade_id)
+    return await concluir(sessao, atividade, ong, request=request)

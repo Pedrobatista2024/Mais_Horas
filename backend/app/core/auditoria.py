@@ -41,8 +41,9 @@ ACOES = {
     "certificado.revogacao_revertida", "integridade.verificada",
     # Administração
     "admin.criado", "admin.entrou_como", "admin.saiu_do_modo",
-    "admin.navegou_como", "auditoria.consultada", "ong.verificada",
-    "ong.verificacao_removida",
+    "admin.navegou_como", "auditoria.consultada", "auditoria.exportada",
+    "usuario.consultado", "ong.verificada", "ong.verificacao_removida",
+    "sistema.tokens_limpos",
 }
 
 

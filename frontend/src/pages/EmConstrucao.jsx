@@ -27,11 +27,9 @@ const ATALHOS = {
     { para: "/ong/atividades/nova", rotulo: "Publicar uma atividade" },
     { para: "/perfil", rotulo: "Dados da organização" },
   ],
-  superadmin: [{ para: "/perfil", rotulo: "Meu perfil" }],
 };
 
 const PROXIMAS = [
-  { fatia: 8, titulo: "Console do admin", detalhe: "Auditoria e controle da plataforma" },
   { fatia: 9, titulo: "Portal", detalhe: "Página pública de apresentação" },
 ];
 

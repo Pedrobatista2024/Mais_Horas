@@ -78,6 +78,7 @@ frontend/src/
     RotaPrivada.jsx    guarda por autenticação e papel
     destinos.js        para onde cada papel vai depois de entrar
   hooks/useFetch       GET com { data, loading, error, refetch, setData }
+  hooks/useListagem    GET paginado com filtros do servidor
   components/
     layout/            PainelLayout (área logada), AuthLayout, PublicPage
     atividade/         CartaoAtividade, SituacaoBadge, situacoes.js,
@@ -91,6 +92,8 @@ frontend/src/
     auth/              Entrar, CriarConta, EsqueciSenha, RedefinirSenha
     perfil/            MeuPerfil (serve aos dois papéis)
     Notificacoes.jsx   todos os avisos, com filtro de não lidas
+    admin/             VisaoGeral, Auditoria, Usuarios, DetalheUsuario, Ongs,
+                       Atividades, Certificados, Sistema (+ rotulos.js)
     estudante/         Vitrine, DetalheAtividade, MinhasInscricoes, Checkin,
                        MeusCertificados
     ong/               MinhasAtividades, FormularioAtividade, GerenciarAtividade,
@@ -142,7 +145,14 @@ endpoint inexistente, e tela quebrada é pior que tela ausente.
 | `/ong/atividades/:id/inscricoes` | ONG | `O5` Inscrições da atividade |
 | `/ong/atividades/:id/check-in` | ONG | `O6` Painel de QR rotativo |
 | `/ong/atividades/:id/presencas` | ONG | `O7` Validar presenças |
-| `/admin` | superadmin | `A1` Visão geral *(em construção)* |
+| `/admin` | superadmin | `A1` Visão geral |
+| `/admin/auditoria` | superadmin | `A2` Auditoria (`?alvoId=` `?acao=`) |
+| `/admin/usuarios` | superadmin | `A3` Usuários |
+| `/admin/usuarios/:id` | superadmin | `A4` Detalhe do usuário |
+| `/admin/ongs` | superadmin | `A5` Organizações |
+| `/admin/atividades` | superadmin | `A6` Atividades (`?ongId=` `?paradas=1`) |
+| `/admin/certificados` | superadmin | `A7` Certificados (`?assinatura=`) |
+| `/admin/sistema` | superadmin | `A8` Sistema |
 
 Papel errado não dá erro: o usuário é levado ao painel dele. Ele não fez nada de errado,
 só digitou o endereço de outro. Rota inexistente cai em `/`. Os endereços da versão

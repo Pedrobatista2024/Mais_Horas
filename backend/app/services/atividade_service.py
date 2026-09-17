@@ -13,7 +13,7 @@ forma confiável em serviço que hiberna por inatividade.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, time
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from fastapi import Request, status
@@ -166,7 +166,12 @@ async def listar_vitrine(
     Mostra só `publicada` com data de hoje em diante. Atividade lotada continua
     aparecendo (D7) — ela some da vitrine quando o dia passa, não quando enche.
     """
-    condicoes = [Atividade.situacao == "publicada", Atividade.data >= hoje()]
+    condicoes = [
+        Atividade.situacao == "publicada", Atividade.data >= hoje(),
+        # RN-36 — atividade de ONG suspensa sai da vitrine, mesmo a que já
+        # começou e por isso não foi cancelada na suspensão.
+        Atividade.ong_id.in_(select(Usuario.id).where(Usuario.situacao == "ativa")),
+    ]
 
     if busca:
         alvo = f"%{busca.strip()}%"
@@ -306,12 +311,18 @@ async def criar(
     return await serializar(sessao, atividade, usuario=ong, ocupadas=0)
 
 
-async def editar(
-    sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID, dados: dict,
-    *, request: Request | None = None,
-) -> dict:
-    atividade = await _buscar_da_ong(sessao, atividade_id, ong)
+async def aplicar_edicao(
+    sessao: AsyncSession, atividade: Atividade, ator: Usuario, dados: dict, *,
+    travar_com_inscritos: bool, acao: str, request: Request | None = None,
+) -> tuple[int, bool]:
+    """
+    Valida e aplica a edição. **Não dá commit.** Devolve (vagas ocupadas,
+    se algum campo mudou).
 
+    A ONG edita com a trava da RN-12; o admin, não — ele existe justamente
+    para corrigir o que a ONG não corrige, e a correção fica visível (RN-35).
+    As travas de coerência (vagas, horário, data) valem para os dois.
+    """
     if atividade.situacao in ("finalizada", "cancelada"):
         raise ErroDeNegocio(
             "atividade_encerrada",
@@ -323,7 +334,7 @@ async def editar(
 
     # RN-12 — com gente inscrita, só as vagas mudam. Recusar é melhor que
     # ignorar em silêncio: o usuário precisa saber por que não pode.
-    if ocupadas > 0:
+    if travar_com_inscritos and ocupadas > 0:
         bloqueados = [c for c in dados if c not in CAMPOS_COM_INSCRITOS]
         if bloqueados:
             raise ErroDeNegocio(
@@ -366,10 +377,21 @@ async def editar(
 
     if depois:
         await auditoria.registrar(
-            sessao, "atividade.editada", ator_id=ong.id, ator_papel=ong.papel,
+            sessao, acao, ator_id=ator.id, ator_papel=ator.papel,
             entidade="atividade", entidade_id=atividade.id,
             antes=antes, depois=depois, request=request,
         )
+    return ocupadas, bool(depois)
+
+
+async def editar(
+    sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID, dados: dict,
+    *, request: Request | None = None,
+) -> dict:
+    atividade = await _buscar_da_ong(sessao, atividade_id, ong)
+    ocupadas, _ = await aplicar_edicao(
+        sessao, atividade, ong, dados, travar_com_inscritos=True,
+        acao="atividade.editada", request=request)
     await sessao.commit()
     return await serializar(sessao, atividade, usuario=ong, ocupadas=ocupadas)
 
@@ -398,12 +420,15 @@ async def publicar(
     return await serializar(sessao, atividade, usuario=ong)
 
 
-async def cancelar(
-    sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
+async def encerrar_por_cancelamento(
+    sessao: AsyncSession, atividade: Atividade, ator: Usuario,
     motivo: str | None, *, request: Request | None = None,
-) -> dict:
-    atividade = await _buscar_da_ong(sessao, atividade_id, ong)
-
+) -> None:
+    """
+    Cancela e derruba as inscrições ativas, avisando cada aluno. **Não dá
+    commit** — a suspensão de uma ONG cancela várias atividades de uma vez, e
+    ou todas caem, ou nenhuma.
+    """
     if atividade.situacao in ("finalizada", "cancelada"):
         raise ErroDeNegocio(
             "situacao_invalida",
@@ -412,7 +437,7 @@ async def cancelar(
     anterior = atividade.situacao
     atividade.situacao = "cancelada"
     atividade.cancelada_em = agora()
-    atividade.cancelada_por = ong.id
+    atividade.cancelada_por = ator.id
 
     # As inscrições ativas caem junto — a vaga não faz sentido sem o evento.
     inscricoes = await sessao.scalars(
@@ -427,11 +452,19 @@ async def cancelar(
             sessao, inscricao.usuario_id, atividade.titulo)
 
     await auditoria.registrar(
-        sessao, "atividade.cancelada", ator_id=ong.id, ator_papel=ong.papel,
+        sessao, "atividade.cancelada", ator_id=ator.id, ator_papel=ator.papel,
         entidade="atividade", entidade_id=atividade.id,
         antes={"situacao": anterior},
         depois={"situacao": "cancelada", "motivo": motivo}, request=request,
     )
+
+
+async def cancelar(
+    sessao: AsyncSession, ong: Usuario, atividade_id: uuid.UUID,
+    motivo: str | None, *, request: Request | None = None,
+) -> dict:
+    atividade = await _buscar_da_ong(sessao, atividade_id, ong)
+    await encerrar_por_cancelamento(sessao, atividade, ong, motivo, request=request)
     await sessao.commit()
     return await serializar(sessao, atividade, usuario=ong)
 

@@ -6,6 +6,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   IconBuildingCommunity, IconCalendarEvent, IconCertificate, IconChevronRight,
+  IconListSearch, IconServerCog, IconUsers,
   IconLayoutDashboard, IconLogout, IconPlus, IconSearch, IconTicket, IconUser,
 } from "@tabler/icons-react";
 
@@ -36,7 +37,13 @@ const MENU_ONG = [
 ];
 
 const MENU_ADMIN = [
-  { rotulo: "Painel", para: "/admin", icone: IconLayoutDashboard, exato: true },
+  { rotulo: "Visão geral", para: "/admin", icone: IconLayoutDashboard, exato: true },
+  { rotulo: "Auditoria", para: "/admin/auditoria", icone: IconListSearch },
+  { rotulo: "Usuários", para: "/admin/usuarios", icone: IconUsers },
+  { rotulo: "Organizações", para: "/admin/ongs", icone: IconBuildingCommunity },
+  { rotulo: "Atividades", para: "/admin/atividades", icone: IconCalendarEvent },
+  { rotulo: "Certificados", para: "/admin/certificados", icone: IconCertificate },
+  { rotulo: "Sistema", para: "/admin/sistema", icone: IconServerCog },
 ];
 
 const MENU_POR_PAPEL = {

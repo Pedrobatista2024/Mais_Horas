@@ -493,10 +493,14 @@ Todas exigem `superadmin`, e **todas são auditadas** (RN-32).
 | Método | Rota | Descrição |
 |---|---|---|
 | `GET` | `/admin/visao-geral` | Números e alertas |
-| `GET` | `/admin/auditoria` | Registros. Paginada. Filtros: `de` `ate` `atorId` `acao` `entidade` `apenasAdmin` `apenasEmNomeDe` |
+| `GET` | `/admin/auditoria` | Registros. Paginada. Filtros: `de` `ate` `atorId` `alvoId` `acao` `entidade` `entidadeId` `ip` `apenasAdmin` `apenasEmNomeDe` |
 | `GET` | `/admin/auditoria/exportar` | CSV do recorte filtrado |
 
 > **Não existe `PUT` nem `DELETE` em auditoria** (RN-33). A ausência é a garantia.
+
+`acao` terminada em ponto (`sessao.`) filtra a família inteira. `alvoId` junta o que a
+pessoa fez, o que fizeram com ela e o que foi feito em nome dela. O CSV tem teto de 5.000
+linhas e neutraliza células que virariam fórmula.
 
 ### 12.2 Usuários
 
@@ -512,7 +516,12 @@ Todas exigem `superadmin`, e **todas são auditadas** (RN-32).
 | `POST` | `/admin/sair-do-modo` | Encerra a sessão espelho |
 | `POST` | `/admin/administradores` | Cria admin. Exige `senhaAtual` (RN-37) |
 
-> **Não existe rota para definir senha** (RN-28). A ausência é a garantia.
+> **Não existe rota para definir senha** (RN-28) **nem para trocar e-mail** — trocar e
+> em seguida disparar a redefinição daria ao admin o link da outra pessoa. A ausência é a
+> garantia.
+
+Suspender ONG devolve `atividadesCanceladas`. Códigos novos: `ja_suspensa`, `ja_ativa`,
+`email_em_uso` (`409`).
 
 | Código de erro | Situação |
 |---|---|
@@ -532,12 +541,18 @@ Todas exigem `superadmin`, e **todas são auditadas** (RN-32).
 | `GET` | `/admin/atividades` | Todas as ONGs. Paginada |
 | `PUT` | `/admin/atividades/{id}` | Edita. Marca `editadaPorAdminEm` (RN-35) |
 | `POST` | `/admin/atividades/{id}/cancelar` | Exige `motivo` |
-| `POST` | `/admin/atividades/{id}/forcar-validacao` | Exige `motivo` e `politica` (FS-08) |
+| `POST` | `/admin/atividades/{id}/forcar-validacao` | Exige `motivo` e `politica` (`checkin_presente` ou `todos_ausentes`) (FS-08) |
 | `GET` | `/admin/certificados` | Paginada. Filtro `situacaoAssinatura` |
+| `POST` | `/admin/certificados/{id}/reconferir` | Recalcula a assinatura de um |
 | `POST` | `/admin/certificados/{id}/revogar` | **Exige `motivo`** (RN-34) |
 | `POST` | `/admin/certificados/{id}/reverter-revogacao` | |
 
 > **Não existe rota para emitir certificado** (D14). A ausência é a garantia.
+
+`GET /admin/atividades` aceita `situacao` (inclusive as calculadas), `ongId`, `busca` e
+`paradas` (aguardando validação há mais de 7 dias); cada item traz `podeForcarValidacao`.
+Forçar antes do prazo responde `400 prazo_da_ong`; `checkin_presente` sem nenhum check-in
+responde `400 sem_checkin`. Cancelar só antes do fim da atividade.
 
 ### 12.4 Sistema
 
@@ -612,7 +627,10 @@ hora torna a busca inútil.
 | `admin.criado` | Novo superadmin |
 | `admin.entrou_como` / `admin.saiu_do_modo` | Sessão espelho |
 | `admin.navegou_como` | Cada tela vista no modo espelho |
-| `auditoria.consultada` | Alguém abriu a auditoria |
+| `auditoria.consultada` | Alguém abriu a auditoria (só a primeira página) |
+| `auditoria.exportada` | Alguém baixou o CSV |
+| `usuario.consultado` | Alguém abriu o detalhe de uma conta (RN-32) |
+| `sistema.tokens_limpos` | Limpeza de tokens vencidos |
 | `ong.verificada` / `ong.verificacao_removida` | Selo |
 
 ---

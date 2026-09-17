@@ -39,6 +39,7 @@ def _gerar_segredos() -> None:
 async def _criar_admin_async() -> None:
     from sqlalchemy import select
 
+    from app.core import auditoria
     from app.core.security import gerar_hash_senha
     from app.db.models import Usuario
     from app.db.session import CriarSessao
@@ -57,12 +58,19 @@ async def _criar_admin_async() -> None:
         if existe:
             sys.exit(f"Já existe conta com o e-mail {email}.")
 
-        sessao.add(Usuario(
+        novo = Usuario(
             nome=nome or "Administrador",
             email=email,
             senha_hash=gerar_hash_senha(senha),
             papel="superadmin",
-        ))
+        )
+        sessao.add(novo)
+        await sessao.flush()
+        # FS-01 — quem nasce pela linha de comando também fica na trilha, com a
+        # origem marcada: não há ator logado para registrar.
+        await auditoria.registrar(
+            sessao, "admin.criado", entidade="usuario", entidade_id=novo.id,
+            depois={"email": email, "origem": "cli"})
         await sessao.commit()
 
     print(f"\nAdministrador criado: {email}")

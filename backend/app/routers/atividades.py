@@ -7,7 +7,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 
-from app.core.deps import Ong, Sessao, UsuarioAtual, usuario_atual
+from app.core.deps import Ong, Sessao, usuario_atual
 from app.schemas.atividade import (
     AtividadeEdicao, AtividadeEntrada, AtividadeSaida, MotivoEntrada,
 )

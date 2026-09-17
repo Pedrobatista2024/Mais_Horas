@@ -1000,8 +1000,8 @@ o código, ou do certificado impresso com o QR danificado.
 
 **Alternativos**
 
-- **A1** — Reativar: restaura o acesso e as atividades voltam
-- **A2** — Suspender ONG: as atividades futuras são canceladas e os inscritos notificados (RN-51)
+- **A1** — Reativar: restaura o acesso. **As atividades canceladas na suspensão não voltam** — os inscritos já foram avisados e liberados
+- **A2** — Suspender ONG: as atividades que ainda não começaram são canceladas e os inscritos notificados (RN-51). As que já começaram ficam, fora da vitrine (RN-36), e podem ter a validação forçada (FS-08)
 
 **Exceções**
 
@@ -1066,7 +1066,7 @@ o código, ou do certificado impresso com o QR danificado.
 1. `A1` alerta sobre a atividade parada
 2. Abre em `A6` e clica em "Forçar validação"
 3. **Confirmação reforçada**, exigindo motivo
-4. Escolhe a política: tratar quem tem check-in como presente, ou marcar todos ausentes
+4. Escolhe a política: tratar quem tem check-in como presente, ou marcar todos ausentes. **A política vale só para quem ainda está sem decisão** — o que a ONG já marcou é respeitado
 5. O sistema aplica, emite os certificados e finaliza
 
 **Exceções**
