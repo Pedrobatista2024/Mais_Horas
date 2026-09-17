@@ -301,8 +301,37 @@ Decisões tomadas durante a implementação:
 navegador: visão geral com alertas reais, integridade das assinaturas, suspensão com motivo
 obrigatório e reativação, e a trilha registrando cada passo — inclusive as leituras.
 
-**Parte 2 — "entrar como" (A4b, FS-04):** a sessão espelho somente leitura. Fica
-separada por ser a peça mais sensível do sistema.
+**Parte 2 ✅ — "entrar como" (A4b, FS-04):** a sessão espelho somente leitura, entregue
+separada por ser a peça mais sensível do sistema. Backend em `core/deps.py`
+(`_conferir_espelho`, `SessaoEspelho`), `admin_contas_service.entrar_como`/`sair_do_modo`,
+25 testes em `tests/test_espelho.py`. Frontend: `TarjaEspelho`, modo espelho em
+`services/api.js` e `AuthContext`, botão no detalhe do usuário. Verificado no navegador:
+entrar como aluna, navegar, escrita recusada sem sair requisição, saída pelo botão e por
+expiração voltando ao detalhe da conta, tarja em 375px e a trilha completa na auditoria.
+
+Decisões da parte 2:
+
+- **O token espelho é um JWT comum com `espelho`, `adm` e `sid`, lastreado numa linha de
+  `tokens_sessao`** (com `em_nome_de` = admin). A cada requisição a API confere a linha, o
+  admin (ativo e superadmin) e o alvo. Revogar a linha — sair do modo, encerrar sessões do
+  admin — mata o token na hora, sem esperar os 30 minutos.
+- **Sem refresh.** O interceptor não tenta renovar um 401 no espelho: o cookie é do admin,
+  e renovar trocaria o token em silêncio com a tela ainda achando que está no espelho.
+- **Escrita é barrada no servidor** (`403 modo_somente_leitura`), com uma única exceção:
+  `POST /admin/sair-do-modo`. O cliente barra antes, com a mesma mensagem, só para poupar a
+  ida e a volta. Os botões não ficam desabilitados um a um (a A4b previa isso): seria
+  preciso tocar em toda tela, e esquecer uma só daria falsa sensação de ação possível. A
+  recusa central não esquece nenhuma.
+- **A navegação é auditada no servidor**: cada `GET` com token espelho grava
+  `admin.navegou_como` com o caminho. O contador do sino fica de fora — é consulta
+  automática a cada minuto, não navegação.
+- **O QR do painel de check-in é recusado no espelho.** É leitura, mas entrega uma
+  credencial válida por 40 s: o admin poderia registrar presença pela ONG.
+- **Recarregar a página encerra o espelho no navegador** — o token vive só em memória — e
+  volta à sessão do admin pelo cookie. A linha fica aberta até expirar; não há como
+  revogá-la sem o token.
+- **Toda auditoria gravada durante o espelho herda `em_nome_de`** automaticamente, de
+  `request.state`, sem cada serviço precisar lembrar.
 
 Decisões da parte 1:
 

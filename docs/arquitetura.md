@@ -85,6 +85,7 @@ frontend/src/
                        BotaoInscricao
     perfil/            FotoPerfil
     notificacao/       Sino (cabeçalho), ItemDeAviso, eventos.js
+    admin/             TarjaEspelho (topo do PainelLayout no "entrar como")
     ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, StatCard,
                        ActionCard, InfoItem, StatusBadge, BackButton, BrandMark,
                        BrandIcon, ClockGlyph, WelcomeBanner

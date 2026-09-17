@@ -13,13 +13,14 @@ garantia:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Request, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import auditoria, security
+from app.core.config import config
 from app.core.errors import ErroDeNegocio
 from app.db.models import (
     Atividade, Certificado, Inscricao, PerfilEstudante, PerfilOng, TokenSessao,
@@ -295,6 +296,79 @@ async def criar_admin(sessao: AsyncSession, admin: Usuario, nome: str, email: st
     await auth_service.pedir_redefinicao(
         sessao, email, disparado_por=admin.id, request=request)
     return _resumo(novo, None)
+
+
+# ===================== Entrar como (A4b, D13) =====================
+
+
+def validade_do_espelho() -> timedelta:
+    return timedelta(minutes=config.espelho_minutos)
+
+
+async def entrar_como(sessao: AsyncSession, admin: Usuario, usuario_id: uuid.UUID,
+                      *, request: Request | None = None) -> dict:
+    """
+    FS-04 — abre a sessão espelho: **observar, nunca se disfarçar**.
+
+    O token carrega a identidade do alvo, mas a trilha registra o admin como
+    ator e o alvo em `em_nome_de`. Nenhuma escrita passa (RN-29), e em 30
+    minutos acaba, sem renovação (RN-31).
+    """
+    alvo = await _buscar(sessao, usuario_id)
+    if alvo.papel == "superadmin":
+        raise ErroDeNegocio("nao_pode_espelhar_admin",
+                            "Não é possível entrar como outro administrador",
+                            status.HTTP_403_FORBIDDEN)
+    if alvo.situacao != "ativa":
+        raise ErroDeNegocio("conta_suspensa", "Reative a conta primeiro",
+                            status.HTTP_403_FORBIDDEN)
+
+    agora = _agora()
+    expira_em = agora + validade_do_espelho()
+    ip, user_agent = auditoria.contexto(request)
+    registro = TokenSessao(
+        usuario_id=alvo.id,
+        # O hash é de um valor que ninguém recebe: esta linha não serve como
+        # refresh, só como registro revogável da sessão espelho.
+        token_hash=security.hash_refresh_token(security.gerar_refresh_token()),
+        familia_id=uuid.uuid4(),
+        expira_em=expira_em,
+        em_nome_de=admin.id,
+        user_agent=(user_agent or "")[:400] or None,
+        ip=(ip or "")[:64] or None,
+    )
+    sessao.add(registro)
+    await sessao.flush()
+
+    await auditoria.registrar(
+        sessao, "admin.entrou_como", ator_id=admin.id, ator_papel=admin.papel,
+        em_nome_de_id=alvo.id, entidade="usuario", entidade_id=alvo.id,
+        depois={"expira_em": expira_em.isoformat()}, request=request)
+    await sessao.commit()
+
+    token = security.criar_token_espelho(alvo.id, alvo.papel, admin.id,
+                                         registro.id, expira_em)
+    return {
+        "token": token,
+        "expiraEm": expira_em.isoformat(),
+        "usuario": {"id": str(alvo.id), "nome": alvo.nome, "email": alvo.email,
+                    "papel": alvo.papel},
+        "admin": {"id": str(admin.id), "nome": admin.nome},
+    }
+
+
+async def sair_do_modo(sessao: AsyncSession, admin: Usuario, alvo: Usuario,
+                       sessao_id: uuid.UUID, *,
+                       request: Request | None = None) -> dict:
+    registro = await sessao.get(TokenSessao, sessao_id)
+    if registro is not None and registro.revogado_em is None:
+        registro.revogado_em = _agora()
+    await auditoria.registrar(
+        sessao, "admin.saiu_do_modo", ator_id=admin.id, ator_papel=admin.papel,
+        em_nome_de_id=alvo.id, entidade="usuario", entidade_id=alvo.id,
+        request=request)
+    await sessao.commit()
+    return {"alvoId": str(alvo.id)}
 
 
 # ===================== ONGs (A5) =====================

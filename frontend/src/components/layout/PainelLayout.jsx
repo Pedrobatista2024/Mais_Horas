@@ -13,6 +13,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { painelDe } from "../../routes/destinos";
 import { initials } from "../../utils/format";
+import TarjaEspelho from "../admin/TarjaEspelho";
 import Sino from "../notificacao/Sino";
 import BrandMark from "../ui/BrandMark";
 
@@ -80,7 +81,7 @@ function ItemDeMenu({ item, ativo, aoClicar }) {
 
 /** Casca da área logada: topo, menu lateral e o conteúdo da rota. */
 export default function PainelLayout() {
-  const { usuario, sair } = useAuth();
+  const { usuario, sair, espelho, sairDoModo } = useAuth();
   const navegar = useNavigate();
   const local = useLocation();
   const [aberto, { toggle, close }] = useDisclosure(false);
@@ -95,6 +96,11 @@ export default function PainelLayout() {
   }
 
   async function encerrar() {
+    // No espelho, "Sair" encerra o modo — não a sessão do admin.
+    if (espelho) {
+      await sairDoModo({ voltarPara: `/admin/usuarios/${espelho.alvo.id}` });
+      return;
+    }
     await sair();
     navegar("/entrar");
   }
@@ -106,13 +112,14 @@ export default function PainelLayout() {
 
   return (
     <AppShell
-      header={{ height: 72 }}
+      header={{ height: espelho ? 116 : 72 }}
       navbar={{ width: 292, breakpoint: "md", collapsed: { mobile: !aberto } }}
       padding={0}
       className="mh-app-shell"
     >
       <AppShell.Header className="mh-topbar">
-        <Group h="100%" px={{ base: "md", md: "xl" }} justify="space-between" wrap="nowrap">
+        {espelho && <TarjaEspelho />}
+        <Group h={72} px={{ base: "md", md: "xl" }} justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
             <Burger
               opened={aberto}
@@ -147,12 +154,12 @@ export default function PainelLayout() {
             <Menu.Dropdown>
               <Menu.Label>{ROTULO_PAPEL[papel] || ""}</Menu.Label>
               <Menu.Item leftSection={<IconUser size={16} />} onClick={() => ir("/perfil")}>
-                Meu perfil
+                {espelho ? "Perfil" : "Meu perfil"}
               </Menu.Item>
               <Menu.Divider />
               <Menu.Item color="red" leftSection={<IconLogout size={16} />}
                          onClick={encerrar}>
-                Sair
+                {espelho ? "Sair do modo" : "Sair"}
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
@@ -178,7 +185,7 @@ export default function PainelLayout() {
 
           <Button variant="subtle" color="red" fullWidth justify="flex-start"
                   leftSection={<IconLogout size={18} />} onClick={encerrar}>
-            Sair
+            {espelho ? "Sair do modo" : "Sair"}
           </Button>
         </Stack>
       </AppShell.Navbar>

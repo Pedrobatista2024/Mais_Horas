@@ -84,6 +84,13 @@ async def registrar(
         )
 
     ip, user_agent = contexto(request)
+
+    # Qualquer registro nascido de uma requisição em modo espelho carrega o
+    # alvo, mesmo que quem chamou tenha esquecido de informar.
+    espelho = getattr(getattr(request, "state", None), "espelho", None)
+    if espelho is not None and em_nome_de_id is None:
+        em_nome_de_id = espelho.alvo.id
+
     sessao.add(RegistroAuditoria(
         ator_id=ator_id,
         ator_papel=ator_papel,

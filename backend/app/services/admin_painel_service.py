@@ -301,6 +301,7 @@ def sistema() -> dict:
             "uploadMaximoBytes": config.upload_max_bytes,
             "verificacoesPorMinuto": config.verificacao_por_minuto,
             "inscricoesAtivasMaximo": config.inscricoes_ativas_max,
+            "espelhoMinutos": config.espelho_minutos,
             "ambiente": config.ambiente,
         },
     }

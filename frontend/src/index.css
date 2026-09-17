@@ -53,6 +53,12 @@ select {
   backdrop-filter: blur(14px);
 }
 
+/* "Entrar como": laranja forte e fixo, para não passar despercebido. */
+.mh-tarja-espelho {
+  background: #f76707;
+  color: #fff;
+}
+
 .mh-sidebar {
   border-right: 1px solid #dbe3f3;
   background: #f8faff;

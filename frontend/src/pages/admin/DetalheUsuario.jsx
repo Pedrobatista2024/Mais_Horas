@@ -4,12 +4,14 @@ import {
   Alert, Badge, Button, Card, Group, SimpleGrid, Stack, Table, Text, Title,
 } from "@mantine/core";
 import {
-  IconArrowLeft, IconKey, IconListSearch, IconLogout, IconUserCheck, IconUserOff,
+  IconArrowLeft, IconEye, IconKey, IconListSearch, IconLogout, IconUserCheck, IconUserOff,
 } from "@tabler/icons-react";
 
 import ConfirmarAcao from "../../components/ui/ConfirmarAcao";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
+import { useAuth } from "../../context/AuthContext";
+import { painelDe } from "../../routes/destinos";
 import { api, mensagemDoErro } from "../../services/api";
 import { formatRelativo } from "../../utils/format";
 import { notifyError, notifySuccess } from "../../utils/notify";
@@ -41,6 +43,7 @@ function Dado({ rotulo, valor }) {
 export default function DetalheUsuario() {
   const { id } = useParams();
   const navegar = useNavigate();
+  const { entrarComo } = useAuth();
   const [usuario, setUsuario] = useState(null);
   const [erro, setErro] = useState(false);
   const [confirmando, setConfirmando] = useState(null);
@@ -69,6 +72,11 @@ export default function DetalheUsuario() {
         notifySuccess(data.atividadesCanceladas
           ? `Conta suspensa. ${data.atividadesCanceladas} atividade(s) futura(s) cancelada(s).`
           : "Conta suspensa.");
+      } else if (acao === "espelho") {
+        const { data } = await api.post(`/admin/usuarios/${id}/entrar-como`);
+        entrarComo(data);
+        navegar(painelDe(data.usuario.papel), { replace: true });
+        return;
       } else if (acao === "reativar") {
         await api.post(`/admin/usuarios/${id}/reativar`);
         notifySuccess("Conta reativada.");
@@ -106,6 +114,11 @@ export default function DetalheUsuario() {
         : "A pessoa perde o acesso e as sessões abertas caem. Nada é apagado: histórico e certificados permanecem.",
       rotulo: "Suspender", motivo: true,
     },
+    espelho: {
+      titulo: `Entrar como ${usuario.nome}`,
+      mensagem: "Você verá o sistema exatamente como esta pessoa vê, por até 30 minutos. É somente leitura: nada pode ser alterado. Cada tela aberta fica registrada na auditoria em seu nome.",
+      rotulo: "Entrar como", cor: "orange",
+    },
     reativar: {
       titulo: "Reativar conta", mensagem: "A pessoa volta a poder entrar.",
       rotulo: "Reativar", cor: "brand",
@@ -134,6 +147,12 @@ export default function DetalheUsuario() {
         </Stack>
 
         <Group gap="xs" wrap="wrap">
+          {!eAdmin && !suspensa && (
+            <Button variant="light" color="orange" leftSection={<IconEye size={16} />}
+                    onClick={() => setConfirmando("espelho")}>
+              Entrar como
+            </Button>
+          )}
           <Button variant="light" leftSection={<IconKey size={16} />}
                   disabled={suspensa} onClick={() => setConfirmando("senha")}>
             Redefinir senha
@@ -213,7 +232,12 @@ export default function DetalheUsuario() {
               <Table.Tbody>
                 {usuario.sessoesAtivas.map((s) => (
                   <Table.Tr key={s.id}>
-                    <Table.Td><Text size="sm">{formatRelativo(s.abertaEm)}</Text></Table.Td>
+                    <Table.Td>
+                      <Group gap={6} wrap="nowrap">
+                        <Text size="sm">{formatRelativo(s.abertaEm)}</Text>
+                        {s.espelho && <Badge size="xs" color="orange" variant="light">entrar como</Badge>}
+                      </Group>
+                    </Table.Td>
                     <Table.Td><Text size="sm">{s.ip ?? "—"}</Text></Table.Td>
                     <Table.Td>
                       <Text size="xs" c="dimmed" lineClamp={1}>{s.dispositivo ?? "—"}</Text>

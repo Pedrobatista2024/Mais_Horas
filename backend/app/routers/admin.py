@@ -13,7 +13,7 @@ from datetime import date
 
 from fastapi import APIRouter, Query, Request, Response
 
-from app.core.deps import Admin, Sessao
+from app.core.deps import Admin, Sessao, SessaoEspelho
 from app.schemas.admin import (
     DetalheUsuario, ForcarValidacao, MotivoObrigatorio, NovoAdmin, OngAdmin,
     RegistroDeAuditoria, RelatorioDeIntegridade, ResumoUsuario, SuspensaoSaida,
@@ -128,6 +128,24 @@ async def suspender(request: Request, usuario_id: uuid.UUID,
 async def reativar(request: Request, usuario_id: uuid.UUID, admin: Admin,
                    sessao: Sessao) -> dict:
     return await contas.reativar(sessao, admin, usuario_id, request=request)
+
+
+@router.post("/usuarios/{usuario_id}/entrar-como")
+async def entrar_como(request: Request, usuario_id: uuid.UUID, admin: Admin,
+                      sessao: Sessao) -> dict:
+    """
+    Abre a sessão espelho (D13). O token devolvido **não tem refresh** e só
+    serve para leitura: a API recusa qualquer escrita feita com ele.
+    """
+    return await contas.entrar_como(sessao, admin, usuario_id, request=request)
+
+
+@router.post("/sair-do-modo")
+async def sair_do_modo(request: Request, espelho: SessaoEspelho,
+                       sessao: Sessao) -> dict:
+    """Chamada **com o token espelho** — é a única escrita que ele pode fazer."""
+    return await contas.sair_do_modo(sessao, espelho.admin, espelho.alvo,
+                                     espelho.sessao_id, request=request)
 
 
 @router.post("/usuarios/{usuario_id}/encerrar-sessoes")

@@ -53,6 +53,9 @@ class Configuracao(BaseSettings):
     # último instante chegar. Soma com a janela o tempo máximo de vida do QR.
     checkin_graca_segundos: int = 10
 
+    # ===== Modo "entrar como" (D13, RN-31) =====
+    espelho_minutos: int = 30
+
     # ===== URLs públicas =====
     app_url: str = "http://localhost:3000"
     web_url: str = "http://localhost:5173"

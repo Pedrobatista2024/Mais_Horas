@@ -512,9 +512,14 @@ linhas e neutraliza células que virariam fórmula.
 | `POST` | `/admin/usuarios/{id}/suspender` | Exige `motivo` |
 | `POST` | `/admin/usuarios/{id}/reativar` | |
 | `POST` | `/admin/usuarios/{id}/encerrar-sessoes` | Revoga todos os refresh |
-| `POST` | `/admin/usuarios/{id}/entrar-como` | Abre a sessão espelho (D13) |
-| `POST` | `/admin/sair-do-modo` | Encerra a sessão espelho |
+| `POST` | `/admin/usuarios/{id}/entrar-como` | Abre a sessão espelho (D13). Devolve `{ token, expiraEm, usuario, admin }` |
+| `POST` | `/admin/sair-do-modo` | Encerra a sessão espelho. **Chamada com o token espelho** |
 | `POST` | `/admin/administradores` | Cria admin. Exige `senhaAtual` (RN-37) |
+
+O token espelho vale 30 minutos, não tem refresh e só lê. Códigos:
+`403 nao_pode_espelhar_admin` (RN-30), `403 conta_suspensa`, `403 modo_somente_leitura`
+(qualquer escrita com o token espelho), `401 espelho_expirado` (linha revogada ou vencida,
+admin rebaixado ou suspenso), `400 fora_do_modo_espelho` (`sair-do-modo` com token comum).
 
 > **Não existe rota para definir senha** (RN-28) **nem para trocar e-mail** — trocar e
 > em seguida disparar a redefinição daria ao admin o link da outra pessoa. A ausência é a

@@ -933,11 +933,16 @@ Não é tela: é um **estado da sessão** que atravessa todo o sistema.
 
 **Regras:**
 
-- **Somente leitura.** Todo botão de ação fica desabilitado; a API recusa qualquer escrita
+- **Somente leitura.** A API recusa qualquer escrita (`403 modo_somente_leitura`), e o
+  cliente recusa antes de enviar, com a mesma mensagem. A única escrita aceita é "Sair do modo"
 - A tarja é fixa e não pode ser fechada
 - A sessão espelho **expira em 30 minutos** e não renova
 - Cada tela visitada gera registro com `em_nome_de` preenchido
-- **Não funciona sobre outro superadmin** — admin não observa admin
+- **Não funciona sobre outro superadmin** — admin não observa admin — nem sobre conta suspensa
+- A tarja mostra o tempo restante. Ao sair (botão, expiração ou recusa do token) o admin
+  volta ao detalhe da conta que via
+- Recarregar a página encerra o modo e restaura a sessão do admin
+- O QR rotativo do painel de check-in não é exibido: seria uma credencial de presença
 
 ---
 

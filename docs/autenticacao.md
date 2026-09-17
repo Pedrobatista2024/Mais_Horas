@@ -120,13 +120,28 @@ existem na base só pela diferença da resposta.
 
 ## Outras proteções
 
-- **Rate limit**: 20 tentativas por IP a cada 15 minutos em `/register` e `/login`.
+- **Rate limit**: 20 tentativas por IP a cada 15 minutos em `/auth/cadastro` e `/auth/entrar`.
   Considera `X-Forwarded-For`, senão no Render todo mundo compartilharia o IP do proxy.
-- **Escopo do cookie**: `path=/api/users`, então o refresh não acompanha as demais chamadas.
+- **Escopo do cookie**: `path=/api/v1/auth`, então o refresh não acompanha as demais chamadas.
 - **CORS**: em produção a API **se recusa a subir** sem `CORS_ORIGIN` definido.
   `allow_credentials` fica ligado porque o cookie precisa atravessar origens.
-- **Papéis na rota**: `require_role("organization")` é declarado na assinatura do endpoint,
+- **Papéis na rota**: `Estudante`, `Ong` e `Admin` são declarados na assinatura do endpoint,
   não checado no meio da lógica — some a classe de bug de esquecer a verificação.
+
+## Sessão espelho ("entrar como")
+
+O admin pode ver o sistema como outra pessoa (D13), **sem nunca agir por ela**.
+
+- `POST /admin/usuarios/{id}/entrar-como` devolve um access token do **alvo**, com as
+  claims `espelho`, `adm` (o admin) e `sid` (uma linha de `tokens_sessao` com
+  `em_nome_de`). Vale 30 minutos e **não tem refresh**.
+- Toda requisição com esse token reconfere a linha, o admin e o alvo. Qualquer falha é
+  `401 espelho_expirado`.
+- Método que não seja `GET`/`HEAD`/`OPTIONS` é `403 modo_somente_leitura`, exceto
+  `POST /admin/sair-do-modo`.
+- No navegador, `definirEspelho(true)` troca o token em memória; o `usuario` do
+  `localStorage` continua sendo o admin. Um 401 no espelho **não** chama `renovarSessao()`
+  — dispara `mh:espelho-encerrado`, e só então a sessão do admin é restaurada pelo cookie.
 
 ## Limitações conhecidas
 

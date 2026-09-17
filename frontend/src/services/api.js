@@ -32,8 +32,48 @@ export function obterToken() {
   return accessToken;
 }
 
+/**
+ * Modo "entrar como" (D13): o token em memória é o do **alvo**, somente
+ * leitura e sem refresh.
+ *
+ * Duas consequências aqui:
+ * - escrita é barrada já no cliente, com a mesma resposta que a API daria —
+ *   a API também barra, isto só evita a ida e a volta;
+ * - um 401 **não** dispara renovação: o cookie é do admin, e renovar trocaria
+ *   o token em silêncio enquanto a tela ainda acha que está no espelho.
+ */
+let modoEspelho = false;
+const METODOS_DE_LEITURA = ["get", "head", "options"];
+const SAIDA_DO_ESPELHO = "/admin/sair-do-modo";
+
+export function definirEspelho(ativo) {
+  modoEspelho = Boolean(ativo);
+}
+
+export function emModoEspelho() {
+  return modoEspelho;
+}
+
+function recusaSomenteLeitura(config) {
+  const erro = new Error("Modo somente leitura");
+  erro.config = config;
+  erro.response = {
+    status: 403,
+    data: {
+      codigo: "modo_somente_leitura",
+      mensagem: "Modo somente leitura: no \"entrar como\" nada pode ser alterado.",
+    },
+  };
+  return erro;
+}
+
 api.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+  const metodo = (config.method || "get").toLowerCase();
+  if (modoEspelho && !METODOS_DE_LEITURA.includes(metodo)
+      && config.url !== SAIDA_DO_ESPELHO) {
+    return Promise.reject(recusaSomenteLeitura(config));
+  }
   return config;
 });
 
@@ -75,6 +115,11 @@ api.interceptors.response.use(
   (resposta) => resposta,
   async (erro) => {
     const { config, response } = erro;
+
+    if (modoEspelho && response?.status === 401) {
+      window.dispatchEvent(new CustomEvent("mh:espelho-encerrado"));
+      return Promise.reject(erro);
+    }
 
     if (
       !response ||

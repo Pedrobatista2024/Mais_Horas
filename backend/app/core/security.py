@@ -108,6 +108,33 @@ def criar_access_token(usuario_id: uuid.UUID | str, papel: str) -> tuple[str, in
     return token, int(duracao.total_seconds())
 
 
+def criar_token_espelho(usuario_id: uuid.UUID, papel: str, admin_id: uuid.UUID,
+                        sessao_id: uuid.UUID, expira_em: datetime) -> str:
+    """
+    Token do modo "entrar como" (D13).
+
+    Carrega a identidade do **alvo** — para as telas mostrarem o que a pessoa
+    vê —, mais três marcas que a dependência de autenticação confere a cada
+    requisição: é espelho, quem é o admin e qual sessão o sustenta. A sessão é
+    o que permite encerrar antes do prazo; um JWT sozinho não se revoga.
+
+    Não há refresh: ao expirar, acabou (RN-31).
+    """
+    agora = datetime.now(timezone.utc)
+    payload: dict[str, Any] = {
+        "sub": str(usuario_id),
+        "papel": papel,
+        "tipo": "acesso",
+        "espelho": True,
+        "adm": str(admin_id),
+        "sid": str(sessao_id),
+        "iat": agora,
+        "exp": expira_em,
+        "jti": secrets.token_urlsafe(16),
+    }
+    return jwt.encode(payload, config.jwt_secret, algorithm=config.jwt_algoritmo)
+
+
 def ler_access_token(token: str) -> dict[str, Any] | None:
     """Valida assinatura e expiração. Retorna o payload, ou None se inválido."""
     try:

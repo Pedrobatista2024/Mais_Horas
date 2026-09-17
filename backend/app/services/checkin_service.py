@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import auditoria, security
+from app.core.deps import em_modo_espelho
 from app.core.errors import ErroDeNegocio
 from app.db.models import Atividade, Inscricao, PerfilEstudante, Usuario
 from app.services import certificado_service
@@ -83,6 +84,14 @@ async def _auditar_abertura(sessao: AsyncSession, ong: Usuario,
 async def token_do_painel(sessao: AsyncSession, ong: Usuario,
                           atividade_id: uuid.UUID, *,
                           request: Request | None = None) -> dict:
+    if em_modo_espelho(request):
+        # O QR vivo registra presença: mostrá-lo a quem observa a conta seria
+        # entregar a ferramenta de fraude que ele existe para impedir.
+        raise ErroDeNegocio(
+            "modo_somente_leitura",
+            "O código de check-in não é exibido no modo \"entrar como\"",
+            status.HTTP_403_FORBIDDEN)
+
     atividade = await _exigir_atividade_da_ong(sessao, ong, atividade_id)
 
     if situacao_real(atividade) != "em_andamento":
