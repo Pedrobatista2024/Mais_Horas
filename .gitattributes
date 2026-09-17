@@ -16,3 +16,7 @@
 
 # Scripts de shell precisam de LF mesmo quando clonados no Windows.
 *.sh    text eol=lf
+
+# Scripts do servidor: sempre LF, senão o bash do Linux quebra no 
+.
+*.sh    text eol=lf

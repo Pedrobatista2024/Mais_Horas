@@ -9,8 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.core.config import config
 
 _conectar: dict = {}
-if config.pgssl or config.producao:
-    # O Postgres do Render usa certificado que não valida na cadeia padrão.
+usar_ssl = config.pgssl if config.pgssl is not None else config.producao
+if usar_ssl:
+    # Banco gerenciado (Render, Neon...) exige SSL; o certificado nem sempre
+    # valida na cadeia padrão.
     _conectar["ssl"] = True
 
 engine = create_async_engine(

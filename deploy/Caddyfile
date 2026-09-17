@@ -1,0 +1,29 @@
+# Um endereço só para site e API: o cookie de sessão fica "do próprio site" e
+# não cai no Safari. O Caddy emite e renova o certificado HTTPS sozinho.
+{$DOMINIO} {
+	encode zstd gzip
+
+	@api path /api/* /uploads/* /saude
+	handle @api {
+		# Sem trusted_proxies, o Caddy descarta o X-Forwarded-For que vier do
+		# cliente e grava o IP real — é nele que a auditoria e o rate limit confiam.
+		reverse_proxy api:3000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Arquivos do build têm hash no nome: podem ficar em cache para sempre.
+	@estaticos path /assets/*
+	header @estaticos Cache-Control "public, max-age=31536000, immutable"
+}

@@ -1,9 +1,74 @@
 # Deploy — Mais Horas
 
-O [`render.yaml`](../render.yaml) na raiz é um blueprint que provisiona os três serviços de
-uma vez: banco Postgres, API Python e site estático.
+Há dois caminhos. **O oficial é o servidor próprio** (VM na Azure, com os créditos de
+estudante): não dorme, não perde uploads e serve site e API no mesmo endereço. O
+[`render.yaml`](../render.yaml) continua como alternativa gratuita, descrita mais abaixo.
 
-## Serviços provisionados
+## Servidor próprio (Docker + Caddy)
+
+Tudo mora em [`deploy/`](../deploy):
+
+| Arquivo | Papel |
+|---|---|
+| `docker-compose.yml` | Postgres, API e Caddy. O banco não expõe porta |
+| `Caddyfile` | HTTPS automático, entrega o site e repassa `/api`, `/uploads` e `/saude` |
+| `instalar.sh` | Prepara o Ubuntu (Docker, swap, cron), gera os segredos e sobe |
+| `atualizar.sh` | `git pull` + rebuild do que mudou |
+| `backup.sh` | `pg_dump` diário em `~/backups`, guardando 14 dias |
+| `.env.exemplo` | Modelo do `deploy/.env` (este nunca vai para o git) |
+
+Imagens: `backend/Dockerfile` (Python 3.12, sem root, um worker, migrations na subida) e
+`frontend/Dockerfile` (build do Vite servido pelo Caddy).
+
+**Por que um endereço só:** com site e API no mesmo domínio, o cookie de renovação é
+"do próprio site". Em domínios diferentes ele vira cookie de terceiros, que o Safari
+bloqueia — a sessão cairia a cada 15 minutos.
+
+### A máquina
+
+- Azure for Students: as regiões liberadas são limitadas por política da assinatura
+  (`eastus`, `eastus2`, `northcentralus`, `canadacentral`, `mexicocentral`) e muitos
+  tamanhos ficam indisponíveis. Usamos **B2als_v2** (2 vCPU, 4 GB, ~US$ 27/mês) em
+  **North Central US**, Ubuntu 24.04 x64, disco Premium SSD 64 GB, portas 22/80/443.
+- No IP público, defina um **rótulo DNS** (Configuração → Rótulo do nome DNS). O endereço
+  vira `<rotulo>.northcentralus.cloudapp.azure.com`, e é com ele que o Caddy tira o
+  certificado. HTTPS é obrigatório: sem ele o navegador não libera a câmera do check-in
+  e o cookie `Secure` não viaja.
+- Crie um orçamento na assinatura com aviso por e-mail. O crédito expira em 18/06/2027.
+
+### Primeira instalação
+
+```bash
+ssh -i maishoras_key.pem maishoras@<endereco>
+git clone https://github.com/Pedrobatista2024/Mais_Horas.git
+cd Mais_Horas
+./deploy/instalar.sh <endereco>
+cd deploy && sudo docker compose exec api python -m app.cli criar-admin
+```
+
+`instalar.sh` pode ser rodado de novo: mantém swap, `.env` e chave existentes.
+
+> **Copie `deploy/.env` para fora do servidor** logo após instalar. Ele tem a
+> `CHAVE_ASSINATURA`: perdê-la invalida todo certificado emitido, e trocá-la também.
+
+### Atualizar e operar
+
+```bash
+~/Mais_Horas/deploy/atualizar.sh                      # publica o main
+cd ~/Mais_Horas/deploy && sudo docker compose logs -f api
+sudo docker compose exec -T banco pg_restore -U maishoras -d mais_horas --clean < ~/backups/<arquivo>.dump
+```
+
+Leve os backups para fora da VM de vez em quando (`scp`): backup no mesmo disco não
+protege contra perder a máquina.
+
+## Render (alternativa)
+
+O `render.yaml` é um blueprint que provisiona os três serviços de uma vez: banco
+Postgres, API Python e site estático. No plano gratuito a API dorme após inatividade e
+leva perto de um minuto para acordar.
+
+### Serviços provisionados
 
 | Serviço | Tipo | Diretório | Comando |
 |---|---|---|---|
@@ -15,7 +80,7 @@ O site estático usa rewrite de `/*` para `/index.html`, necessário para o rote
 client-side do React Router funcionar em links diretos (ex.: alguém abrindo
 `/verificar/ABC123` direto do QR Code).
 
-## Passo a passo
+### Passo a passo
 
 1. Suba o repositório no GitHub.
 2. No Render: **New** → **Blueprint** → selecione o `render.yaml`.
@@ -51,7 +116,7 @@ client-side do React Router funcionar em links diretos (ex.: alguém abrindo
 | `APP_URL` | sim | URL pública da API |
 | `WEB_URL` | sim | URL pública do site — vira o destino do QR Code |
 | `CORS_ORIGIN` | **sim em produção** | Origens permitidas, separadas por vírgula. Com `AMBIENTE=producao` a API **se recusa a subir** sem esta variável |
-| `PGSSL` | em produção | `true` para exigir SSL na conexão. `AMBIENTE=producao` tem o mesmo efeito |
+| `PGSSL` | não | SSL na conexão com o banco. Sem valor, segue o ambiente (produção liga). O servidor próprio usa `false`: o banco está na rede interna do Docker |
 | `PORT` | não | Padrão `3000` |
 
 ### Frontend

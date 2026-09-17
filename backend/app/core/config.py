@@ -29,7 +29,9 @@ class Configuracao(BaseSettings):
     database_url_teste: str = Field(
         default="postgresql+asyncpg://postgres:postgres@localhost:5433/mais_horas_teste"
     )
-    pgssl: bool = False
+    # SSL na conexão com o banco. Sem valor, segue o ambiente (produção liga).
+    # Banco na mesma máquina, em rede interna do Docker, dispensa: PGSSL=false.
+    pgssl: bool | None = None
 
     # ===== Sessão =====
     jwt_secret: str = Field(default="")

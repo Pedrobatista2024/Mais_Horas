@@ -13,6 +13,7 @@ Uso:
 from __future__ import annotations
 
 import asyncio
+import getpass
 import secrets
 import sys
 
@@ -46,7 +47,8 @@ async def _criar_admin_async() -> None:
 
     email = input("E-mail do administrador: ").strip().lower()
     nome = input("Nome: ").strip()
-    senha = input("Senha (mínimo 12 caracteres): ")
+    # getpass: a senha não aparece na tela nem fica no histórico do terminal.
+    senha = getpass.getpass("Senha (mínimo 12 caracteres): ")
 
     if len(senha) < 12:
         sys.exit("Senha muito curta. O administrador exige ao menos 12 caracteres.")

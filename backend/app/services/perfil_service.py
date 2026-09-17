@@ -149,7 +149,8 @@ def _apagar_arquivo(caminho: str | None) -> None:
     if not caminho:
         return
     try:
-        alvo = Path(caminho)
+        # O banco guarda o caminho público; o arquivo mora em `upload_dir`.
+        alvo = Path(config.upload_dir) / Path(caminho).name
         if alvo.is_file():
             os.remove(alvo)
     except OSError:
@@ -187,7 +188,9 @@ async def salvar_foto(
     (pasta / nome_arquivo).write_bytes(conteudo)
 
     _apagar_arquivo(getattr(perfil, campo, None))
-    caminho = f"{config.upload_dir}/{nome_arquivo}"
+    # Caminho público (é assim que a API serve, em /uploads), não o do disco:
+    # em produção a pasta fica num volume com caminho absoluto.
+    caminho = f"uploads/{nome_arquivo}"
     setattr(perfil, campo, caminho)
 
     await auditoria.registrar(

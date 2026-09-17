@@ -213,7 +213,8 @@ anterior ao redesenho. Quem manda hoje é `contrato-api.md`.
 
 ## Dívida técnica conhecida
 
-- Uploads gravados em disco local — somem a cada deploy em serviço efêmero.
+- Uploads gravados em disco local. No servidor próprio ficam num volume e persistem; num
+  serviço efêmero (Render) somem a cada deploy.
 - Rate limit em memória, por processo: não vale para mais de uma instância.
 - E-mail em modo console; não há envio real configurado.
 - Telas da versão anterior ainda não migradas, descritas em "Estado atual".

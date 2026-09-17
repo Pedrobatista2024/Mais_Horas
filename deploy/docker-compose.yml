@@ -1,0 +1,64 @@
+# Produção em servidor próprio. Rode de dentro de deploy/:
+#   docker compose up -d --build
+# Os valores vêm de deploy/.env (modelo em .env.exemplo, criado por instalar.sh).
+name: mais-horas
+
+services:
+  banco:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: maishoras
+      POSTGRES_PASSWORD: ${POSTGRES_SENHA:?defina POSTGRES_SENHA no .env}
+      POSTGRES_DB: mais_horas
+    volumes:
+      - banco:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maishoras -d mais_horas"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # Sem "ports": o banco só é alcançável pela rede interna.
+
+  api:
+    build: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      AMBIENTE: producao
+      DATABASE_URL: postgresql://maishoras:${POSTGRES_SENHA}@banco:5432/mais_horas
+      PGSSL: "false"
+      APP_URL: https://${DOMINIO:?defina DOMINIO no .env}
+      WEB_URL: https://${DOMINIO}
+      CORS_ORIGIN: https://${DOMINIO}
+      UPLOAD_DIR: /dados/uploads
+    volumes:
+      - uploads:/dados/uploads
+    depends_on:
+      banco:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../frontend
+      args:
+        VITE_API_URL: https://${DOMINIO}
+    restart: unless-stopped
+    environment:
+      DOMINIO: ${DOMINIO}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_dados:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+volumes:
+  banco:
+  uploads:
+  caddy_dados:
+  caddy_config:
