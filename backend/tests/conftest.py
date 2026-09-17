@@ -19,6 +19,7 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import config
+from app.core.security import gerar_par_de_chaves
 from app.db.models import Base
 
 
@@ -30,6 +31,21 @@ async def _montar_schema() -> None:
             await conexao.run_sync(Base.metadata.create_all)
     finally:
         await motor.dispose()
+
+
+_CHAVE_DE_TESTE = gerar_par_de_chaves()[0]
+
+
+@pytest.fixture(autouse=True)
+def _chave_de_assinatura(monkeypatch) -> None:
+    """
+    Todo teste tem chave de assinatura, como em produção.
+
+    Sem isto, os testes que finalizam atividade dependiam da chave do `.env` de
+    quem roda — passavam na máquina do dev e falhavam no CI. Teste que precisa
+    da ausência sobrescreve com "".
+    """
+    monkeypatch.setattr(config, "chave_assinatura", _CHAVE_DE_TESTE)
 
 
 @pytest.fixture(scope="session", autouse=True)
