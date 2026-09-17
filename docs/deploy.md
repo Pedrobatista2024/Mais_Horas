@@ -148,6 +148,7 @@ client-side do React Router funcionar em links diretos (ex.: alguém abrindo
 | `ACCESS_TOKEN_MINUTOS` | não | Padrão `15` |
 | `REFRESH_TOKEN_DIAS` | não | Padrão `7` |
 | `EMAIL_MODO` | não | Padrão `console` (escreve no log) |
+| `CERTIFICADO_DEMONSTRACAO` | não | Código de um certificado de conta de teste, mostrado em "Ver uma verificação de exemplo" (T2). Vazio esconde o botão |
 | `APP_URL` | sim | URL pública da API |
 | `WEB_URL` | sim | URL pública do site — vira o destino do QR Code |
 | `CORS_ORIGIN` | **sim em produção** | Origens permitidas, separadas por vírgula. Com `AMBIENTE=producao` a API **se recusa a subir** sem esta variável |

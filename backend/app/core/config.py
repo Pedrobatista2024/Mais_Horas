@@ -58,6 +58,11 @@ class Configuracao(BaseSettings):
     # ===== Modo "entrar como" (D13, RN-31) =====
     espelho_minutos: int = 30
 
+    # ===== Portal (T2) =====
+    # Código de um certificado de demonstração, emitido para uma conta de teste.
+    # Vazio: o botão "Ver uma verificação de exemplo" não aparece.
+    certificado_demonstracao: str = ""
+
     # ===== URLs públicas =====
     app_url: str = "http://localhost:3000"
     web_url: str = "http://localhost:5173"

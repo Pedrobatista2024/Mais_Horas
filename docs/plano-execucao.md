@@ -360,11 +360,45 @@ Decisões da parte 1:
 
 ---
 
-### Fatia 9 — Portal institucional
+### Fatia 9 — Portal institucional ✅
 
 **Frontend:** `T1` a `T5` — início, como funciona, para estudantes, para ONGs, parceiras
 
 Fica por último de propósito: é a camada mais visível, mas a que menos bloqueia as outras.
+
+Entregue: `portal_service.py` e `routers/portal.py` (`/portal/resumo`, `/portal/ongs`,
+`/portal/ongs/{id}`), 14 testes em `tests/test_portal.py`; no frontend, `PortalLayout`,
+`components/portal/` e as páginas de `pages/portal/`, mais a vitrine pública em `/vagas`.
+Verificado no navegador, inclusive em 375px: as oito páginas, o menu do celular e o
+caminho "Quero participar" → cadastro com retorno para a vaga.
+
+Decisões:
+
+- **Número de vitrine sai do banco ou não aparece.** A página inicial antiga tinha
+  "+120 vagas" fixo no código; saiu. Número zerado também some, e sem nenhum número a
+  seção de impacto inteira não é desenhada. Certificado revogado não entra na conta.
+- **T5 lista só ONG ativa que já publicou** (publicada ou finalizada). Conta recém-criada
+  não aparece: vitrine de parceiras com cartão vazio não prova nada. Verificadas primeiro,
+  depois quem mais realizou.
+- **O perfil público da ONG é aberto a visitante, o do estudante não.** Da ONG saem nome,
+  descrição, cidade, site, Instagram, logo e números; telefone, CNPJ e endereço ficam de
+  fora — muita ONG pequena funciona na casa de alguém. `GET /usuarios/{id}/publico`
+  continua exigindo login.
+- **A vitrine pública reaproveita E2/E3** (`Vitrine` e `DetalheAtividade` recebem `base`).
+  Para visitante, `BotaoInscricao` vira "Quero participar", que leva ao cadastro com o
+  perfil de estudante e `?volta=` para a vaga; ONG e admin não veem botão.
+- **`?volta=` só aceita caminho deste site** (`destinoSeguro`): sem isso, um link de
+  login viraria redirecionamento para fora. O "Entrar" também passou a respeitar o destino
+  que a `RotaPrivada` guarda.
+- **"Ver uma verificação de exemplo" (T2) depende de configuração.**
+  `CERTIFICADO_DEMONSTRACAO` aponta para um certificado de uma conta de teste; se estiver
+  vazio, revogado ou não existir, o botão vira "Verificar um certificado". Escolher
+  sozinho um certificado real para exibir exporia o nome de alguém sem pedir.
+- **"Apenas com vaga" passou a filtrar no SQL.** Antes, as lotadas eram retiradas da
+  página já montada, e total e paginação saíam errados.
+- **Lacuna do plano: os painéis `E1` e `O1`** (`GET /painel/estudante` e `/painel/ong`,
+  seção 11 do contrato) não estão em nenhuma fatia. `/painel` e `/ong` seguem com a tela
+  provisória, que agora diz isso sem prometer fatia.
 
 ---
 

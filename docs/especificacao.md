@@ -359,7 +359,7 @@ da assinatura. É a página que sustenta a conversa técnica sem exigir login.
 | Botão | Quando aparece | Ação |
 |---|---|---|
 | Criar conta | visitante | Vai para T8 |
-| Ver uma verificação de exemplo | sempre | Abre T6 com um código de demonstração |
+| Ver uma verificação de exemplo | há código de demonstração configurado e válido | Abre T6 com esse código. Sem ele, o botão vira "Verificar um certificado" |
 
 ---
 
@@ -373,7 +373,10 @@ cadastro com o perfil já escolhido.
 | Botão | Quando aparece | Ação |
 |---|---|---|
 | Criar conta de estudante / de ONG | visitante | Vai para T8 pré-configurada |
-| Ver atividades abertas | em T3 | Abre a vitrine pública |
+| Ver atividades abertas | em T3 | Abre a vitrine pública (`/vagas`) |
+
+Na vitrine pública, o visitante vê "Quero participar": vai para T8 como estudante e, ao
+terminar o cadastro, volta para a vaga.
 
 ---
 
@@ -382,7 +385,11 @@ cadastro com o perfil já escolhido.
 **Rota:** `/ongs`
 
 Vitrine das organizações ativas: logo, nome, cidade, quantas atividades já realizaram.
-Serve de prova social e dá visibilidade a quem publica.
+Serve de prova social e dá visibilidade a quem publica. Entra quem já publicou ao menos
+uma atividade; verificadas aparecem primeiro.
+
+O perfil público da ONG (`/ongs/:id`) é aberto a visitante: descrição, cidade, site,
+Instagram, números e próximas atividades. Telefone, CNPJ e endereço não aparecem.
 
 | Botão | Quando aparece | Ação |
 |---|---|---|

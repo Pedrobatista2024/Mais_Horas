@@ -17,7 +17,7 @@ Frontend (React + Vite + Mantine)          Backend (Python + FastAPI)
 
 Três camadas de acesso:
 
-- **Público** — landing, login/registro e verificação de certificado (`/verificar/:code`)
+- **Público** — portal (T1 a T5 e vagas abertas), login/registro e verificação de certificado (`/verificar/:codigo`)
 - **Aluno** (`role: student`) — busca atividades, se inscreve, acompanha horas e certificados
 - **ONG** (`role: organization`) — publica atividades, valida presença, emite certificados
 
@@ -79,8 +79,12 @@ frontend/src/
     destinos.js        para onde cada papel vai depois de entrar
   hooks/useFetch       GET com { data, loading, error, refetch, setData }
   hooks/useListagem    GET paginado com filtros do servidor
+  hooks/useConsultaPublica  GET do portal que falha em silêncio (a seção some)
   components/
-    layout/            PainelLayout (área logada), AuthLayout, PublicPage
+    layout/            PainelLayout (área logada), PortalLayout (portal),
+                       AuthLayout, PublicPage (verificação)
+    portal/            Secao, Passo, CartaoOng, NumerosDeImpacto, ChamadaFinal,
+                       PaginaDePublico, ConteudoDoPortal, navegacao.js, impacto.js
     atividade/         CartaoAtividade, SituacaoBadge, situacoes.js,
                        BotaoInscricao
     perfil/            FotoPerfil
@@ -99,9 +103,10 @@ frontend/src/
                        MeusCertificados
     ong/               MinhasAtividades, FormularioAtividade, GerenciarAtividade,
                        InscricoesDaAtividade, PainelCheckin, ValidarPresencas
-    public/            Landing, VerificarCertificado
-                       (+ telas antigas ainda não migradas)
-    EmConstrucao.jsx   ocupa as rotas de painel até as fatias correspondentes
+    portal/            Inicio, ComoFunciona, ParaEstudantes, ParaOngs,
+                       OngsParceiras, PerfilOng
+    public/            VerificarCertificado (+ StudentPublicProfile, antiga)
+    EmConstrucao.jsx   ocupa /painel e /ong até existirem E1 e O1
   utils/
     format.js          formatDate, formatDateLong, formatRelativo, resolveImage,
                        initials
@@ -123,9 +128,16 @@ endpoint inexistente, e tela quebrada é pior que tela ausente.
 
 | Rota | Acesso | Tela |
 |---|---|---|
-| `/` | público | Landing (redireciona quem já entrou ao painel do papel) |
-| `/entrar` | público | Entrar |
-| `/criar-conta` | público | Criar conta |
+| `/` | público | `T1` Início (redireciona quem já entrou ao painel do papel) |
+| `/como-funciona` | público | `T2` Como funciona |
+| `/para-estudantes` | público | `T3` Para estudantes |
+| `/para-ongs` | público | `T4` Para ONGs |
+| `/ongs` | público | `T5` ONGs parceiras |
+| `/ongs/:id` | público | Perfil público da ONG |
+| `/vagas` | público | Vitrine pública (E2 com `base="/vagas"`) |
+| `/vagas/:id` | público | Detalhe público (E3 com `base="/vagas"`) |
+| `/entrar` | público | Entrar. `?volta=` leva de volta à tela de origem |
+| `/criar-conta` | público | Criar conta. `?papel=` pré-seleciona o perfil; `?volta=` vale só para estudante |
 | `/esqueci-senha` | público | Pedir redefinição |
 | `/redefinir-senha` | público | Definir nova senha |
 | `/verificar` | público | `T6` Verificar certificado — campo de código |

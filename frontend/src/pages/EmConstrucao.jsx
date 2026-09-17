@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import {
-  Alert, Anchor, Badge, Card, Group, List, Stack, Text, Title,
+  Alert, Anchor, Card, List, Stack, Text, Title,
 } from "@mantine/core";
 import { IconInfoCircle } from "@tabler/icons-react";
 
 import { useAuth } from "../context/AuthContext";
 
 /**
- * Painel provisório enquanto `E1`/`O1`/`A1` não chegam.
+ * Painel provisório enquanto `E1` e `O1` não chegam (não estão em nenhuma fatia).
  *
  * A implementação avança por fatia vertical (ver docs/plano-execucao.md): cada
  * uma entrega uma funcionalidade completa, do banco à tela. Esta página existe
@@ -28,10 +28,6 @@ const ATALHOS = {
     { para: "/perfil", rotulo: "Dados da organização" },
   ],
 };
-
-const PROXIMAS = [
-  { fatia: 9, titulo: "Portal", detalhe: "Página pública de apresentação" },
-];
 
 export default function EmConstrucao() {
   const { usuario } = useAuth();
@@ -54,8 +50,8 @@ export default function EmConstrucao() {
       </Stack>
 
       <Alert icon={<IconInfoCircle size={18} />} color="brand" variant="light">
-        O painel com seus números entra junto com as fatias que faltam. Por enquanto,
-        use o menu ao lado ou os atalhos abaixo.
+        O painel com os seus números ainda não foi construído. Tudo o que ele vai
+        resumir já está no menu ao lado e nos atalhos abaixo.
       </Alert>
 
       <Card withBorder radius="md" p="lg">
@@ -73,28 +69,6 @@ export default function EmConstrucao() {
         </List>
       </Card>
 
-      <Card withBorder radius="md" p="lg">
-        <Text fw={700} mb="sm">
-          Em construção
-        </Text>
-        <Stack gap="sm">
-          {PROXIMAS.map((item) => (
-            <Group key={item.fatia} justify="space-between" wrap="wrap" gap="xs">
-              <div style={{ minWidth: 0 }}>
-                <Text fw={600} size="sm">
-                  {item.titulo}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  {item.detalhe}
-                </Text>
-              </div>
-              <Badge variant="light" color="gray" radius="sm">
-                Fatia {item.fatia}
-              </Badge>
-            </Group>
-          ))}
-        </Stack>
-      </Card>
     </Stack>
   );
 }

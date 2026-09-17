@@ -1,19 +1,25 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Anchor, Button, Group, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconLock, IconMail } from "@tabler/icons-react";
 
 import AuthLayout from "../../components/layout/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
-import { painelDe } from "../../routes/destinos";
+import { destinoSeguro, painelDe } from "../../routes/destinos";
 import { api, mensagemDoErro } from "../../services/api";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
 /** T7 — Entrar. Ponto de acesso único para os três perfis (D9). */
 export default function Entrar() {
   const navigate = useNavigate();
+  const local = useLocation();
+  const [parametros] = useSearchParams();
   const { entrar } = useAuth();
+  // Quem foi barrado por falta de login (RotaPrivada) ou veio de um "Já tenho
+  // conta" volta para onde estava.
+  const volta = destinoSeguro(parametros.get("volta"))
+    ?? destinoSeguro(local.state?.de?.pathname);
   const [enviando, setEnviando] = useState(false);
 
   const form = useForm({
@@ -30,7 +36,7 @@ export default function Entrar() {
       const { data } = await api.post("/auth/entrar", valores);
       entrar(data);
       notifySuccess(`Bem-vindo(a), ${data.usuario.nome}!`);
-      navigate(painelDe(data.usuario.papel), { replace: true });
+      navigate(volta ?? painelDe(data.usuario.papel), { replace: true });
     } catch (erro) {
       notifyError(mensagemDoErro(erro, "Não foi possível entrar"));
     } finally {
@@ -69,7 +75,8 @@ export default function Entrar() {
 
           <Text size="sm" c="dimmed" ta="center">
             Ainda não tem conta?{" "}
-            <Anchor component={Link} to="/criar-conta" fw={600}>
+            <Anchor component={Link} fw={600}
+                    to={volta ? `/criar-conta?volta=${encodeURIComponent(volta)}` : "/criar-conta"}>
               Criar conta
             </Anchor>
           </Text>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  Alert, Badge, Button, Card, Divider, Grid, Group, Stack, Text, Title, Tooltip,
+  Alert, Anchor, Badge, Button, Card, Divider, Grid, Group, Stack, Text, Title, Tooltip,
 } from "@mantine/core";
 import {
   IconAlertTriangle, IconArrowLeft, IconCalendar, IconCheck, IconClock,
@@ -37,7 +37,7 @@ function Dado({ icon: Icon, rotulo, children }) {
  * instituição de terceiros a qualquer colega vazaria dado de quem não
  * consentiu. A ONG vê a lista completa na tela dela.
  */
-export default function DetalheAtividade() {
+export default function DetalheAtividade({ base = "/atividades" }) {
   const { id } = useParams();
   const navegar = useNavigate();
 
@@ -81,7 +81,7 @@ export default function DetalheAtividade() {
         icon={IconAlertTriangle}
         title="Atividade não encontrada"
         description="Ela pode ter sido cancelada ou o endereço está errado."
-        action={{ label: "Ver outras atividades", onClick: () => navegar("/atividades") }}
+        action={{ label: "Ver outras atividades", onClick: () => navegar(base) }}
       />
     );
   }
@@ -96,7 +96,7 @@ export default function DetalheAtividade() {
     <Stack gap="lg" maw={900}>
       <Button variant="subtle" size="compact-sm" w="fit-content"
               leftSection={<IconArrowLeft size={15} />}
-              onClick={() => navegar("/atividades")}>
+              onClick={() => navegar(base)}>
         Voltar à vitrine
       </Button>
 
@@ -116,7 +116,12 @@ export default function DetalheAtividade() {
           {atividade.titulo}
         </Title>
         <Group gap={5}>
-          <Text c="dimmed">por {atividade.ong?.nome}</Text>
+          <Text c="dimmed">
+            por{" "}
+            <Anchor component={Link} to={`/ongs/${atividade.ong?.id}`} inherit>
+              {atividade.ong?.nome}
+            </Anchor>
+          </Text>
           {atividade.ong?.verificada && (
             <Tooltip label="Organização verificada pela administração">
               <IconCheck size={15} color="var(--mantine-color-brand-6)" />

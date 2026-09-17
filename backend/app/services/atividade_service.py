@@ -159,6 +159,7 @@ async def listar_vitrine(
     pagina: int = 1, tamanho: int = 20, busca: str | None = None,
     cidade: str | None = None, carga_min: int | None = None,
     carga_max: int | None = None, com_vaga: bool = False,
+    ong_id: uuid.UUID | None = None,
 ) -> tuple[list[dict], int]:
     """
     Filtrada **no servidor** (não no navegador, como na versão anterior).
@@ -180,6 +181,18 @@ async def listar_vitrine(
                              Atividade.cidade.ilike(alvo)))
     if cidade:
         condicoes.append(Atividade.cidade.ilike(f"%{cidade.strip()}%"))
+    if ong_id is not None:
+        condicoes.append(Atividade.ong_id == ong_id)
+    if com_vaga:
+        # No SQL, e não depois da consulta: filtrar a página já montada deixava
+        # o total e a paginação errados sempre que havia atividade lotada.
+        ocupadas = (
+            select(func.count()).select_from(Inscricao)
+            .where(Inscricao.atividade_id == Atividade.id,
+                   Inscricao.situacao.in_(SITUACOES_QUE_OCUPAM))
+            .correlate(Atividade).scalar_subquery()
+        )
+        condicoes.append(ocupadas < Atividade.vagas_max)
     if carga_min is not None:
         condicoes.append(Atividade.carga_horaria >= carga_min)
     if carga_max is not None:
@@ -196,16 +209,9 @@ async def listar_vitrine(
         .offset((pagina - 1) * tamanho).limit(tamanho)
     )
 
-    itens = []
-    for atividade in resultado:
-        corpo = await serializar(sessao, atividade, usuario=usuario)
-        # "Apenas com vaga" é filtro de contagem, então roda depois da consulta.
-        if com_vaga and corpo["lotada"]:
-            total -= 1
-            continue
-        itens.append(corpo)
-
-    return itens, max(total, 0)
+    itens = [await serializar(sessao, atividade, usuario=usuario)
+             for atividade in resultado]
+    return itens, total
 
 
 # Situações que a ONG pode pedir nas abas de O2, incluindo as derivadas.

@@ -150,6 +150,16 @@ select {
   color: #dbe3ff;
 }
 
+/* cabeçalho do portal: fixo no topo ao rolar */
+.mh-portal-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e6eaf1;
+}
+
 /* hero com gradiente diagonal azul royal */
 .mh-hero {
   position: relative;

@@ -26,7 +26,7 @@ const FILTROS_LIMPOS = { busca: "", cidade: "", cargaMin: "", cargaMax: "", comV
  * baixada: com o catálogo crescendo, filtrar no navegador significaria baixar
  * tudo a cada visita.
  */
-export default function Vitrine() {
+export default function Vitrine({ base = "/atividades" }) {
   const navegar = useNavigate();
 
   const [filtros, setFiltros] = useState(FILTROS_LIMPOS);
@@ -158,13 +158,13 @@ export default function Vitrine() {
               <CartaoAtividade
                 key={atividade.id}
                 atividade={atividade}
-                aoClicar={() => navegar(`/atividades/${atividade.id}`)}
+                aoClicar={() => navegar(`${base}/${atividade.id}`)}
                 rodape={
                   <Stack gap={6} onClick={(e) => e.stopPropagation()}>
                     <BotaoInscricao atividade={atividade} aoMudar={buscar}
                                     tamanho="compact-sm" largo />
                     <Button variant="subtle" size="compact-sm" fullWidth
-                            onClick={() => navegar(`/atividades/${atividade.id}`)}>
+                            onClick={() => navegar(`${base}/${atividade.id}`)}>
                       Ver detalhes
                     </Button>
                   </Stack>

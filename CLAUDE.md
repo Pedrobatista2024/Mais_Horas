@@ -23,15 +23,17 @@ o código: quando os dois discordarem, o código é que está atrasado.
 ## Estado atual
 
 A construção é por **fatias verticais**: cada uma entrega backend, frontend e testes de um
-pedaço que funciona ponta a ponta. Fatias 0 a 8 estão concluídas (fundação, acesso, perfil,
-atividades, inscrições, presença, certificado, notificações,
-console administrativo com "entrar como") — o ciclo inteiro já é demonstrável. As telas das fatias seguintes **ainda não estão roteadas** em `App.jsx`, de
-propósito: chamariam endpoints que não existem, e tela quebrada é pior que tela ausente.
+pedaço que funciona ponta a ponta. As fatias 0 a 9 do plano estão concluídas (fundação,
+acesso, perfil, atividades, inscrições, presença, certificado, notificações, console
+administrativo com "entrar como" e portal público).
 
-Restam no frontend alguns arquivos da versão anterior (Node/Express) em `pages/org/`,
-`pages/student/` e `pages/public/` que ainda não foram migrados. Eles não estão roteados e
-falam com uma API que não existe mais — não os use como referência de padrão. Cada fatia
-apaga os que substitui.
+Falta o que o plano não cobriu: os painéis `E1` e `O1` (`/painel/estudante` e
+`/painel/ong` no contrato). `/painel` e `/ong` usam a tela provisória `EmConstrucao`.
+Tela sem endpoint **não é roteada**: tela quebrada é pior que tela ausente.
+
+Restam arquivos da versão anterior (Node/Express) em `pages/org/`, `pages/student/` e
+`pages/public/StudentPublicProfile.jsx`. Não estão roteados e falam com uma API que não
+existe mais — não os use como referência de padrão.
 
 ## Comandos
 

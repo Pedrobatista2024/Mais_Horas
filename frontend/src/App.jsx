@@ -4,8 +4,10 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Loading from "./components/ui/Loading";
 import { useAuth } from "./context/AuthContext";
 import { painelDe } from "./routes/destinos";
-import Landing from "./pages/public/Landing";
 import PainelLayout from "./components/layout/PainelLayout";
+import PortalLayout from "./components/layout/PortalLayout";
+import ConteudoDoPortal from "./components/portal/ConteudoDoPortal";
+import InicioDoPortal from "./pages/portal/Inicio";
 import RotaPrivada from "./routes/RotaPrivada";
 
 // Acesso — Fatia 1
@@ -43,6 +45,13 @@ const VerificarCertificado = lazy(() =>
 // Notificações — Fatia 7
 const Notificacoes = lazy(() => import("./pages/Notificacoes"));
 
+// Portal — Fatia 9
+const ComoFunciona = lazy(() => import("./pages/portal/ComoFunciona"));
+const ParaEstudantes = lazy(() => import("./pages/portal/ParaEstudantes"));
+const ParaOngs = lazy(() => import("./pages/portal/ParaOngs"));
+const OngsParceiras = lazy(() => import("./pages/portal/OngsParceiras"));
+const PerfilOng = lazy(() => import("./pages/portal/PerfilOng"));
+
 // Console administrativo — Fatia 8
 const AdminVisaoGeral = lazy(() => import("./pages/admin/VisaoGeral"));
 const AdminAuditoria = lazy(() => import("./pages/admin/Auditoria"));
@@ -53,17 +62,13 @@ const AdminAtividades = lazy(() => import("./pages/admin/Atividades"));
 const AdminCertificados = lazy(() => import("./pages/admin/Certificados"));
 const AdminSistema = lazy(() => import("./pages/admin/Sistema"));
 
-/**
- * As rotas entram fatia a fatia (docs/plano-execucao.md). As telas das fatias
- * seguintes ainda não estão listadas aqui porque chamariam endpoints que não
- * existem — melhor ausentes que quebradas.
- */
+/** Rotas por zona (docs/especificacao.md, seção 6). */
 function Inicio() {
   const { autenticado, usuario } = useAuth();
   if (autenticado) {
     return <Navigate to={painelDe(usuario?.papel)} replace />;
   }
-  return <Landing />;
+  return <InicioDoPortal />;
 }
 
 /** Área logada: exige sessão e, quando informado, um papel. */
@@ -81,7 +86,19 @@ export default function App() {
       <Suspense fallback={<Loading label="Carregando..." />}>
         <Routes>
           {/* Portal — público */}
-          <Route path="/" element={<Inicio />} />
+          <Route element={<PortalLayout />}>
+            <Route path="/" element={<Inicio />} />
+            <Route path="/como-funciona" element={<ComoFunciona />} />
+            <Route path="/para-estudantes" element={<ParaEstudantes />} />
+            <Route path="/para-ongs" element={<ParaOngs />} />
+            <Route path="/ongs" element={<OngsParceiras />} />
+            <Route path="/ongs/:id" element={<PerfilOng />} />
+            <Route path="/vagas" element={
+              <ConteudoDoPortal><Vitrine base="/vagas" /></ConteudoDoPortal>} />
+            <Route path="/vagas/:id" element={
+              <ConteudoDoPortal tamanho="lg"><DetalheAtividade base="/vagas" /></ConteudoDoPortal>} />
+          </Route>
+
           <Route path="/entrar" element={<Entrar />} />
           <Route path="/criar-conta" element={<CriarConta />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />

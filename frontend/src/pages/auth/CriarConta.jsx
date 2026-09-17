@@ -8,7 +8,7 @@ import { IconLock, IconMail, IconUser } from "@tabler/icons-react";
 
 import AuthLayout from "../../components/layout/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
-import { painelDe } from "../../routes/destinos";
+import { destinoSeguro, painelDe } from "../../routes/destinos";
 import { api, mensagemDoErro } from "../../services/api";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
@@ -35,6 +35,7 @@ export default function CriarConta() {
   const { entrar } = useAuth();
   const [enviando, setEnviando] = useState(false);
 
+  const volta = destinoSeguro(parametros.get("volta"));
   const papelInicial = ["estudante", "ong"].includes(parametros.get("papel"))
     ? parametros.get("papel")
     : "estudante";
@@ -57,7 +58,11 @@ export default function CriarConta() {
       const { data } = await api.post("/auth/cadastro", valores);
       entrar(data);
       notifySuccess("Conta criada. Bem-vindo(a) ao Mais Horas!");
-      navigate(painelDe(data.usuario.papel), { replace: true });
+      // O destino pedido só vale para quem se cadastrou como estudante: é de
+      // uma vaga que ele veio.
+      const destino = data.usuario.papel === "estudante" && volta ? volta
+        : painelDe(data.usuario.papel);
+      navigate(destino, { replace: true });
     } catch (erro) {
       notifyError(mensagemDoErro(erro, "Não foi possível criar a conta"));
     } finally {
@@ -121,7 +126,8 @@ export default function CriarConta() {
 
           <Text size="sm" c="dimmed" ta="center">
             Já tem conta?{" "}
-            <Anchor component={Link} to="/entrar" fw={600}>
+            <Anchor component={Link} fw={600}
+                    to={volta ? `/entrar?volta=${encodeURIComponent(volta)}` : "/entrar"}>
               Entrar
             </Anchor>
           </Text>

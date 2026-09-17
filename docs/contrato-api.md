@@ -484,6 +484,40 @@ externa é descartada na gravação, para o sino não virar redirecionamento abe
 
 ---
 
+## 11b. Portal — `/portal` 🌐
+
+| Método | Rota | Acesso | Descrição |
+|---|---|:---:|---|
+| `GET` | `/portal/resumo` | 🌐 | Números de impacto de `T1` |
+| `GET` | `/portal/ongs` | 🌐 | ONGs parceiras (`T5`). Paginada (`tamanho` até 48). Filtro `busca` (nome ou cidade) |
+| `GET` | `/portal/ongs/{id}` | 🌐 | Perfil público da ONG, com as próximas atividades |
+
+**`GET /portal/resumo`**
+
+```json
+{
+  "atividadesRealizadas": 2, "atividadesAbertas": 5, "horasCertificadas": 38,
+  "certificadosEmitidos": 11, "estudantes": 40, "ongs": 3,
+  "codigoDemonstracao": null
+}
+```
+
+Certificado revogado não conta. `atividadesAbertas` usa a mesma regra da vitrine.
+`codigoDemonstracao` vem de `CERTIFICADO_DEMONSTRACAO` e só é devolvido se o certificado
+existir e estiver válido.
+
+**`GET /portal/ongs`** — só ONG ativa com ao menos uma atividade publicada ou finalizada.
+Ordem: verificadas, depois mais atividades realizadas, depois nome. Cada item: `id`,
+`nome`, `descricao`, `cidade`, `estado`, `logo`, `verificada`, `atividadesRealizadas`,
+`atividadesAbertas`.
+
+**`GET /portal/ongs/{id}`** — os mesmos campos, mais `site`, `instagram`,
+`horasCertificadas`, `desde` e `proximasAtividades` (até 6, formato da vitrine).
+**Não devolve** telefone, CNPJ, endereço nem e-mail. ONG suspensa, conta de outro papel ou
+id inexistente: `404 nao_encontrado`.
+
+---
+
 ## 12. Administração — `/admin` 👑
 
 Todas exigem `superadmin`, e **todas são auditadas** (RN-32).
@@ -644,7 +678,9 @@ hora torna a busca inútil.
 
 | Tela | Endpoints |
 |---|---|
-| `T1` Portal | `GET /atividades?tamanho=6` |
+| `T1` Portal | `GET /portal/resumo` · `GET /atividades?tamanho=6` · `GET /portal/ongs?tamanho=6` |
+| `T2` Como funciona | `GET /portal/resumo` (código de demonstração) |
+| `T5` ONGs parceiras | `GET /portal/ongs` · `GET /portal/ongs/{id}` |
 | `T6` Verificar | `GET /certificados/verificar/{codigo}` |
 | `T7` Entrar | `POST /auth/entrar` |
 | `T8` Criar conta | `POST /auth/cadastro` |

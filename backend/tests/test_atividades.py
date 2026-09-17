@@ -571,6 +571,29 @@ async def test_filtro_com_vaga_esconde_a_lotada(cliente, sessao):
     assert all(i["id"] != atividade["id"] for i in resposta.json()["itens"])
 
 
+async def test_filtro_com_vaga_acerta_total_e_paginas(cliente, sessao):
+    """O filtro é do SQL: a página vem cheia e o total conta só as com vaga."""
+    _, ong = await _cadastrar(cliente, "ong")
+    aluno_id, _ = await _cadastrar(cliente, "estudante")
+    for _ in range(3):
+        lotada = await _criar(cliente, ong, vagas_min=1, vagas_max=1)
+        await _publicar(cliente, ong, lotada["id"])
+        await _inscrever(sessao, lotada["id"], aluno_id)
+    livres = []
+    for _ in range(3):
+        livre = await _criar(cliente, ong, vagas_min=1, vagas_max=5)
+        await _publicar(cliente, ong, livre["id"])
+        livres.append(livre["id"])
+
+    corpo = (await cliente.get("/api/v1/atividades",
+                               params={"comVaga": "true", "tamanho": 2})).json()
+
+    assert corpo["total"] == 3
+    assert corpo["paginas"] == 2
+    assert len(corpo["itens"]) == 2
+    assert {i["id"] for i in corpo["itens"]} <= set(livres)
+
+
 async def test_busca_filtra_por_titulo(cliente):
     _, ong = await _cadastrar(cliente, "ong")
     achavel = await _criar(cliente, ong, titulo="Plantio de mudas")

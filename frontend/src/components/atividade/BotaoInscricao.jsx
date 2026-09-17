@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { IconAlertTriangle, IconUserPlus, IconUserX } from "@tabler/icons-react";
 
 import ConfirmarAcao from "../ui/ConfirmarAcao";
+import { useAuth } from "../../context/AuthContext";
+import { cadastroComo } from "../portal/navegacao";
 import { api, codigoDoErro, mensagemDoErro } from "../../services/api";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
@@ -26,6 +28,7 @@ const ROTULOS = {
  */
 export default function BotaoInscricao({ atividade, aoMudar, tamanho, largo = false }) {
   const navegar = useNavigate();
+  const { usuario } = useAuth();
   const [enviando, setEnviando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
   const [perfilIncompleto, setPerfilIncompleto] = useState(null);
@@ -71,6 +74,27 @@ export default function BotaoInscricao({ atividade, aoMudar, tamanho, largo = fa
   }
 
   function conteudo() {
+    // Visitante, vindo do portal: a inscrição começa pelo cadastro e volta
+    // para esta mesma atividade, já dentro da área do estudante.
+    if (!usuario) {
+      if (atividade.situacao !== "publicada" || atividade.lotada) return null;
+      const volta = `/atividades/${atividade.id}`;
+      return (
+        <Stack gap={4}>
+          <Button {...comum} component={Link} to={cadastroComo("estudante", volta)}
+                  leftSection={<IconUserPlus size={16} />}>
+            Quero participar
+          </Button>
+          <Button {...comum} variant="subtle" size="compact-sm" component={Link}
+                  to={`/entrar?volta=${encodeURIComponent(volta)}`}>
+            Já tenho conta
+          </Button>
+        </Stack>
+      );
+    }
+    // ONG e admin olham a vaga, mas não se inscrevem.
+    if (usuario.papel !== "estudante") return null;
+
     if (inscricao?.situacao === "pendente") {
       return (
         <Stack gap={6}>
