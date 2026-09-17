@@ -42,13 +42,16 @@ client-side do React Router funcionar em links diretos (ex.: alguém abrindo
 |---|---|---|
 | `DATABASE_URL` | sim | String de conexão do Postgres. No Render vem automática do `mais-horas-db` |
 | `JWT_SECRET` | sim | Secret de assinatura do JWT. **O servidor aborta o boot se faltar.** No Render é gerada automaticamente |
-| `ENVIRONMENT` | em produção | `production` liga cookie `Secure`, `SameSite=None` e HSTS |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | não | Padrão `15` |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | não | Padrão `7` |
+| `AMBIENTE` | em produção | `producao` liga cookie `Secure`, `SameSite=None`, HSTS e as travas de boot abaixo. **Sem ela o servidor roda em modo desenvolvimento** |
+| `CHECKIN_SECRET` | sim | Segredo do QR de check-in. **O servidor aborta o boot se faltar.** No Render é gerado automaticamente |
+| `CHAVE_ASSINATURA` | **sim em produção** | Chave Ed25519 dos certificados (`python -m app.cli gerar-chave`). Com `AMBIENTE=producao` a API **se recusa a subir** sem ela. **Nunca troque** depois de emitir: invalida todos os certificados |
+| `ACCESS_TOKEN_MINUTOS` | não | Padrão `15` |
+| `REFRESH_TOKEN_DIAS` | não | Padrão `7` |
+| `EMAIL_MODO` | não | Padrão `console` (escreve no log) |
 | `APP_URL` | sim | URL pública da API |
 | `WEB_URL` | sim | URL pública do site — vira o destino do QR Code |
-| `CORS_ORIGIN` | **sim em produção** | Origens permitidas, separadas por vírgula. Com `ENVIRONMENT=production` a API **se recusa a subir** sem esta variável |
-| `PGSSL` | em produção | `true` para exigir SSL na conexão. `ENVIRONMENT=production` tem o mesmo efeito |
+| `CORS_ORIGIN` | **sim em produção** | Origens permitidas, separadas por vírgula. Com `AMBIENTE=producao` a API **se recusa a subir** sem esta variável |
+| `PGSSL` | em produção | `true` para exigir SSL na conexão. `AMBIENTE=producao` tem o mesmo efeito |
 | `PORT` | não | Padrão `3000` |
 
 ### Frontend

@@ -17,8 +17,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.10"
-      - key: ENVIRONMENT
-        value: production
+      - key: AMBIENTE
+        value: producao # liga cookie Secure, SameSite=None, HSTS e as travas de boot
       - key: PGSSL
         value: "true"
       - key: DATABASE_URL
@@ -27,17 +27,23 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
-      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+      - key: CHECKIN_SECRET
+        generateValue: true # segredo próprio do QR de check-in
+      - key: CHAVE_ASSINATURA
+        sync: false # python -m app.cli gerar-chave. NUNCA troque depois: invalida todo certificado emitido
+      - key: ACCESS_TOKEN_MINUTOS
         value: "15"
-      - key: REFRESH_TOKEN_EXPIRE_DAYS
+      - key: REFRESH_TOKEN_DIAS
         value: "7"
+      - key: EMAIL_MODO
+        value: console # sem provedor de e-mail configurado ainda
       - key: APP_URL
         sync: false # cole a URL pública da API após o 1º deploy
       - key: WEB_URL
         sync: false # cole a URL do mais-horas-web (usada no QR dos certificados)
       - key: CORS_ORIGIN
         sync: false # cole a URL do mais-horas-web (ex: https://mais-horas-web.onrender.com)
-        # Obrigatório em produção: a API se recusa a subir sem esta variável.
+        # Obrigatório em produção: sem ela (ou sem CHAVE_ASSINATURA) a API não sobe.
 
   # ===== Frontend (Vite static site) =====
   - type: web
