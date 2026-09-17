@@ -9,7 +9,7 @@ cd "$(dirname "$0")"
 
 echo "==> Pacotes"
 sudo apt-get update -qq
-sudo apt-get install -y -qq docker.io docker-compose-v2 openssl cron
+sudo apt-get install -y -qq docker.io docker-compose-v2 openssl cron jq curl
 sudo systemctl enable --now docker
 DOCKER="sudo docker"
 
@@ -50,17 +50,27 @@ echo "==> Subindo"
 $DOCKER compose up -d
 
 echo "==> Backup diário do banco (03:30)"
-chmod +x backup.sh atualizar.sh
+chmod +x backup.sh atualizar.sh auto-deploy.sh
 LINHA="30 3 * * * $(pwd)/backup.sh >> $HOME/backups/backup.log 2>&1"
 mkdir -p "$HOME/backups"
 # Numa máquina nova não há crontab, e "crontab -l" sai com erro: o "|| true"
 # impede o set -e de abortar aqui.
 { { crontab -l 2>/dev/null || true; } | { grep -v 'backup.sh' || true; }; echo "$LINHA"; } | crontab -
 
+echo "==> Publicação automática (confere o GitHub a cada 2 min)"
+RAIZ="$(cd .. && pwd)"
+sed -e "s|__USUARIO__|$(whoami)|" -e "s|__PASTA__|${RAIZ}|" mais-horas-deploy.service   | sudo tee /etc/systemd/system/mais-horas-deploy.service >/dev/null
+sudo cp mais-horas-deploy.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now mais-horas-deploy.timer
+
 cat <<FIM
 
 Pronto: https://${DOMINIO}
 O certificado HTTPS pode levar um minuto na primeira vez.
+
+Todo push no main com CI verde é publicado sozinho em até ~2 minutos.
+Acompanhar: journalctl -u mais-horas-deploy -f
 
 Próximos passos:
   1. Criar o primeiro admin:
