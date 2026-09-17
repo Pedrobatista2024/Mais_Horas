@@ -1,5 +1,10 @@
 # Mais Horas
 
+[![CI / Deploy](https://github.com/Pedrobatista2024/Mais_Horas/actions/workflows/ci.yml/badge.svg)](https://github.com/Pedrobatista2024/Mais_Horas/actions/workflows/ci.yml)
+
+**No ar:** https://maishoras.northcentralus.cloudapp.azure.com — todo push no `main` com
+testes verdes é publicado sozinho ([docs/deploy.md](docs/deploy.md)).
+
 Plataforma que conecta **estudantes** e **ONGs**: as ONGs publicam vagas de voluntariado
 (como ofertas de trabalho), os estudantes se inscrevem para cumprir horas de extensão, e a
 presença confirmada gera um **certificado validável por QR Code**.
