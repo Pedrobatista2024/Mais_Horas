@@ -53,7 +53,9 @@ echo "==> Backup diário do banco (03:30)"
 chmod +x backup.sh atualizar.sh
 LINHA="30 3 * * * $(pwd)/backup.sh >> $HOME/backups/backup.log 2>&1"
 mkdir -p "$HOME/backups"
-( crontab -l 2>/dev/null | grep -v 'backup.sh' ; echo "$LINHA" ) | crontab -
+# Numa máquina nova não há crontab, e "crontab -l" sai com erro: o "|| true"
+# impede o set -e de abortar aqui.
+{ { crontab -l 2>/dev/null || true; } | { grep -v 'backup.sh' || true; }; echo "$LINHA"; } | crontab -
 
 cat <<FIM
 
