@@ -3,6 +3,11 @@
 {$DOMINIO} {
 	encode zstd gzip
 
+	# A CITINOVA usa apenas esta rota; o restante do Mais Horas nao muda.
+	handle_path /citinova/* {
+		reverse_proxy citinova-api:8000
+	}
+
 	@api path /api/* /uploads/* /saude
 	handle @api {
 		# Sem trusted_proxies, o Caddy descarta o X-Forwarded-For que vier do

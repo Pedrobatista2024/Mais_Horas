@@ -18,6 +18,11 @@ Tudo mora em [`deploy/`](../deploy):
 | `backup.sh` | `pg_dump` diário em `~/backups`, guardando 14 dias |
 | `.env.exemplo` | Modelo do `deploy/.env` (este nunca vai para o git) |
 
+O Caddy também encaminha apenas `/citinova/*` para a API isolada da CITINOVA,
+quando ela está presente na rede Docker `mais-horas_default` sob o nome
+`citinova-api`. A rota remove o prefixo `/citinova` antes do repasse. O
+frontend, as rotas `/api/*` e o banco do Mais Horas permanecem independentes.
+
 Imagens: `backend/Dockerfile` (Python 3.12, sem root, um worker, migrations na subida) e
 `frontend/Dockerfile` (build do Vite servido pelo Caddy).
 
