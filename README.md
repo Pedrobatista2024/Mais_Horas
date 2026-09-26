@@ -17,7 +17,8 @@ presença confirmada gera um **certificado validável por QR Code**.
 | **Autenticação** | JWT access token curto + refresh token rotativo em cookie httpOnly, senhas em Argon2id |
 | **Frontend** | React 19 + Vite + Mantine v8, react-router, axios |
 | **Banco** | PostgreSQL 16 (UUID, JSONB para perfis) |
-| **Deploy** | Render (blueprint em `render.yaml`) |
+| **Testes** | pytest (432 testes) + ESLint e build do Vite, todos na esteira do GitHub Actions |
+| **Deploy** | Servidor próprio: Docker + Caddy (HTTPS automático) numa VM Linux. Blueprint do Render fica como alternativa |
 
 ## Rodar local
 
@@ -61,14 +62,17 @@ Roda em `http://localhost:5173`.
 
 ## Testes
 
-O backend tem um teste de fumaça que exercita os 25 endpoints ponta a ponta — cadastro,
-login, rotação de sessão, atividade, presença, certificado e verificação por QR:
-
 ```bash
-cd backend && python smoke_test.py
+cd backend && pytest -q          # 432 testes; exige o Postgres no ar
+cd frontend && npx eslint src    # sem erros
+cd frontend && npm run build     # precisa passar limpo
 ```
 
-Exige o Postgres no ar. São 68 verificações; qualquer falha sai com código 1.
+Os testes usam um banco separado (`mais_horas_teste`), recriado no começo da sessão. Cada
+teste roda numa transação revertida ao final, então a ordem não importa.
+
+A esteira do GitHub Actions roda os três a cada push. **Só com tudo verde o `main` é
+publicado em produção** — o servidor busca o commit testado e se atualiza sozinho.
 
 ## Documentação
 
@@ -79,13 +83,11 @@ Exige o Postgres no ar. São 68 verificações; qualquer falha sai com código 1
 | [docs/fluxos.md](docs/fluxos.md) | Todos os caminhos do sistema: feliz, alternativos e de erro, por perfil |
 | [docs/modelo-dados.md](docs/modelo-dados.md) | Tabelas, restrições, índices e o plano de migrations |
 | [docs/contrato-api.md](docs/contrato-api.md) | Endpoints por perfil, payloads, códigos de erro e catálogo de auditoria |
-| [docs/requisitos.md](docs/requisitos.md) | Retrato do sistema como está hoje: requisitos, casos de uso e lacunas |
 | [docs/arquitetura.md](docs/arquitetura.md) | Estrutura de pastas, rotas de tela, schema do banco |
-| [docs/api.md](docs/api.md) | Referência dos endpoints: acesso, payload, formato de erro |
 | [docs/autenticacao.md](docs/autenticacao.md) | Como funciona a sessão: tokens, rotação, detecção de roubo |
-| [docs/desafio-tecnico.md](docs/desafio-tecnico.md) | O problema difícil do projeto e a proposta de QR dinâmico |
-| [docs/backend-refactor.md](docs/backend-refactor.md) | Histórico das melhorias do backend e dívida técnica aberta |
-| [docs/deploy.md](docs/deploy.md) | Deploy no Render, variáveis de ambiente, limitações |
+| [docs/desafio-tecnico.md](docs/desafio-tecnico.md) | O problema difícil do projeto: presença que não se falsifica |
+| [docs/deploy.md](docs/deploy.md) | Servidor, publicação automática, variáveis de ambiente, backup |
+| [docs/historico/](docs/historico/) | A versão anterior do sistema: requisitos, API e a auditoria com as 10 lacunas |
 | [presentation/roteiro.md](presentation/roteiro.md) | Roteiro da apresentação do projeto de extensão |
 | [presentation/Mais_Horas_Documento_de_Requisitos.pdf](presentation/Mais_Horas_Documento_de_Requisitos.pdf) | Documento de requisitos em ABNT, entregue na faculdade ([gerador](docs/requisitos-abnt/)) |
 

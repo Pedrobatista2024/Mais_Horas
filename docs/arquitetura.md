@@ -27,36 +27,40 @@ Três camadas de acesso:
 backend/
   app/
     main.py            boot: checagem de env, headers, CORS, rotas, handlers de erro
+    cli.py             comandos de servidor: gerar chave, gerar segredos, criar admin
     core/
-      config.py        Settings (pydantic-settings), lê o .env
-      security.py      hash de senha (Argon2id + bcrypt legado), JWT, refresh token
-      deps.py          get_db, get_current_user, require_role
-      errors.py        AppError + handlers centrais
-      rate_limit.py    limite de tentativas em login/registro
+      config.py        configuração lida do ambiente (pydantic-settings)
+      security.py      senha (Argon2id), JWT, token do QR, assinatura do certificado
+      deps.py          sessão, usuário atual, papéis e o modo "entrar como"
+      auditoria.py     registrar() — catálogo fechado de ações, sem commit próprio
+      errors.py        ErroDeNegocio + handlers centrais ({ codigo, mensagem, detalhes })
+      rate_limit.py    limite por IP em login, cadastro e verificação pública
+      email.py         envio do link de redefinição (modo console em desenvolvimento)
     db/
       session.py       engine e sessão async (SQLAlchemy 2.0 + asyncpg)
-      models.py        User, Activity, Participation, Certificate, RefreshToken
+      models.py        as 10 tabelas, com as restrições declaradas
       migration_utils.py  helper das migrations
-    schemas/           Pydantic — validação de entrada (equivale aos validators zod)
-    services/          regra de negócio (user, activity, participation, certificate)
-    routers/           endpoints + dependências de auth/papel
-    utils/             datas, código de verificação, PDF+QR, serialização
-  alembic/             migrations (0001 schema inicial, 0002 refresh_tokens)
-  smoke_test.py        teste de fumaça ponta a ponta (68 verificações)
+    schemas/           Pydantic — entrada e saída de cada rota
+    services/          regra de negócio: atividade, inscrição, check-in, certificado,
+                       notificação, perfil, portal, painel e os três de administração
+    routers/           endpoints finos, com papel declarado na assinatura
+  alembic/versions/    migrations (0001 — schema inicial)
+  tests/               pytest por área, um arquivo por fatia
+  Dockerfile           imagem da API usada em produção
   requirements.txt
 ```
 
 **Fluxo de uma requisição:**
 
 ```
-rota -> Depends(get_current_user) -> Depends(require_role) -> Pydantic -> service -> SQLAlchemy
+rota -> Depends(usuario_atual) -> Depends(exigir_papel) -> Pydantic -> service -> SQLAlchemy
                                                                        |
                                                  erro em qualquer ponto -> exception handler
 ```
 
-Diferente do Express, a validação e a autorização não são middlewares escondidos: elas
-aparecem na **assinatura do endpoint**, então o FastAPI já documenta quem exige token e
-qual papel cada rota pede. A documentação OpenAPI sai de graça em `/docs`.
+A validação e a autorização não são middlewares escondidos: elas aparecem na
+**assinatura do endpoint**, então já fica documentado quem exige token e qual papel cada
+rota pede. A documentação OpenAPI sai de graça em `/docs`.
 
 Os handlers em `core/errors.py` traduzem `RequestValidationError` em `400` com lista de
 campos, `AppError` no status do próprio erro, violação de unique do Postgres (`23505`) em
@@ -92,8 +96,7 @@ frontend/src/
     painel/            Destaque (faixa do topo de E1/O1), destaques.js
     admin/             TarjaEspelho (topo do PainelLayout no "entrar como")
     ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, StatCard,
-                       ActionCard, InfoItem, StatusBadge, BackButton, BrandMark,
-                       BrandIcon, ClockGlyph, WelcomeBanner
+                       ActionCard, WelcomeBanner, BrandMark, BrandIcon, ClockGlyph
   pages/
     auth/              Entrar, CriarConta, EsqueciSenha, RedefinirSenha
     perfil/            MeuPerfil (serve aos dois papéis)
@@ -107,17 +110,13 @@ frontend/src/
                        ValidarPresencas
     portal/            Inicio, ComoFunciona, ParaEstudantes, ParaOngs,
                        OngsParceiras, PerfilOng
-    public/            VerificarCertificado (+ StudentPublicProfile, antiga)
+    public/            VerificarCertificado (destino do QR)
   utils/
     format.js          formatDate, formatDateLong, formatRelativo, resolveImage,
                        initials
     baixar.js          baixa arquivo autenticado (o token não vai em link)
     notify.js          notifySuccess / notifyError (toasts Mantine)
 ```
-
-`pages/student/`, `pages/org/` e parte de `pages/public/` ainda guardam telas da versão
-Node/Express. Não estão roteadas e falam com uma API que não existe mais — cada fatia
-apaga as que substitui.
 
 As convenções de UI (paleta, componentes reutilizáveis, responsividade) estão em
 [`.claude/skills/frontend-maishoras/SKILL.md`](../.claude/skills/frontend-maishoras/SKILL.md).

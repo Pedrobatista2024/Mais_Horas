@@ -1,4 +1,9 @@
-# Referência da API — Mais Horas
+# Referência da API — Mais Horas (versão anterior)
+
+> **Documento histórico.** Descreve o sistema anterior, em Node/Express, que foi
+> substituído pelo backend em FastAPI. Não use como referência do que roda hoje — veja
+> [README.md](README.md) desta pasta para o mapa da documentação atual.
+
 
 Base: `http://localhost:3000` em dev (`APP_URL` em produção).
 Todas as rotas de negócio ficam sob `/api`.

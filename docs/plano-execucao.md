@@ -478,11 +478,11 @@ Uma fatia só está concluída quando:
 O backend de hoje é **substituído**, não adaptado. A cada fatia, o que ela cobre sai do
 código antigo.
 
-- `smoke_test.py` continua rodando enquanto houver código antigo, e é **removido ao final
-  da Fatia 6**, quando o pytest já cobrir o mesmo terreno
+- ✅ `smoke_test.py` foi aposentado: o pytest cobre o mesmo terreno, por fatia
 - O banco atual já foi zerado; as migrations novas nascem em base limpa
-- `docs/requisitos.md`, `arquitetura.md` e `api.md` descrevem o sistema antigo e vão
-  perdendo validade fatia a fatia. Ao concluir a Fatia 6, cabe reescrevê-los ou removê-los
+- ✅ O código antigo saiu inteiro do repositório, e `requisitos.md`, `api.md` e
+  `backend-refactor.md` foram para [historico/](historico/), com aviso no topo. O
+  `arquitetura.md` foi reescrito para o sistema de hoje
 
 ---
 

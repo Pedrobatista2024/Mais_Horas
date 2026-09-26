@@ -1,6 +1,10 @@
-# Documento de Requisitos — Mais Horas
+# Documento de Requisitos — Mais Horas (versão anterior)
 
-Levantado a partir do sistema implementado. Cada requisito abaixo corresponde a
+> **Documento histórico.** Descreve o sistema anterior, em Node/Express, que foi
+> substituído pelo backend em FastAPI. Não use como referência do que roda hoje — veja
+> [README.md](README.md) desta pasta para o mapa da documentação atual.
+
+Levantado a partir do sistema implementado **à época**. Cada requisito abaixo corresponde a
 comportamento que existe no código; o que ainda não existe está separado na seção
 [Fora do escopo atual](#12-fora-do-escopo-atual).
 
@@ -664,8 +668,30 @@ Não implementado e **não pendente** — são decisões de escopo do MVP.
 
 | Documento | Conteúdo |
 |---|---|
-| [arquitetura.md](arquitetura.md) | Estrutura de código, rotas de tela e schema do banco |
-| [api.md](api.md) | Contrato de cada endpoint |
-| [autenticacao.md](autenticacao.md) | Detalhamento dos RNF-03 a RNF-06 |
-| [desafio-tecnico.md](desafio-tecnico.md) | Justificativa do RF-29 e a evolução proposta |
-| [deploy.md](deploy.md) | Ambientes e configuração |
+| [api.md](api.md) | Contrato de cada endpoint daquele backend |
+| [../arquitetura.md](../arquitetura.md) | Estrutura de código, rotas de tela e schema do banco (atual) |
+| [../autenticacao.md](../autenticacao.md) | Detalhamento dos RNF-03 a RNF-06 (atual) |
+| [../desafio-tecnico.md](../desafio-tecnico.md) | Justificativa do RF-29 e a evolução proposta |
+| [../deploy.md](../deploy.md) | Ambientes e configuração (atual) |
+
+---
+
+## 14. O que aconteceu com cada lacuna
+
+Fechamento da auditoria da seção 11, conferido no código atual.
+
+| # | Lacuna | Hoje |
+|---|---|---|
+| **L1** | Estudante não podia cancelar inscrição | ✅ **Resolvida** — `POST /inscricoes/{id}/cancelar`, permitido até o início da atividade (RN-20). A vaga volta para a contagem |
+| **L2** | Presença não conferia se a ONG era dona | ✅ **Resolvida** — a checagem de dono mora no serviço (`checkin_service.definir_presenca`, RN-11), não só no papel da rota. Coberta por teste |
+| **L3** | Excluir atividade apagava certificados | ✅ **Resolvida** — só rascunho pode ser excluído (RN-18). Atividade com histórico se cancela, nunca se apaga |
+| **L4** | Mínimo de participantes não valia nada | ⚖️ **Decidido** — segue como intenção da ONG, com a única regra de coerência `máximo ≥ mínimo` (RN-08). Nada impede realizar a atividade com menos: quem decide cancelar é a organização |
+| **L5** | O estado "cancelada" nunca acontecia | ✅ **Resolvida** — cancelar é operação da ONG e do admin, avisa os inscritos e libera as vagas |
+| **L6** | Nenhuma notificação | ✅ **Resolvida** — avisos no sistema para inscrição respondida, atividade cancelada e certificado emitido, revogado ou restabelecido |
+| **L7** | Listagem pública devolvia tudo, filtrada no navegador | ✅ **Resolvida** — a vitrine filtra e pagina **no servidor**, inclusive pelas situações calculadas |
+| **L8** | ONG não podia remover um inscrito | ⚖️ **Decidido** — continua sem remoção. A ONG aprova ou recusa enquanto está pendente; depois de confirmada, a saída é marcar ausente, que deixa rastro. Remover apagaria a evidência de que a pessoa esteve inscrita |
+| **L9** | Sem recuperação de senha | ✅ **Resolvida** — link por token de uso único, com validade. Em desenvolvimento ele sai no log; o envio real de e-mail é a dívida aberta |
+| **L10** | Endpoints sem interface | ✅ **Resolvida** — o contrato foi redesenhado e cada rota tem tela correspondente no mapa "tela → endpoint" de [../contrato-api.md](../contrato-api.md) |
+
+As duas marcadas como **decidido** não são pendências: são escolhas registradas, com o
+motivo ao lado.

@@ -408,7 +408,7 @@ WHERE situacao = 'publicada' AND data >= CURRENT_DATE
 ORDER BY data ASC, hora_inicio ASC;
 ```
 
-Filtro **no servidor**, não no navegador — corrige a lacuna L7 de [requisitos.md](requisitos.md).
+Filtro **no servidor**, não no navegador — corrige a lacuna L7 de [historico/requisitos.md](historico/requisitos.md).
 
 ### 5.5 Perfil mínimo (RN-45)
 

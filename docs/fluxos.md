@@ -808,7 +808,7 @@ creditadas
 | E1 | Não está em `rascunho` | O botão **nem aparece** (RN-18) |
 | E2 | Chamada direta à API em atividade publicada | `403` — "Só rascunho pode ser excluído" |
 
-> **RN-18 fecha a falha L3** documentada em [requisitos.md](requisitos.md): hoje é possível
+> **RN-18 fecha a falha L3** documentada em [historico/requisitos.md](historico/requisitos.md): hoje é possível
 > apagar uma atividade finalizada e destruir certificados já entregues.
 
 ---
@@ -1329,6 +1329,6 @@ ONG                          ALUNO                      COORDENAÇÃO
 | Documento | Relação |
 |---|---|
 | [especificacao.md](especificacao.md) | Define atores, estados, telas e regras que estes fluxos exercitam |
-| [requisitos.md](requisitos.md) | Retrato do sistema atual — mostra a distância até este alvo |
+| [historico/requisitos.md](historico/requisitos.md) | Retrato do sistema anterior — mostra a distância que foi percorrida |
 | [desafio-tecnico.md](desafio-tecnico.md) | Fundamenta C4 e C5 |
 | [autenticacao.md](autenticacao.md) | Detalha FA-02 a FA-05 |

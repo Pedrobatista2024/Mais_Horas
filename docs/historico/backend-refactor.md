@@ -1,5 +1,10 @@
 # Refatoração do backend — o que mudou e por quê
 
+> **Documento histórico.** Descreve o sistema anterior, em Node/Express, que foi
+> substituído pelo backend em FastAPI. Não use como referência do que roda hoje — veja
+> [README.md](README.md) desta pasta para o mapa da documentação atual.
+
+
 Registro dos pontos fracos encontrados no backend e como cada um foi resolvido.
 Serve como histórico técnico do projeto e como guia do padrão a seguir daqui pra frente.
 

@@ -17,20 +17,24 @@ Stack: **React 19 + Vite + Mantine v8** (`@mantine/core`, `/hooks`, `/form`, `/d
 1. **Sempre Mantine.** Não escrever HTML cru estilizado com `style` inline solto.
    Use componentes Mantine (`Paper`, `Card`, `Group`, `Stack`, `SimpleGrid`, `Button`,
    `Text`, `Title`, `Badge`, `ThemeIcon`, etc.) e props do sistema (`p`, `mt`, `gap`, `c`).
-2. **Reaproveite os componentes existentes** em `src/components/ui` antes de criar novos:
-   - `PageHeader` — cabeçalho de página (props: `eyebrow`, `title`, `subtitle`, `action`)
-   - `StatCard` — cartão de métrica (`icon`, `label`, `value`, `color`)
-   - `ActivityCard` — cartão de atividade (`activity`, `orgSlot`, `footer`, `onClick`)
-   - `ActionCard` — cartão de ação com CTA
-   - `InfoItem` — par rótulo/valor com ícone (`icon`, `label`, `value`, `href`, `color`)
-   - `StatusBadge` — badge de status (`pending|present|absent|active|finished|cancelled`)
-   - `EmptyState` — estado vazio (`icon`, `title`, `description`, `action`)
-   - `Loading` — spinner centralizado
-   - `BackButton` — botão voltar
-   - `BrandMark` — logo "MaisHoras"
-3. **Layouts:** `AppLayout` (área logada, AppShell + navbar), `AuthLayout` (login/registro),
-   `PublicPage` (verificação de certificado e perfis públicos).
-4. **Dados:** use o hook `useFetch(url)` para GET (`{ data, loading, error, refetch, setData }`).
+2. **Reaproveite os componentes existentes** antes de criar novos:
+   - `ui/PageHeader` — cabeçalho de página (`eyebrow`, `title`, `subtitle`, `action`)
+   - `ui/StatCard` — cartão de métrica (`icon`, `label`, `value`, `color`, `helper`)
+   - `ui/ActionCard` — cartão de ação com botão (`icon`, `title`, `description`, `actionLabel`)
+   - `ui/EmptyState` — estado vazio (`icon`, `title`, `description`, `action`)
+   - `ui/Loading` — spinner centralizado (`label`)
+   - `ui/ConfirmarAcao` — modal de confirmação, com motivo obrigatório quando preciso
+   - `ui/WelcomeBanner` — faixa azul do topo dos painéis
+   - `ui/BrandMark` / `ui/BrandIcon` — logo "MaisHoras"
+   - `atividade/CartaoAtividade` — cartão de atividade (`atividade`, `rodape`, `aoClicar`)
+   - `atividade/SituacaoBadge` — selo da situação da atividade
+   - `atividade/BotaoInscricao` — decide sozinho o botão a partir do estado do servidor
+   - `painel/Destaque` — faixa da ação mais urgente em E1 e O1
+   - `portal/` — peças das páginas públicas (`Secao`, `CartaoOng`, `ChamadaFinal`…)
+3. **Layouts:** `PainelLayout` (área logada, AppShell + navbar), `PortalLayout` (portal
+   público), `AuthLayout` (login/registro), `PublicPage` (verificação de certificado).
+4. **Dados:** `useFetch(url)` para GET simples, `useListagem(url, params)` para listas
+   paginadas com filtro do servidor, `useConsultaPublica(url)` nas páginas do portal.
    Mutations via `api` de `src/services/api`. Sempre trate `loading` com `<Loading />` e
    listas vazias com `<EmptyState />`.
 5. **Feedback:** use `notifySuccess` / `notifyError` de `src/utils/notify` (toasts Mantine).

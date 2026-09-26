@@ -3,7 +3,7 @@
 **O sistema que vamos construir.** Este documento é o alvo: define atores, estados, telas,
 botões e regras antes de escrever código.
 
-> Não confundir com [requisitos.md](requisitos.md), que descreve o sistema **como ele está
+> Não confundir com [historico/requisitos.md](historico/requisitos.md), que descreve o sistema **como ele estava
 > hoje**. Onde os dois divergirem, este documento manda — o código é que precisa mudar.
 
 ---

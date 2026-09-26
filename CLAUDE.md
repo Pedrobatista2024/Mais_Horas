@@ -31,9 +31,8 @@ e da ONG (fatias 0 a 10).
 Regra que continua valendo: tela sem endpoint **não é roteada** — tela quebrada é pior que
 tela ausente.
 
-Restam arquivos da versão anterior (Node/Express) em `pages/org/`, `pages/student/` e
-`pages/public/StudentPublicProfile.jsx`. Não estão roteados e falam com uma API que não
-existe mais — não os use como referência de padrão.
+O código da versão anterior (Node/Express) foi removido do repositório. O que restou dela
+está em [docs/historico/](docs/historico/), como registro.
 
 ## Comandos
 
@@ -77,7 +76,7 @@ rota -> Depends(usuario_atual) -> Depends(exigir_papel) -> Pydantic -> service -
 2. **Autorização sempre na assinatura da rota**, via `Estudante` / `Ong` / `Admin` /
    `UsuarioAtual` de `app/core/deps.py`. Checagem de dono (ownership) fica em helper do
    service — foi exatamente a falta dela que criou a falha L2 registrada em
-   [docs/requisitos.md](docs/requisitos.md).
+   [docs/historico/requisitos.md](docs/historico/requisitos.md).
 
 3. **Routers são finos.** Recebem, chamam o service, respondem. Se um handler passou de
    ~20 linhas, a regra pertence a `app/services/`.
@@ -210,8 +209,9 @@ Ao mudar algo estrutural, atualize o doc correspondente:
 | Env, build, deploy | [docs/deploy.md](docs/deploy.md) |
 | Estratégia de certificado ou presença | [docs/desafio-tecnico.md](docs/desafio-tecnico.md) |
 
-`docs/api.md` e `docs/backend-refactor.md` são **históricos** — descrevem o backend
-anterior ao redesenho. Quem manda hoje é `contrato-api.md`.
+`docs/historico/` guarda a documentação do sistema anterior (requisitos, API e
+refatoração do backend Node/Express). Serve como registro; quem manda hoje é
+`contrato-api.md`.
 
 ## Dívida técnica conhecida
 

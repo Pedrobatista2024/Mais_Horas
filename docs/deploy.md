@@ -192,7 +192,7 @@ O disco do plano free do Render é **efêmero**. As fotos de perfil são gravada
 Em desenvolvimento isso não incomoda. Para produção de verdade, a correção é trocar a
 gravação em disco por um storage externo (Cloudinary, S3 ou R2) em
 `backend/app/services/user_service.py`. Está registrado como dívida técnica em
-[backend-refactor.md](backend-refactor.md).
+[historico/backend-refactor.md](historico/backend-refactor.md).
 
 > As fotos em `backend/uploads/` **não são versionadas**. Houve um período em que ficaram
 > no git por acidente — um padrão errado no `.gitignore` — mas eram imagens órfãs da versão
