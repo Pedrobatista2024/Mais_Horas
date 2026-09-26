@@ -59,7 +59,7 @@ async def listar_atividades(
     if situacao:
         # Reaproveita a tradução das abas de O2, que já sabe separar as
         # situações calculadas no próprio SQL.
-        condicoes += atividade_service._condicao_de_situacao(situacao)
+        condicoes += atividade_service.condicao_de_situacao(situacao)
     if ong_id:
         condicoes.append(Atividade.ong_id == ong_id)
     if busca and busca.strip():
@@ -69,7 +69,7 @@ async def listar_atividades(
                              Atividade.local.ilike(alvo)))
     if apenas_paradas:
         limite = (agora() - PRAZO_DA_ONG).date()
-        condicoes += atividade_service._condicao_de_situacao("aguardando_validacao")
+        condicoes += atividade_service.condicao_de_situacao("aguardando_validacao")
         condicoes.append(Atividade.data <= limite)
 
     total = int(await sessao.scalar(

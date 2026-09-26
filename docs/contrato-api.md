@@ -479,8 +479,39 @@ externa é descartada na gravação, para o sino não virar redirecionamento abe
 }
 ```
 
-`destaque` é o que decide a ação principal da tela `E1`. `tipo` aceita
-`checkin_disponivel` · `evento_hoje` · `certificado_novo` · `nenhum`.
+`destaque` é o que decide a ação principal da tela `E1`, e **a prioridade é do
+servidor**: check-in, depois evento de hoje, depois certificado novo, depois nada. `tipo`
+aceita `checkin_disponivel` · `evento_hoje` · `certificado_novo` · `nenhum`; cada destaque
+traz `titulo` e `mensagem` prontos, mais `atividade` (id, título, data, horários e local)
+ou `quantidade`, conforme o caso.
+
+`checkin_disponivel` exige inscrição **confirmada** em atividade `em_andamento` e sem
+check-in feito — depois do check-in o destaque vira `evento_hoje`. `certificado_novo` conta
+as notificações `certificado.emitido` ainda não lidas. `proximaAtividade` é a próxima
+inscrição ativa que ainda não começou, ou `null`.
+
+**`GET /painel/ong`**
+
+```json
+{
+  "atividadesPublicadas": 3,
+  "voluntariosEngajados": 24,
+  "certificadosEmitidos": 41,
+  "inscricoesPendentes": 2,
+  "rascunhos": 1,
+  "aguardandoValidacao": 1,
+  "destaque": { "tipo": "validar_presencas", "titulo": "...", "mensagem": "...",
+                "atividade": { "id": "...", "titulo": "...", "data": "2026-09-20",
+                               "horaInicio": "08:00", "horaFim": "12:00",
+                               "local": "Praia do Futuro" } }
+}
+```
+
+`atividadesPublicadas` soma as que ainda vão acontecer e a que está acontecendo — o que já
+terminou entra em `aguardandoValidacao`. `voluntariosEngajados` conta **pessoas
+diferentes** com inscrição `confirmada` ou `presente`. `certificadosEmitidos` ignora os
+revogados. `tipo` do destaque: `checkin_disponivel` · `validar_presencas` ·
+`inscricoes_pendentes` · `rascunho_parado` · `nenhum`, nessa ordem de prioridade.
 
 ---
 
@@ -685,6 +716,7 @@ hora torna a busca inútil.
 | `T7` Entrar | `POST /auth/entrar` |
 | `T8` Criar conta | `POST /auth/cadastro` |
 | `E1` Painel aluno | `GET /painel/estudante` · `GET /notificacoes/contador` |
+| `O1` Painel ONG | `GET /painel/ong` |
 | `E2` Vitrine | `GET /atividades` · `POST /inscricoes` |
 | `E3` Detalhe | `GET /atividades/{id}` |
 | `E4` Inscrições | `GET /inscricoes/minhas` · `POST /inscricoes/{id}/cancelar` |

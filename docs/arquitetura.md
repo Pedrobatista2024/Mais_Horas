@@ -89,6 +89,7 @@ frontend/src/
                        BotaoInscricao
     perfil/            FotoPerfil
     notificacao/       Sino (cabeçalho), ItemDeAviso, eventos.js
+    painel/            Destaque (faixa do topo de E1/O1), destaques.js
     admin/             TarjaEspelho (topo do PainelLayout no "entrar como")
     ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, StatCard,
                        ActionCard, InfoItem, StatusBadge, BackButton, BrandMark,
@@ -99,14 +100,14 @@ frontend/src/
     Notificacoes.jsx   todos os avisos, com filtro de não lidas
     admin/             VisaoGeral, Auditoria, Usuarios, DetalheUsuario, Ongs,
                        Atividades, Certificados, Sistema (+ rotulos.js)
-    estudante/         Vitrine, DetalheAtividade, MinhasInscricoes, Checkin,
-                       MeusCertificados
-    ong/               MinhasAtividades, FormularioAtividade, GerenciarAtividade,
-                       InscricoesDaAtividade, PainelCheckin, ValidarPresencas
+    estudante/         Painel, Vitrine, DetalheAtividade, MinhasInscricoes,
+                       Checkin, MeusCertificados
+    ong/               Painel, MinhasAtividades, FormularioAtividade,
+                       GerenciarAtividade, InscricoesDaAtividade, PainelCheckin,
+                       ValidarPresencas
     portal/            Inicio, ComoFunciona, ParaEstudantes, ParaOngs,
                        OngsParceiras, PerfilOng
     public/            VerificarCertificado (+ StudentPublicProfile, antiga)
-    EmConstrucao.jsx   ocupa /painel e /ong até existirem E1 e O1
   utils/
     format.js          formatDate, formatDateLong, formatRelativo, resolveImage,
                        initials
@@ -144,13 +145,13 @@ endpoint inexistente, e tela quebrada é pior que tela ausente.
 | `/verificar/:codigo` | público | `T6` Verificar certificado — destino do QR |
 | `/perfil` | autenticado | `E7`/`O8` Meu perfil |
 | `/notificacoes` | autenticado | Todos os avisos (FE-10) |
-| `/painel` | aluno | `E1` Painel *(em construção)* |
+| `/painel` | aluno | `E1` Painel do estudante |
 | `/atividades` | aluno | `E2` Vitrine |
 | `/atividades/:id` | aluno | `E3` Detalhe da atividade |
 | `/minhas-inscricoes` | aluno | `E4` Minhas inscrições |
 | `/check-in` | aluno | `E5` Check-in por QR |
 | `/meus-certificados` | aluno | `E6` Meus certificados |
-| `/ong` | ONG | `O1` Painel *(em construção)* |
+| `/ong` | ONG | `O1` Painel da organização |
 | `/ong/atividades` | ONG | `O2` Minhas atividades |
 | `/ong/atividades/nova` | ONG | `O3` Criar atividade |
 | `/ong/atividades/:id` | ONG | `O4` Gerenciar atividade |

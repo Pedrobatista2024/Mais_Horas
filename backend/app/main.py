@@ -20,7 +20,7 @@ from app.core.errors import registrar_handlers
 from app.db.session import engine
 from app.routers import (
     admin, atividades, auth, certificados, checkin, inscricoes, notificacoes,
-    perfil, portal,
+    painel, perfil, portal,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -140,6 +140,7 @@ app.include_router(certificados.router, prefix=PREFIXO)
 app.include_router(admin.router, prefix=PREFIXO)
 app.include_router(notificacoes.router, prefix=PREFIXO)
 app.include_router(portal.router, prefix=PREFIXO)
+app.include_router(painel.router, prefix=PREFIXO)
 
 # A entrar nas próximas fatias:
 #   Fatia 4  /api/v1/inscricoes

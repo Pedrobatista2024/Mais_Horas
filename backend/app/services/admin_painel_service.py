@@ -60,13 +60,13 @@ async def visao_geral(sessao: AsyncSession) -> dict:
     atividades = {
         situacao: await _contar(
             sessao, Atividade,
-            *atividade_service._condicao_de_situacao(situacao))
+            *atividade_service.condicao_de_situacao(situacao))
         for situacao in atividade_service.SITUACOES_FILTRAVEIS
     }
 
     paradas = await _contar(
         sessao, Atividade,
-        *atividade_service._condicao_de_situacao("aguardando_validacao"),
+        *atividade_service.condicao_de_situacao("aguardando_validacao"),
         Atividade.data <= (datetime.now(TZ) - timedelta(days=7)).date())
     falhas = await _contar(sessao, RegistroAuditoria,
                            RegistroAuditoria.acao == "sessao.falha",

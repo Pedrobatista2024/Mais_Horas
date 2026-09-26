@@ -221,7 +221,7 @@ SITUACOES_FILTRAVEIS = (
 )
 
 
-def _condicao_de_situacao(situacao: str) -> list:
+def condicao_de_situacao(situacao: str) -> list:
     """
     Traduz a situação pedida em condição SQL.
 
@@ -258,7 +258,7 @@ async def listar_da_ong(
 ) -> tuple[list[dict], int]:
     condicoes = [Atividade.ong_id == ong.id]
     if situacao:
-        condicoes += _condicao_de_situacao(situacao)
+        condicoes += condicao_de_situacao(situacao)
 
     total = int(await sessao.scalar(
         select(func.count()).select_from(Atividade).where(*condicoes)

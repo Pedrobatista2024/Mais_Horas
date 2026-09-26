@@ -402,6 +402,40 @@ Decisões:
 
 ---
 
+### Fatia 10 — Painéis de entrada ✅
+
+**Backend:** `GET /painel/estudante` · `GET /painel/ong`
+**Frontend:** `E1` e `O1`
+
+Fatia que **não estava no plano original**: as duas telas de entrada estavam na
+especificação e no contrato, mas nenhuma fatia as cobria. Até aqui, `/painel` e `/ong`
+mostravam uma tela provisória.
+
+Entregue: `painel_service.py`, `routers/painel.py`, 13 testes em `tests/test_painel.py`;
+no frontend, `pages/estudante/Painel.jsx`, `pages/ong/Painel.jsx` e
+`components/painel/`. A tela provisória `EmConstrucao` foi apagada.
+
+Decisões:
+
+- **Quem escolhe o destaque é o servidor.** A prioridade (check-in > evento de hoje >
+  certificado novo > nada; e, na ONG, check-in > validar presenças > pedidos pendentes >
+  rascunho parado) é regra de negócio. No navegador, cada tela reimplementaria a ordem — e
+  elas divergiriam na primeira mudança.
+- **"Certificado novo" é o aviso não lido.** O certificado não guarda leitura; a
+  notificação `certificado.emitido` ainda não lida é a única marca honesta de "você ainda
+  não viu isto".
+- **Check-in já feito para de cobrar.** Com a presença registrada, o destaque vira
+  "é hoje, sua presença já foi registrada" em vez de insistir no QR.
+- **"Voluntários engajados" conta pessoas, não inscrições** (`confirmada` ou `presente`):
+  quem voltou em três ações é um voluntário, não três. Pendente e cancelada não entram.
+- **"Atividades no ar" = publicadas + acontecendo.** As duas são `publicada` no banco e se
+  separam pelo relógio (RN-54); o que já terminou sai da conta e vira "aguardando
+  validação".
+- **A aba de `O2` passou a caber na URL** (`?aba=rascunho`): é assim que o destaque leva a
+  ONG direto para a lista certa, e o endereço pode ser guardado.
+
+---
+
 ## 4. Ordem e o ponto de virada
 
 ```

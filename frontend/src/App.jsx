@@ -15,7 +15,10 @@ const Entrar = lazy(() => import("./pages/auth/Entrar"));
 const CriarConta = lazy(() => import("./pages/auth/CriarConta"));
 const EsqueciSenha = lazy(() => import("./pages/auth/EsqueciSenha"));
 const RedefinirSenha = lazy(() => import("./pages/auth/RedefinirSenha"));
-const EmConstrucao = lazy(() => import("./pages/EmConstrucao"));
+
+// Painéis — Fatia 10
+const PainelEstudante = lazy(() => import("./pages/estudante/Painel"));
+const PainelOng = lazy(() => import("./pages/ong/Painel"));
 
 // Perfil — Fatia 2
 const MeuPerfil = lazy(() => import("./pages/perfil/MeuPerfil"));
@@ -115,7 +118,7 @@ export default function App() {
 
           {/* Estudante */}
           <Route element={<Area papel="estudante" />}>
-            <Route path="/painel" element={<EmConstrucao />} />
+            <Route path="/painel" element={<PainelEstudante />} />
             <Route path="/atividades" element={<Vitrine />} />
             <Route path="/atividades/:id" element={<DetalheAtividade />} />
             <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
@@ -125,7 +128,7 @@ export default function App() {
 
           {/* Organização */}
           <Route element={<Area papel="ong" />}>
-            <Route path="/ong" element={<EmConstrucao />} />
+            <Route path="/ong" element={<PainelOng />} />
             <Route path="/ong/atividades" element={<MinhasAtividades />} />
             <Route path="/ong/atividades/nova" element={<FormularioAtividade />} />
             <Route path="/ong/atividades/:id" element={<GerenciarAtividade />} />

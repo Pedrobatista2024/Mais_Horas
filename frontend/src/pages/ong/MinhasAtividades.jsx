@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Button, Center, Group, Pagination, SimpleGrid, Stack, Tabs,
 } from "@mantine/core";
@@ -43,8 +43,13 @@ const VAZIO = {
 /** O2 — Minhas atividades. */
 export default function MinhasAtividades() {
   const navegar = useNavigate();
+  const [parametros, definirParametros] = useSearchParams();
 
-  const [aba, setAba] = useState("publicada");
+  // A aba vem da URL: é assim que o painel (O1) manda a ONG direto para
+  // "Rascunhos" ou "A validar", e é o que faz o endereço poder ser guardado.
+  const daUrl = parametros.get("aba");
+  const [aba, setAba] = useState(
+    ABAS.some((item) => item.valor === daUrl) ? daUrl : "publicada");
   const [pagina, setPagina] = useState(1);
   const [carregando, setCarregando] = useState(true);
   const [resultado, setResultado] = useState({ itens: [], total: 0, paginas: 1 });
@@ -71,6 +76,7 @@ export default function MinhasAtividades() {
   function trocarAba(valor) {
     setAba(valor);
     setPagina(1);
+    definirParametros(valor === "publicada" ? {} : { aba: valor }, { replace: true });
   }
 
   async function publicar(atividade) {
