@@ -25,7 +25,12 @@ __pycache__/
 
 # ===== Ferramentas de IA e áreas de trabalho temporárias =====
 .codex-temp/
+.codex-artifacts/
 .claude/worktrees/
+
+# Saídas geradas fora do código (apresentações, PDFs exportados). O que vale
+# como entrega do projeto mora em presentation/ e docs/.
+output/
 
 # ===== Sistema operacional =====
 .DS_Store
