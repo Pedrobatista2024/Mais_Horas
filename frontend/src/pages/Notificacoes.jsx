@@ -76,7 +76,7 @@ export default function Notificacoes() {
   const naoLidas = resultado.itens.some((a) => !a.lida);
 
   return (
-    <Stack gap="lg" maw={760}>
+    <Stack gap="lg" maw={860} mx="auto" w="100%">
       <PageHeader
         eyebrow="Avisos"
         title="Notificações"

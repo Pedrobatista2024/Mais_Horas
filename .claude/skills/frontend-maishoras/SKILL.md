@@ -65,6 +65,10 @@ A maioria dos estudantes acessa por celular. Sempre:
 - Padding responsivo: `p={{ base: "lg", sm: "xl" }}`
 - `Group` com `wrap="wrap"` quando houver risco de estouro
 - Testar em 375px de largura
+- **Página de conteúdo estreito centraliza**: `maw={1040} mx="auto" w="100%"` no `Stack`
+  raiz. Sem o `mx`, o conteúdo encosta à esquerda e sobra meia tela vazia em 1920px
+- Campo curto não ocupa a linha sozinho: agrupe em `SimpleGrid`, com mais colunas em
+  telas largas (`cols={{ base: 1, sm: 3, lg: 4 }}`)
 
 ## Padrão de uma página típica
 

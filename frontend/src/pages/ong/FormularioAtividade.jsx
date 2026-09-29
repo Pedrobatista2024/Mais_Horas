@@ -182,7 +182,7 @@ export default function FormularioAtividade() {
   if (carregando) return <Loading label="Carregando atividade..." />;
 
   return (
-    <Stack gap="lg" maw={820}>
+    <Stack gap="lg" maw={1040} mx="auto" w="100%">
       <Button variant="subtle" size="compact-sm" w="fit-content"
               leftSection={<IconArrowLeft size={15} />}
               onClick={() => navegar("/ong/atividades")}>
@@ -244,7 +244,7 @@ export default function FormularioAtividade() {
 
             <Divider label="Quando" labelPosition="left" />
 
-            <SimpleGrid cols={{ base: 1, sm: 3 }}>
+            <SimpleGrid cols={{ base: 1, sm: 3, lg: 4 }}>
               <DatePickerInput
                 label="Data" placeholder="Escolha o dia" withAsterisk
                 valueFormat="DD/MM/YYYY" minDate={new Date()}
@@ -254,23 +254,23 @@ export default function FormularioAtividade() {
                          {...trava("hora_inicio")} {...form.getInputProps("hora_inicio")} />
               <TimeInput label="Término" withAsterisk
                          {...trava("hora_fim")} {...form.getInputProps("hora_fim")} />
+              {/* Fica na mesma linha do horário: é dele que a carga é sugerida. */}
+              <NumberInput
+                label="Carga horária"
+                description={
+                  cargaManual
+                    ? "Ajuste se houver intervalo que não conta"
+                    : `Sugerida pelo horário${sugestao ? `: ${sugestao}h` : ""}`
+                }
+                min={1} max={24}
+                {...trava("carga_horaria")}
+                {...form.getInputProps("carga_horaria")}
+                onChange={(v) => {
+                  setCargaManual(true);
+                  form.setFieldValue("carga_horaria", v);
+                }}
+              />
             </SimpleGrid>
-
-            <NumberInput
-              label="Carga horária"
-              description={
-                cargaManual
-                  ? "Ajuste se houver intervalo que não conta como atividade"
-                  : `Sugerida pelo horário${sugestao ? `: ${sugestao}h` : ""}`
-              }
-              min={1} max={24} w={{ base: "100%", sm: 220 }}
-              {...trava("carga_horaria")}
-              {...form.getInputProps("carga_horaria")}
-              onChange={(v) => {
-                setCargaManual(true);
-                form.setFieldValue("carga_horaria", v);
-              }}
-            />
 
             <Divider label="Vagas" labelPosition="left" />
 

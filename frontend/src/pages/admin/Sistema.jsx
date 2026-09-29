@@ -77,7 +77,7 @@ export default function Sistema() {
   if (!info) return <Loading label="Carregando..." />;
 
   return (
-    <Stack gap="lg" maw={960}>
+    <Stack gap="lg" maw={1100} mx="auto" w="100%">
       <PageHeader eyebrow="Administração" title="Sistema"
                   subtitle="Chave de assinatura, parâmetros e manutenção." />
 

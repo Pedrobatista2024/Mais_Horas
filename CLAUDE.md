@@ -133,6 +133,8 @@ O resumo curto:
 - **Constante exportada não mora em arquivo de componente** — quebra o recarregamento
   rápido do Vite. Veja `routes/destinos.js` e `components/atividade/situacoes.js`.
 - **Responsivo é obrigatório** — a maioria dos alunos acessa por celular. Teste em 375px.
+  E em 1920px: página de conteúdo estreito leva `mx="auto"`, senão encosta à esquerda e
+  deixa meia tela vazia.
 
 ## Sessão — não quebre estas regras
 

@@ -87,7 +87,7 @@ export default function MeuPerfil() {
   const faltantes = perfil?.camposFaltantes ?? [];
 
   return (
-    <Stack gap="lg" maw={720}>
+    <Stack gap="lg" maw={940} mx="auto" w="100%">
         <Stack gap={4}>
           <Text tt="uppercase" c="brand.7" fw={700} size="xs">
             {eOng ? "Perfil da organização" : "Meu perfil"}

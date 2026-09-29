@@ -127,7 +127,7 @@ export default function DetalheUsuario() {
   const atual = confirmando ? CONFIRMACOES[confirmando] : null;
 
   return (
-    <Stack gap="lg" maw={960}>
+    <Stack gap="lg" maw={1100} mx="auto" w="100%">
       <Button variant="subtle" size="compact-sm" w="fit-content"
               leftSection={<IconArrowLeft size={15} />}
               onClick={() => navegar("/admin/usuarios")}>

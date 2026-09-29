@@ -154,7 +154,7 @@ export default function PainelCheckin() {
     i.aluno?.nome?.toLowerCase().includes(busca.trim().toLowerCase()));
 
   return (
-    <Stack gap="lg" maw={900}>
+    <Stack gap="lg" maw={1040} mx="auto" w="100%">
       <Button variant="subtle" size="compact-sm" w="fit-content"
               leftSection={<IconArrowLeft size={15} />}
               onClick={() => navegar(`/ong/atividades/${id}`)}>
