@@ -46,10 +46,16 @@ jobs:
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
       # As migrations rodam de verdade: a suíte monta o schema a partir dos
-      # modelos, então um erro aqui só apareceria no deploy.
-      - run: alembic upgrade head
-      - run: alembic downgrade base
-      - run: alembic upgrade head
+      # modelos, então um erro aqui só apareceria no deploy. Vai num banco
+      # separado: a migration cria uma view que impediria a suíte de recriar
+      # as tabelas.
+      - name: Migrations (upgrade, downgrade, upgrade)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
       - run: pytest -q
 
   frontend:
