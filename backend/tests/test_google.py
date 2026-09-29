@@ -124,6 +124,9 @@ async def test_estado_trocado_nao_passa(cliente, monkeypatch):
 async def test_retorno_sem_cookie_nao_passa(cliente, monkeypatch):
     _do_google(monkeypatch, _identidade("maria@gmail.com"))
     estado, _ = await _ida(cliente)
+    # O cliente de teste guarda os cookies sozinho: sem limpar, o "sem cookie"
+    # mandaria o cookie assim mesmo e o teste passaria sem testar nada.
+    cliente.cookies.clear()
 
     resposta = await cliente.get("/api/v1/auth/google/retorno",
                                  params={"code": "x", "state": estado})
