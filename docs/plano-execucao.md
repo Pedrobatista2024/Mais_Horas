@@ -496,6 +496,9 @@ Decisões:
   Workspace da instituição. Conta pessoal entra igual, só não ganha o selo.
 - **Sem credencial configurada, o botão não existe** e as rotas respondem `503`. Botão que
   leva a erro é pior que botão ausente.
+- **O app do Google fica em modo "Testing"** (até 100 usuários listados, sem revisão e sem
+  custo). Publicar exigiria verificar o domínio no Search Console, e o endereço atual é um
+  subdomínio da Microsoft — abrir ao público passa por registrar um domínio próprio.
 
 ---
 

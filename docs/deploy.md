@@ -115,8 +115,23 @@ No [Google Cloud Console](https://console.cloud.google.com/apis/credentials), em
 Em desenvolvimento, acrescente `http://localhost:3000/api/v1/auth/google/retorno`.
 
 Copie o ID e o segredo para `deploy/.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) e
-publique. A tela de consentimento pede nome do app, e-mail de suporte e logotipo; enquanto
-estiver em modo de teste, só as contas listadas conseguem entrar.
+publique.
+
+**O app fica em modo "Testing", de propósito.** Nesse modo:
+
+- não passa pela revisão do Google e funciona no mesmo dia;
+- entram só as contas cadastradas como usuários de teste, **até 100**;
+- antes do consentimento aparece um aviso de "app não verificado" — num piloto
+  acadêmico, isso é honesto, não defeito.
+
+Publicar para qualquer pessoa exigiria verificar o domínio do redirecionamento no Search
+Console, e o Google pede o **domínio registrável**. O endereço de hoje é um subdomínio da
+Microsoft (`…cloudapp.azure.com`), que pode não ser aceito como domínio próprio — o
+caminho, nesse caso, seria registrar um domínio (uns R$ 40/ano). Nada disso é necessário
+para o piloto.
+
+> O modo Testing faz o *refresh token* do Google expirar em 7 dias. **Não nos afeta:** o
+> `id_token` é usado uma vez, na entrada, e quem continua é a sessão do Mais Horas.
 
 > O `redirect_uri` precisa bater **exatamente** com o que a API monta a partir de
 > `APP_URL`. Divergência de barra final ou de `http`/`https` faz o Google recusar com
