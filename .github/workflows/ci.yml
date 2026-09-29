@@ -76,7 +76,11 @@ jobs:
 
   deploy:
     needs: [backend, frontend]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Publica também no disparo manual: quando o GitHub não cria a execução
+    # do push (já aconteceu), o botão "Run workflow" é o que resta.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment:
       name: producao
