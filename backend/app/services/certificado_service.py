@@ -304,6 +304,128 @@ async def verificar(sessao: AsyncSession, codigo: str, *,
 
 # ===================== PDF =====================
 
+# Paleta da marca (mesma de frontend/src/theme.js). O certificado é a peça que
+# mais circula fora da plataforma: sair com outra cor seria sair sem identidade.
+AZUL = "#1839b0"      # brand.7 — royal, cor principal
+AZUL_ESCURO = "#0f2570"
+AZUL_CLARO = "#e8edfb"
+AMBAR = "#ef9504"     # clay.6 — o ponteiro de segundos da marca
+TINTA = "#1b2540"     # texto
+CINZA = "#5b6885"     # texto secundário
+
+
+def _relogio(pdf, cx: float, cy: float, raio: float) -> None:
+    """
+    O relógio que substitui o "o" de "Horas" no logotipo.
+
+    Desenhado em vetor, e não colado como imagem: o PDF é impresso e ampliado,
+    e um PNG de logotipo apareceria serrilhado. Espelha
+    `frontend/src/components/ui/ClockGlyph.jsx`, inclusive na pose 10:10.
+    """
+    from math import cos, pi, sin
+
+    from reportlab.lib import colors
+
+    pdf.saveState()
+    pdf.setLineCap(1)
+
+    pdf.setFillColor(colors.HexColor(AZUL))
+    pdf.circle(cx, cy, raio, stroke=0, fill=1)
+    pdf.setFillColor(colors.HexColor(AZUL_CLARO))
+    pdf.circle(cx, cy, raio * 0.85, stroke=0, fill=1)
+    pdf.setFillColor(colors.white)
+    pdf.circle(cx, cy, raio * 0.79, stroke=0, fill=1)
+
+    for marcador in range(12):
+        angulo = marcador * pi / 6
+        cheio = marcador % 3 == 0
+        fora, dentro = raio * 0.70, raio * (0.55 if cheio else 0.62)
+        pdf.setStrokeColor(colors.HexColor(AZUL_ESCURO if cheio else "#9fb1d6"))
+        pdf.setLineWidth(raio * (0.068 if cheio else 0.038))
+        pdf.line(cx + fora * sin(angulo), cy + fora * cos(angulo),
+                 cx + dentro * sin(angulo), cy + dentro * cos(angulo))
+
+    # Ponteiro de segundos (âmbar), com contrapeso, apontando para baixo.
+    pdf.setStrokeColor(colors.HexColor(AMBAR))
+    pdf.setLineWidth(raio * 0.034)
+    pdf.line(cx, cy, cx, cy - raio * 0.64)
+    pdf.line(cx, cy, cx, cy + raio * 0.17)
+
+    # Horas em 10 e minutos em 2 — a pose clássica de vitrine de relojoaria.
+    pdf.setStrokeColor(colors.HexColor(AZUL_ESCURO))
+    pdf.setLineWidth(raio * 0.11)
+    pdf.line(cx, cy, cx - raio * 0.37, cy + raio * 0.26)
+    pdf.setStrokeColor(colors.HexColor(AZUL))
+    pdf.setLineWidth(raio * 0.094)
+    pdf.line(cx, cy, cx + raio * 0.55, cy + raio * 0.32)
+
+    pdf.setFillColor(colors.HexColor(AZUL_ESCURO))
+    pdf.circle(cx, cy, raio * 0.077, stroke=0, fill=1)
+    pdf.setFillColor(colors.white)
+    pdf.circle(cx, cy, raio * 0.032, stroke=0, fill=1)
+    pdf.restoreState()
+
+
+def _marca(pdf, centro_x: float, base_y: float, tamanho: float,
+           claro: bool = False) -> None:
+    """Logotipo "MaisH(relógio)ras", centralizado em `centro_x`."""
+    from reportlab.lib import colors
+
+    fonte = "Helvetica-Bold"
+    largura_mais = pdf.stringWidth("Mais", fonte, tamanho)
+    largura_h = pdf.stringWidth("H", fonte, tamanho)
+    largura_ras = pdf.stringWidth("ras", fonte, tamanho)
+    raio = tamanho * 0.40
+    total = largura_mais + largura_h + raio * 2 + largura_ras
+
+    x = centro_x - total / 2
+    pdf.setFont(fonte, tamanho)
+    pdf.setFillColor(colors.white if claro else colors.HexColor(TINTA))
+    pdf.drawString(x, base_y, "Mais")
+    x += largura_mais
+    pdf.setFillColor(colors.white if claro else colors.HexColor(AZUL))
+    pdf.drawString(x, base_y, "H")
+    x += largura_h
+    _relogio(pdf, x + raio, base_y + tamanho * 0.36, raio)
+    x += raio * 2
+    pdf.drawString(x, base_y, "ras")
+
+
+def _selo(pdf, cx: float, cy: float, raio: float, impressao: str) -> None:
+    """Selo de assinatura digital — o equivalente honesto do carimbo."""
+    from reportlab.lib import colors
+
+    pdf.saveState()
+    pdf.setStrokeColor(colors.HexColor(AZUL))
+    pdf.setLineWidth(1.6)
+    pdf.circle(cx, cy, raio, stroke=1, fill=0)
+    pdf.setLineWidth(0.6)
+    pdf.circle(cx, cy, raio * 0.88, stroke=1, fill=0)
+
+    pdf.setFillColor(colors.HexColor(AZUL))
+    pdf.setFont("Helvetica-Bold", raio * 0.21)
+    pdf.drawCentredString(cx, cy + raio * 0.36, "ASSINADO")
+    pdf.drawCentredString(cx, cy + raio * 0.10, "DIGITALMENTE")
+    pdf.setFont("Helvetica", raio * 0.17)
+    pdf.setFillColor(colors.HexColor(CINZA))
+    pdf.drawCentredString(cx, cy - raio * 0.18, "Ed25519")
+    # A impressão digital inteira fica no rodapé: aqui ela não caberia sem
+    # virar letra ilegível.
+    pdf.drawCentredString(cx, cy - raio * 0.42, impressao[:8])
+    pdf.restoreState()
+
+
+def _cabe(pdf, texto: str, fonte: str, tamanho: float, largura: float) -> float:
+    """
+    Maior tamanho de fonte (até `tamanho`) em que o texto cabe na largura.
+
+    Nome de 120 caracteres e título de 40 são permitidos pelo cadastro; sem
+    isto, os dois atravessariam a moldura em vez de encolher.
+    """
+    while tamanho > 8 and pdf.stringWidth(texto, fonte, tamanho) > largura:
+        tamanho -= 0.5
+    return tamanho
+
 
 def _desenhar_pdf(cert: Certificado, *, revogado: bool) -> bytes:
     import qrcode
@@ -318,68 +440,114 @@ def _desenhar_pdf(cert: Certificado, *, revogado: bool) -> bytes:
     pdf = canvas.Canvas(buffer, pagesize=landscape(A4))
     pdf.setTitle(f"Certificado Mais Horas {cert.codigo_verificacao}")
     pdf.setAuthor("Mais Horas")
+    pdf.setSubject("Certificado de participação em atividade de extensão")
 
-    verde = colors.HexColor("#1e8449")
-    tinta = colors.HexColor("#1f2a24")
-    cinza = colors.HexColor("#5b6b62")
-
-    # Moldura
-    pdf.setStrokeColor(verde)
-    pdf.setLineWidth(3)
-    pdf.rect(12 * mm, 12 * mm, largura - 24 * mm, altura - 24 * mm)
-    pdf.setLineWidth(0.8)
-    pdf.rect(16 * mm, 16 * mm, largura - 32 * mm, altura - 32 * mm)
-
+    azul = colors.HexColor(AZUL)
+    tinta = colors.HexColor(TINTA)
+    cinza = colors.HexColor(CINZA)
     centro = largura / 2
-    pdf.setFillColor(verde)
-    pdf.setFont("Helvetica-Bold", 14)
-    pdf.drawCentredString(centro, altura - 36 * mm, "MAIS HORAS")
 
-    pdf.setFillColor(tinta)
-    pdf.setFont("Helvetica-Bold", 34)
-    pdf.drawCentredString(centro, altura - 56 * mm, "Certificado de Participação")
+    # Faixa superior: é ela que identifica o documento de longe, na mesa da
+    # coordenação, antes de alguém ler qualquer linha.
+    faixa = 30 * mm
+    pdf.setFillColor(colors.HexColor(AZUL_ESCURO))
+    pdf.rect(0, altura - faixa, largura, faixa, stroke=0, fill=1)
+    pdf.setFillColor(colors.HexColor(AMBAR))
+    pdf.rect(0, altura - faixa - 1.6 * mm, largura, 1.6 * mm, stroke=0, fill=1)
+    _marca(pdf, centro, altura - faixa + 10 * mm, 21, claro=True)
 
-    pdf.setFont("Helvetica", 14)
+    # Moldura fina, respeitando a faixa.
+    pdf.setStrokeColor(colors.HexColor("#c9d4f2"))
+    pdf.setLineWidth(0.8)
+    pdf.rect(12 * mm, 12 * mm, largura - 24 * mm, altura - faixa - 20 * mm)
+
+    pdf.setFillColor(azul)
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawCentredString(centro, altura - faixa - 16 * mm,
+                          "C E R T I F I C A D O   D E   P A R T I C I P A Ç Ã O")
+
     pdf.setFillColor(cinza)
-    pdf.drawCentredString(centro, altura - 72 * mm, "Certificamos que")
+    pdf.setFont("Helvetica", 13)
+    pdf.drawCentredString(centro, altura - faixa - 30 * mm, "Certificamos que")
 
+    util = largura - 56 * mm
     pdf.setFillColor(tinta)
-    pdf.setFont("Helvetica-Bold", 24)
-    pdf.drawCentredString(centro, altura - 86 * mm, cert.nome_no_certificado)
+    pdf.setFont("Helvetica-Bold",
+                _cabe(pdf, cert.nome_no_certificado, "Helvetica-Bold", 32, util))
+    pdf.drawCentredString(centro, altura - faixa - 46 * mm, cert.nome_no_certificado)
 
+    # Fio curto sob o nome, como numa linha de assinatura.
+    pdf.setStrokeColor(colors.HexColor(AMBAR))
+    pdf.setLineWidth(1.4)
+    pdf.line(centro - 45 * mm, altura - faixa - 52 * mm,
+             centro + 45 * mm, altura - faixa - 52 * mm)
+
+    pdf.setFillColor(colors.HexColor("#39456b"))
     pdf.setFont("Helvetica", 14)
-    pdf.setFillColor(cinza)
     linhas = [
         f"participou da atividade “{cert.titulo_atividade}”,",
-        f"promovida por {cert.nome_organizacao}, em "
-        f"{_data_por_extenso(cert.data_atividade)},",
-        f"com carga horária de {cert.horas} "
-        f"{'hora' if cert.horas == 1 else 'horas'} de atividade de extensão.",
+        f"promovida por {cert.nome_organizacao},",
+        f"realizada em {_data_por_extenso(cert.data_atividade)}.",
     ]
+    corpo = min(_cabe(pdf, linha, "Helvetica", 14, util) for linha in linhas)
+    pdf.setFont("Helvetica", corpo)
     for indice, linha in enumerate(linhas):
-        pdf.drawCentredString(centro, altura - (100 + indice * 8) * mm, linha)
+        pdf.drawCentredString(centro, altura - faixa - (64 + indice * 9) * mm, linha)
 
-    # Bloco de verificação
+    # A carga horária é o número que a coordenação procura primeiro: ela ganha
+    # destaque próprio em vez de se esconder no meio da frase.
+    horas = f"{cert.horas} {'hora' if cert.horas == 1 else 'horas'} de extensão"
+    largura_pilula = pdf.stringWidth(horas, "Helvetica-Bold", 15) + 22 * mm
+    topo_pilula = altura - faixa - 110 * mm
+    pdf.setFillColor(colors.HexColor("#fff6e6"))
+    pdf.setStrokeColor(colors.HexColor(AMBAR))
+    pdf.setLineWidth(1)
+    pdf.roundRect(centro - largura_pilula / 2, topo_pilula, largura_pilula,
+                  11 * mm, 5.5 * mm, stroke=1, fill=1)
+    pdf.setFillColor(colors.HexColor("#8a5a03"))
+    pdf.setFont("Helvetica-Bold", 15)
+    pdf.drawCentredString(centro, topo_pilula + 3.6 * mm, horas)
+
+    # Rodapé: QR à esquerda, selo à direita. O QR fica grande o bastante para
+    # ser lido do papel impresso, a uma distância de braço.
+    base = 20 * mm
     url = url_de_verificacao(cert.codigo_verificacao)
-    imagem = qrcode.make(url, box_size=8, border=1)
+    imagem = qrcode.make(url, box_size=10, border=1)
     arquivo = io.BytesIO()
     imagem.save(arquivo, format="PNG")
     arquivo.seek(0)
-    lado = 34 * mm
-    pdf.drawImage(ImageReader(arquivo), 24 * mm, 22 * mm, lado, lado)
+    lado = 32 * mm
+    pdf.drawImage(ImageReader(arquivo), 22 * mm, base, lado, lado)
 
+    texto_x = 22 * mm + lado + 7 * mm
     pdf.setFillColor(tinta)
-    pdf.setFont("Helvetica-Bold", 10)
-    pdf.drawString(62 * mm, 48 * mm, "Verifique a autenticidade")
+    pdf.setFont("Helvetica-Bold", 10.5)
+    pdf.drawString(texto_x, base + 25 * mm, "Confira a autenticidade")
     pdf.setFont("Helvetica", 9)
     pdf.setFillColor(cinza)
-    pdf.drawString(62 * mm, 42 * mm, "Aponte a câmera para o QR Code ou acesse:")
-    pdf.drawString(62 * mm, 37 * mm, url)
-    pdf.drawString(62 * mm, 32 * mm, f"Código: {cert.codigo_verificacao}")
-    pdf.drawString(
-        62 * mm, 27 * mm,
-        f"Emitido em {_data_por_extenso(_no_fuso(cert.emitido_em))} · "
-        f"assinado digitalmente (Ed25519, chave {security.impressao_digital_chave()})")
+    pdf.drawString(texto_x, base + 19.5 * mm,
+                   "Aponte a câmera para o QR Code ou acesse")
+    pdf.setFillColor(azul)
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.drawString(texto_x, base + 14.5 * mm, url)
+    pdf.setFillColor(cinza)
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(texto_x, base + 9 * mm, f"Código: {cert.codigo_verificacao}")
+    pdf.drawString(texto_x, base + 3.5 * mm,
+                   f"Emitido em {_data_por_extenso(_no_fuso(cert.emitido_em))}")
+
+    _selo(pdf, largura - 44 * mm, base + lado / 2, 20 * mm,
+          security.impressao_digital_chave())
+
+    # A página inteira é assinada: dizer isso em letra miúda evita a pergunta
+    # "e a assinatura de quem?" antes que ela apareça.
+    pdf.setFillColor(colors.HexColor("#8792ad"))
+    pdf.setFont("Helvetica", 7.5)
+    pdf.drawCentredString(
+        centro, 14 * mm,
+        "Documento assinado digitalmente pela plataforma Mais Horas "
+        f"(Ed25519, chave {security.impressao_digital_chave()}). A verificação confere "
+        "nome, organização, atividade, data e carga horária.")
 
     if revogado:
         # Marca d'água: o arquivo continua disponível ao aluno (FE-07 E2), mas não

@@ -436,6 +436,24 @@ Decisões:
 
 ---
 
+### Depois das fatias — melhorias pontuais
+
+**Certificado em PDF, redesenhado.** O layout anterior era verde, fora da paleta do
+projeto, e o topo trazia "MAIS HORAS" em texto simples. Agora o PDF sai com a faixa azul
+da marca, o logotipo **desenhado em vetor** (o mesmo relógio que substitui o "o" no site —
+um PNG apareceria serrilhado na impressão), a carga horária em destaque, o QR maior e um
+selo de assinatura digital com a impressão digital da chave.
+
+- **Nada mudou no texto assinado.** Só a aparência: a página não passou a exibir nenhum
+  campo novo, então os certificados já emitidos continuam válidos. Campo novo exigiria
+  versão nova do texto canônico (`MHC2`) e invalidaria o que já saiu.
+- **Nome e título encolhem para caber.** O cadastro permite nome de 120 caracteres e
+  título de 40; sem ajuste automático, os dois atravessariam a moldura.
+- A marca d'água de revogado e a recusa de gerar PDF de registro adulterado continuam
+  como estavam.
+
+---
+
 ## 4. Ordem e o ponto de virada
 
 ```
