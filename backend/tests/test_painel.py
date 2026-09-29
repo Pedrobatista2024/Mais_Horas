@@ -21,6 +21,7 @@ from app.db.models import (
 from app.db.session import obter_sessao
 from app.main import app
 from app.services import atividade_service
+from app.services.atividade_service import hoje
 
 AGORA = datetime.now(timezone.utc)
 
@@ -59,7 +60,7 @@ async def _atividade(sessao, ong: Usuario, *, situacao: str = "publicada",
     atividade = Atividade(
         ong_id=ong.id, titulo=titulo, descricao="Descrição da ação.",
         local="Praia do Futuro", cidade="Fortaleza", estado="CE",
-        data=dia or (date.today() + timedelta(days=3)),
+        data=dia or (hoje() + timedelta(days=3)),
         hora_inicio=inicio, hora_fim=fim, carga_horaria=4,
         vagas_min=1, vagas_max=10, situacao=situacao,
     )
@@ -97,11 +98,14 @@ async def _certificado(sessao, atividade: Atividade, aluno: Usuario, horas: int,
 
 
 def _em_andamento() -> tuple[date, time, time]:
-    """Hoje, com a atividade começada e ainda não terminada."""
-    agora = atividade_service.agora()
-    inicio = (agora - timedelta(hours=1)).time()
-    fim = (agora + timedelta(hours=1)).time()
-    return atividade_service.hoje(), inicio, fim
+    """
+    Hoje, com a atividade começada e ainda não terminada.
+
+    A janela vai de 00:00 a 23:59 de propósito: montá-la como "agora ± 1 hora"
+    quebraria perto da meia-noite, quando o fim cairia no dia seguinte — e
+    atividade de um dia só, com fim depois do início, é restrição do banco.
+    """
+    return hoje(), time(0, 0), time(23, 59)
 
 
 async def _painel_do_aluno(cliente, aluno: Usuario) -> dict:
@@ -153,7 +157,7 @@ async def test_horas_somam_so_certificado_valido(cliente, sessao):
     # inscrever duas vezes na mesma (UNIQUE atividade+usuário).
     for horas, revogado in ((4, False), (3, False), (9, True)):
         feita = await _atividade(sessao, ong, situacao="finalizada",
-                                 dia=date.today() - timedelta(days=5),
+                                 dia=hoje() - timedelta(days=5),
                                  titulo=f"Ação de {horas}h")
         await _certificado(sessao, feita, aluno, horas, revogado=revogado)
 
@@ -170,7 +174,7 @@ async def test_inscricoes_ativas_conta_so_o_que_vem_pela_frente(cliente, sessao)
     await _inscrever(sessao, await _atividade(sessao, ong, titulo="Outra"), aluno,
                      situacao="pendente")
     passada = await _atividade(sessao, ong, situacao="finalizada",
-                               dia=date.today() - timedelta(days=2), titulo="Antiga")
+                               dia=hoje() - timedelta(days=2), titulo="Antiga")
     await _inscrever(sessao, passada, aluno, situacao="presente")
 
     corpo = await _painel_do_aluno(cliente, aluno)
@@ -289,7 +293,7 @@ async def test_indicadores_da_ong_nao_contam_o_que_e_de_outra(cliente, sessao):
     await _atividade(sessao, ong, dia=dia, inicio=inicio, fim=fim)  # acontecendo
     await _atividade(sessao, ong, situacao="rascunho", titulo="Rascunho")
     terminada = await _atividade(sessao, ong, situacao="finalizada",
-                                 dia=date.today() - timedelta(days=4))
+                                 dia=hoje() - timedelta(days=4))
     await _certificado(sessao, terminada, aluno, 4)
     da_outra = await _atividade(sessao, outra, titulo="Da outra")
     await _inscrever(sessao, da_outra, aluno)
@@ -337,7 +341,7 @@ async def test_destaque_da_ong_segue_a_ordem_da_especificacao(cliente, sessao):
     assert (await _painel_da_ong(cliente, ong))["destaque"]["tipo"] == "inscricoes_pendentes"
 
     # Uma atividade terminou sem validação: ela é mais urgente.
-    ontem = date.today() - timedelta(days=1)
+    ontem = hoje() - timedelta(days=1)
     await _atividade(sessao, ong, dia=ontem, titulo="Terminou ontem")
     destaque = (await _painel_da_ong(cliente, ong))["destaque"]
     assert destaque["tipo"] == "validar_presencas"

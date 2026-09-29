@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import date, time as hora_do_dia, timedelta
+from datetime import time as hora_do_dia, timedelta
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -20,6 +20,7 @@ from app.core.config import config
 from app.db.models import Atividade, Inscricao, RegistroAuditoria
 from app.db.session import obter_sessao
 from app.main import app
+from app.services.atividade_service import hoje
 
 SENHA = "senha-bem-longa-123"
 
@@ -71,7 +72,7 @@ async def _atividade_publicada(cliente, ong_token: str, **extra) -> dict:
         "titulo": "Mutirão de limpeza",
         "descricao": "Limpeza da praia com a comunidade.",
         "local": "Praia do Futuro", "cidade": "Fortaleza",
-        "data": (date.today() + timedelta(days=1)).isoformat(),
+        "data": (hoje() + timedelta(days=1)).isoformat(),
         "hora_inicio": "08:00", "hora_fim": "12:00",
         "vagas_min": 1, "vagas_max": 10,
     }
@@ -94,7 +95,7 @@ async def _colocar_em_andamento(sessao, atividade_id: str) -> None:
     jeito de chegar lá é a atividade ser hoje, agora.
     """
     atividade = await sessao.get(Atividade, uuid.UUID(atividade_id))
-    atividade.data = date.today()
+    atividade.data = hoje()
     atividade.hora_inicio = hora_do_dia(0, 0)
     atividade.hora_fim = hora_do_dia(23, 59)
     await sessao.commit()
@@ -102,7 +103,7 @@ async def _colocar_em_andamento(sessao, atividade_id: str) -> None:
 
 async def _colocar_para_validar(sessao, atividade_id: str) -> None:
     atividade = await sessao.get(Atividade, uuid.UUID(atividade_id))
-    atividade.data = date.today() - timedelta(days=1)
+    atividade.data = hoje() - timedelta(days=1)
     await sessao.commit()
 
 

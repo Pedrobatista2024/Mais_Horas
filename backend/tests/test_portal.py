@@ -8,7 +8,7 @@ mostra, não o caminho até a atividade finalizar (esse já tem testes próprios
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -17,6 +17,7 @@ from app.core.config import config
 from app.db.models import Atividade, Certificado, Inscricao, PerfilOng, Usuario
 from app.db.session import obter_sessao
 from app.main import app
+from app.services.atividade_service import hoje
 
 AGORA = datetime.now(timezone.utc)
 
@@ -62,7 +63,7 @@ async def _atividade(sessao, ong: Usuario, situacao: str, *,
     atividade = Atividade(
         ong_id=ong.id, titulo=f"Ação {situacao}", descricao="Descrição da ação.",
         local="Praia", cidade="Fortaleza", estado="CE",
-        data=date.today() + timedelta(days=dias),
+        data=hoje() + timedelta(days=dias),
         hora_inicio=time(8), hora_fim=time(12), carga_horaria=carga,
         vagas_min=1, vagas_max=10, situacao=situacao,
     )

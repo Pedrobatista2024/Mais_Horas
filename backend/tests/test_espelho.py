@@ -8,7 +8,7 @@ pessoa vê, não altera nada, e a trilha registra que foi ele.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -20,6 +20,7 @@ from app.db.models import (
 )
 from app.db.session import obter_sessao
 from app.main import app
+from app.services.atividade_service import hoje
 
 SENHA = "senha-bem-longa-123"
 
@@ -179,7 +180,7 @@ async def test_espelho_de_aluno_nao_se_inscreve(cliente, sessao):
     _, ong = await _cadastrar(cliente, "ong")
     atividade = (await cliente.post("/api/v1/atividades", headers=_como(ong), json={
         "titulo": "Plantio", "descricao": "x", "local": "Parque",
-        "data": (date.today() + timedelta(days=2)).isoformat(),
+        "data": (hoje() + timedelta(days=2)).isoformat(),
         "hora_inicio": "08:00", "hora_fim": "10:00"})).json()["id"]
     await cliente.post(f"/api/v1/atividades/{atividade}/publicar", headers=_como(ong))
     _, alvo_id, espelho, _ = await _espelho(cliente, sessao)
@@ -197,11 +198,11 @@ async def test_espelho_de_ong_nao_ve_o_qr_de_checkin(cliente, sessao):
     ong_id, ong = await _cadastrar(cliente, "ong")
     atividade = (await cliente.post("/api/v1/atividades", headers=_como(ong), json={
         "titulo": "Mutirão", "descricao": "x", "local": "Praia",
-        "data": (date.today() + timedelta(days=2)).isoformat(),
+        "data": (hoje() + timedelta(days=2)).isoformat(),
         "hora_inicio": "08:00", "hora_fim": "10:00"})).json()["id"]
     await cliente.post(f"/api/v1/atividades/{atividade}/publicar", headers=_como(ong))
     await sessao.execute(update(Atividade).where(Atividade.id == uuid.UUID(atividade))
-                         .values(data=date.today(), hora_inicio=time(0, 0),
+                         .values(data=hoje(), hora_inicio=time(0, 0),
                                  hora_fim=time(23, 59)))
     await sessao.commit()
 

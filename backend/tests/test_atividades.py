@@ -21,6 +21,7 @@ from app.db.models import Atividade, Inscricao, RegistroAuditoria
 from app.db.session import obter_sessao
 from app.main import app
 from app.services import atividade_service
+from app.services.atividade_service import hoje
 
 SENHA = "senha-bem-longa-123"
 
@@ -64,7 +65,7 @@ def _em_texto(corpo: dict) -> str:
 
 
 def _amanha() -> str:
-    return (date.today() + timedelta(days=1)).isoformat()
+    return (hoje() + timedelta(days=1)).isoformat()
 
 
 def _dados(**extra) -> dict:
@@ -229,7 +230,7 @@ async def test_visitante_nao_cria_atividade(cliente):
 
 async def test_data_no_passado_e_recusada(cliente):
     _, token = await _cadastrar(cliente, "ong")
-    ontem = (date.today() - timedelta(days=1)).isoformat()
+    ontem = (hoje() - timedelta(days=1)).isoformat()
     resposta = await cliente.post("/api/v1/atividades", json=_dados(data=ontem),
                                   headers=_como(cliente, token))
 
@@ -381,7 +382,7 @@ async def test_inscricao_cancelada_devolve_a_vaga(cliente, sessao):
 async def test_edicao_para_o_passado_e_recusada(cliente):
     _, token = await _cadastrar(cliente, "ong")
     atividade = await _criar(cliente, token)
-    ontem = (date.today() - timedelta(days=1)).isoformat()
+    ontem = (hoje() - timedelta(days=1)).isoformat()
 
     resposta = await cliente.put(f"/api/v1/atividades/{atividade['id']}",
                                  json={"data": ontem}, headers=_como(cliente, token))
@@ -774,7 +775,7 @@ async def test_aba_publicada_traz_so_o_que_nao_comecou(cliente, sessao):
     await _publicar(cliente, ong, futura["id"])
     passada = await _criar(cliente, ong, titulo="Já aconteceu")
     await _publicar_no_banco(sessao, passada["id"],
-                             date.today() - timedelta(days=2), "08:00", "12:00")
+                             hoje() - timedelta(days=2), "08:00", "12:00")
 
     corpo = (await cliente.get("/api/v1/atividades/minhas?situacao=publicada",
                                headers=_como(cliente, ong))).json()
@@ -789,7 +790,7 @@ async def test_aba_a_validar_traz_a_que_ja_terminou(cliente, sessao):
     await _publicar(cliente, ong, futura["id"])
     passada = await _criar(cliente, ong)
     await _publicar_no_banco(sessao, passada["id"],
-                             date.today() - timedelta(days=2), "08:00", "12:00")
+                             hoje() - timedelta(days=2), "08:00", "12:00")
 
     corpo = (await cliente.get(
         "/api/v1/atividades/minhas?situacao=aguardando_validacao",

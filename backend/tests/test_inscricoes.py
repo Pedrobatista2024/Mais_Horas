@@ -9,7 +9,7 @@ cabe a quem criou a atividade (RN-11).
 from __future__ import annotations
 
 import uuid
-from datetime import date, time, timedelta
+from datetime import timedelta
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -20,6 +20,7 @@ from app.db.models import Atividade, Inscricao, RegistroAuditoria
 from app.db.session import obter_sessao
 from app.main import app
 from app.services import inscricao_service
+from app.services.atividade_service import hoje
 
 SENHA = "senha-bem-longa-123"
 
@@ -69,7 +70,7 @@ async def _aluno_pronto(cliente) -> tuple[str, str]:
 
 
 def _amanha() -> str:
-    return (date.today() + timedelta(days=1)).isoformat()
+    return (hoje() + timedelta(days=1)).isoformat()
 
 
 async def _atividade_publicada(cliente, ong_token: str, **extra) -> dict:
@@ -216,7 +217,7 @@ async def test_atividade_cancelada_recusa(cliente):
 async def test_atividade_ja_comecada_recusa(cliente, sessao):
     ong, _, aluno, atividade = await _cenario(cliente)
     gravada = await sessao.get(Atividade, uuid.UUID(atividade["id"]))
-    gravada.data = date.today() - timedelta(days=1)
+    gravada.data = hoje() - timedelta(days=1)
     await sessao.commit()
 
     resposta = await _inscrever(cliente, aluno, atividade["id"])
@@ -326,7 +327,7 @@ async def test_atividade_passada_nao_conta_no_teto(cliente, sessao):
         atividade = await _atividade_publicada(cliente, ong)
         await _inscrever(cliente, aluno, atividade["id"])
         gravada = await sessao.get(Atividade, uuid.UUID(atividade["id"]))
-        gravada.data = date.today() - timedelta(days=10)
+        gravada.data = hoje() - timedelta(days=10)
     await sessao.commit()
 
     nova = await _atividade_publicada(cliente, ong)
@@ -377,7 +378,7 @@ async def test_nao_cancela_depois_do_inicio(cliente, sessao):
     inscricao = (await _inscrever(cliente, aluno, atividade["id"])).json()
 
     gravada = await sessao.get(Atividade, uuid.UUID(atividade["id"]))
-    gravada.data = date.today() - timedelta(days=1)
+    gravada.data = hoje() - timedelta(days=1)
     await sessao.commit()
 
     resposta = await cliente.post(f"/api/v1/inscricoes/{inscricao['id']}/cancelar",
@@ -615,7 +616,7 @@ async def test_confirmada_que_ja_passou_cai_no_historico(cliente, sessao):
     _, _, aluno, atividade = await _cenario(cliente)
     await _inscrever(cliente, aluno, atividade["id"])
     gravada = await sessao.get(Atividade, uuid.UUID(atividade["id"]))
-    gravada.data = date.today() - timedelta(days=3)
+    gravada.data = hoje() - timedelta(days=3)
     await sessao.commit()
 
     proximas = (await cliente.get("/api/v1/inscricoes/minhas?grupo=proximas",

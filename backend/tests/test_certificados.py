@@ -21,6 +21,7 @@ from app.db.models import (
 )
 from app.db.session import obter_sessao
 from app.main import app
+from app.services.atividade_service import hoje
 
 SENHA = "senha-bem-longa-123"
 
@@ -92,7 +93,7 @@ async def _ciclo(cliente, sessao, *, presentes=1, ausentes=0,
     criada = await cliente.post("/api/v1/atividades", headers=_como(ong), json={
         "titulo": titulo, "descricao": "Limpeza da praia.",
         "local": "Praia do Futuro", "cidade": "Fortaleza",
-        "data": (date.today() + timedelta(days=1)).isoformat(),
+        "data": (hoje() + timedelta(days=1)).isoformat(),
         "hora_inicio": "08:00", "hora_fim": "12:00",
         "vagas_min": 1, "vagas_max": 20,
     })
@@ -108,7 +109,7 @@ async def _ciclo(cliente, sessao, *, presentes=1, ausentes=0,
         alunos.append((token, inscricao["id"], indice < presentes))
 
     gravada = await sessao.get(Atividade, uuid.UUID(atividade_id))
-    gravada.data = date.today() - timedelta(days=1)
+    gravada.data = hoje() - timedelta(days=1)
     await sessao.commit()
 
     await cliente.put(

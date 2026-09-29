@@ -11,7 +11,7 @@ from __future__ import annotations
 import csv
 import io
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -25,6 +25,7 @@ from app.db.models import (
 )
 from app.db.session import obter_sessao
 from app.main import app
+from app.services.atividade_service import hoje
 
 SENHA = "senha-bem-longa-123"
 
@@ -86,7 +87,7 @@ async def _aluno_pronto(cliente) -> tuple[str, str]:
 async def _atividade(cliente, ong: str, **extra) -> str:
     dados = {"titulo": "Mutirão de limpeza", "descricao": "Limpeza da praia.",
              "local": "Praia do Futuro",
-             "data": (date.today() + timedelta(days=2)).isoformat(),
+             "data": (hoje() + timedelta(days=2)).isoformat(),
              "hora_inicio": "08:00", "hora_fim": "12:00", "vagas_max": 20}
     dados.update(extra)
     atividade_id = (await cliente.post("/api/v1/atividades", headers=_como(ong),
@@ -106,7 +107,7 @@ async def _mover(sessao, atividade_id: str, *, dias: int, inicio="08:00",
     """Desloca a atividade no calendário: `dias` negativo é passado."""
     await sessao.execute(
         update(Atividade).where(Atividade.id == uuid.UUID(atividade_id))
-        .values(data=date.today() + timedelta(days=dias),
+        .values(data=hoje() + timedelta(days=dias),
                 hora_inicio=time.fromisoformat(inicio),
                 hora_fim=time.fromisoformat(fim)))
     await sessao.commit()
