@@ -1,14 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Anchor, Button, Group, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconLock, IconMail } from "@tabler/icons-react";
 
+import BotaoGoogle from "../../components/auth/BotaoGoogle";
 import AuthLayout from "../../components/layout/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
 import { destinoSeguro, painelDe } from "../../routes/destinos";
 import { api, mensagemDoErro } from "../../services/api";
 import { notifyError, notifySuccess } from "../../utils/notify";
+
+const MOTIVOS = {
+  conta_suspensa: "Esta conta está suspensa. Procure a administração.",
+  google_email_nao_verificado:
+    "Esta conta Google não tem o e-mail verificado, então não dá para entrar por ela.",
+  google_estado_invalido: "A entrada pelo Google demorou demais. Tente de novo.",
+  padrao: "Não foi possível entrar com o Google. Tente de novo.",
+};
 
 /** T7 — Entrar. Ponto de acesso único para os três perfis (D9). */
 export default function Entrar() {
@@ -20,6 +29,15 @@ export default function Entrar() {
   // conta" volta para onde estava.
   const volta = destinoSeguro(parametros.get("volta"))
     ?? destinoSeguro(local.state?.de?.pathname);
+
+  // A volta do Google traz o motivo quando algo deu errado: o texto fica aqui
+  // porque o redirecionamento não carrega corpo de resposta.
+  const falhaDoGoogle = parametros.get("google");
+  useEffect(() => {
+    if (falhaDoGoogle && falhaDoGoogle !== "cancelado") {
+      notifyError(MOTIVOS[falhaDoGoogle] ?? MOTIVOS.padrao);
+    }
+  }, [falhaDoGoogle]);
   const [enviando, setEnviando] = useState(false);
 
   const form = useForm({
@@ -72,6 +90,8 @@ export default function Entrar() {
           <Button type="submit" loading={enviando} fullWidth mt="xs">
             Entrar
           </Button>
+
+          <BotaoGoogle />
 
           <Text size="sm" c="dimmed" ta="center">
             Ainda não tem conta?{" "}

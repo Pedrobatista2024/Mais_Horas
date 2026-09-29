@@ -78,3 +78,11 @@ class SessaoSaida(BaseModel):
 
 class MensagemSaida(BaseModel):
     mensagem: str
+
+
+class PapelEntrada(BaseModel):
+    """Escolha do perfil na primeira entrada pelo Google."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    papel: Papel

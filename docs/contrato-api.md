@@ -110,6 +110,10 @@ Banco em `snake_case`, **JSON em `camelCase`**. A tradução mora em um único l
 |---|---|:---:|---|
 | `POST` | `/auth/cadastro` | 🌐 | Cria conta e inicia sessão. **Rate limit** |
 | `POST` | `/auth/entrar` | 🌐 | Autentica. **Rate limit** |
+| `GET` | `/auth/provedores` | 🌐 | Quais entradas sociais o servidor oferece: `{ "google": true }` |
+| `GET` | `/auth/google/inicio` | 🌐 | Redireciona ao Google (code + PKCE). Guarda `state` em cookie curto |
+| `GET` | `/auth/google/retorno` | 🌐 | Volta do Google. Grava o cookie de sessão e redireciona a `/entrar/google`; conta nova vai para `/entrar/google?novo=1` |
+| `POST` | `/auth/google/concluir` | 🌐 | Cria a conta com o papel escolhido (`estudante` ou `ong`). Exige o cookie de cadastro pendente |
 | `POST` | `/auth/renovar` | 🍪 | Rotaciona a sessão pelo cookie |
 | `POST` | `/auth/sair` | 🍪 | Revoga a família e limpa o cookie |
 | `POST` | `/auth/senha/esqueci` | 🌐 | Dispara o e-mail de redefinição. **Rate limit** |

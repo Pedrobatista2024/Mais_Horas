@@ -128,6 +128,25 @@ existem na base só pela diferença da resposta.
 - **Papéis na rota**: `Estudante`, `Ong` e `Admin` são declarados na assinatura do endpoint,
   não checado no meio da lógica — some a classe de bug de esquecer a verificação.
 
+## Entrada pelo Google (D41)
+
+*Authorization code* com PKCE, tudo do lado do servidor. O navegador nunca vê token do
+Google: o código volta para a API, que o troca pelo `id_token`, confere a assinatura
+contra as chaves públicas do Google e só então abre a sessão **normal** do Mais Horas —
+mesmo access token, mesmo refresh em cookie.
+
+- `state` em cookie assinado protege contra CSRF de login; o PKCE protege o código
+  interceptado. Os dois expiram em 10 minutos.
+- A identidade guardada é `(provedor, sub)`, em `identidades_externas`. O e-mail é copiado
+  junto, mas **não** é chave.
+- `email_verified` é obrigatório. `hd` (domínio do Workspace) é o que sustenta o selo de
+  vínculo institucional.
+- Conta criada por aqui fica **sem senha**. O login por senha responde
+  `credenciais_invalidas`, como para qualquer senha errada: dizer "esta conta é do Google"
+  entregaria a estranhos como a pessoa entra.
+- Sem `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`, as rotas respondem `503` e o botão não
+  aparece.
+
 ## Sessão espelho ("entrar como")
 
 O admin pode ver o sistema como outra pessoa (D13), **sem nunca agir por ela**.

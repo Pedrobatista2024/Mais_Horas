@@ -347,6 +347,25 @@ Refresh tokens, com rotação e detecção de reuso.
 
 ---
 
+### `identidades_externas` (D41)
+
+Conta de provedor externo ligada a um usuário.
+
+| Coluna | Tipo | Regra |
+|---|---|---|
+| `usuario_id` | `UUID` | FK `usuarios`, `ON DELETE CASCADE` |
+| `provedor` | `TEXT` | hoje só `google` |
+| `sub` | `TEXT` | identificador estável no provedor |
+| `email` | `TEXT` | cópia do e-mail no provedor, **não** é chave |
+| `dominio` | `TEXT` | `hd` do Workspace, quando houver — sustenta o selo institucional |
+| `ultimo_acesso_em` | `TIMESTAMPTZ` | atualizado a cada entrada |
+
+`UNIQUE (provedor, sub)` é a chave de busca. O e-mail muda no provedor e, em domínio
+corporativo, pode ser reatribuído a outra pessoa — usá-lo como chave transformaria isso em
+troca silenciosa de dono da conta.
+
+`usuarios.senha_hash` passa a aceitar nulo: quem nasce pelo Google não tem senha.
+
 ## 4. Domínios
 
 | Campo | Valores |

@@ -102,6 +102,26 @@ sudo docker compose exec -T banco pg_restore -U maishoras -d mais_horas --clean 
 Leve os backups para fora da VM de vez em quando (`scp`): backup no mesmo disco não
 protege contra perder a máquina.
 
+### Configurar a entrada pelo Google
+
+No [Google Cloud Console](https://console.cloud.google.com/apis/credentials), em
+**Credenciais → Criar credenciais → ID do cliente OAuth**, tipo **Aplicativo da Web**:
+
+| Campo | Valor |
+|---|---|
+| Origens JavaScript autorizadas | `https://<seu-endereço>` |
+| URIs de redirecionamento autorizados | `https://<seu-endereço>/api/v1/auth/google/retorno` |
+
+Em desenvolvimento, acrescente `http://localhost:3000/api/v1/auth/google/retorno`.
+
+Copie o ID e o segredo para `deploy/.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) e
+publique. A tela de consentimento pede nome do app, e-mail de suporte e logotipo; enquanto
+estiver em modo de teste, só as contas listadas conseguem entrar.
+
+> O `redirect_uri` precisa bater **exatamente** com o que a API monta a partir de
+> `APP_URL`. Divergência de barra final ou de `http`/`https` faz o Google recusar com
+> `redirect_uri_mismatch`.
+
 ## Render (alternativa)
 
 O `render.yaml` é um blueprint que provisiona os três serviços de uma vez: banco
@@ -153,6 +173,8 @@ client-side do React Router funcionar em links diretos (ex.: alguém abrindo
 | `ACCESS_TOKEN_MINUTOS` | não | Padrão `15` |
 | `REFRESH_TOKEN_DIAS` | não | Padrão `7` |
 | `EMAIL_MODO` | não | Padrão `console` (escreve no log) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | não | Credenciais OAuth. Sem elas, a entrada pelo Google fica desligada |
+| `DOMINIO_INSTITUCIONAL` | não | Padrão `unicearense.edu.br`. Domínio que ganha o selo de vínculo verificado |
 | `CERTIFICADO_DEMONSTRACAO` | não | Código de um certificado de conta de teste, mostrado em "Ver uma verificação de exemplo" (T2). Vazio esconde o botão |
 | `APP_URL` | sim | URL pública da API |
 | `WEB_URL` | sim | URL pública do site — vira o destino do QR Code |

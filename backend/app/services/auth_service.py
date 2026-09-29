@@ -42,7 +42,7 @@ def _agora() -> datetime:
     return datetime.now(timezone.utc)
 
 
-async def _abrir_sessao(
+async def abrir_sessao(
     sessao: AsyncSession, usuario: Usuario, *,
     familia_id: uuid.UUID | None = None, request: Request | None = None,
 ) -> Sessao:
@@ -108,7 +108,7 @@ async def cadastrar(
     elif usuario.papel == "ong":
         sessao.add(PerfilOng(usuario_id=usuario.id))
 
-    resultado = await _abrir_sessao(sessao, usuario, request=request)
+    resultado = await abrir_sessao(sessao, usuario, request=request)
     await auditoria.registrar(
         sessao, "conta.criada", ator_id=usuario.id, ator_papel=usuario.papel,
         entidade="usuario", entidade_id=usuario.id, request=request,
@@ -131,7 +131,10 @@ async def entrar(
 
     # Mensagem única para e-mail inexistente e senha errada (RN-22): a diferença
     # transformaria a tela de login num verificador de quais contas existem.
-    if usuario is None or not conferir_senha(senha, usuario.senha_hash):
+    # Conta criada pelo Google não tem senha: comparar com nada seria erro de
+    # execução, e inventar um hash só para comparar esconderia o motivo.
+    if usuario is None or not usuario.senha_hash or not conferir_senha(
+            senha, usuario.senha_hash):
         await auditoria.registrar(
             sessao, "sessao.falha",
             ator_id=usuario.id if usuario else None,
@@ -157,7 +160,7 @@ async def entrar(
     if precisa_regravar(usuario.senha_hash):
         usuario.senha_hash = gerar_hash_senha(senha)
 
-    resultado = await _abrir_sessao(sessao, usuario, request=request)
+    resultado = await abrir_sessao(sessao, usuario, request=request)
     await auditoria.registrar(
         sessao, "sessao.iniciada", ator_id=usuario.id, ator_papel=usuario.papel,
         entidade="usuario", entidade_id=usuario.id, request=request,
@@ -216,7 +219,7 @@ async def renovar(
         registro.usado_em = agora
     await sessao.flush()
 
-    resultado = await _abrir_sessao(sessao, usuario, familia_id=registro.familia_id,
+    resultado = await abrir_sessao(sessao, usuario, familia_id=registro.familia_id,
                                     request=request)
     await auditoria.registrar(
         sessao, "sessao.renovada", ator_id=usuario.id, ator_papel=usuario.papel,

@@ -61,7 +61,9 @@ class Usuario(Base):
     id: Mapped[uuid.UUID] = _pk()
     nome: Mapped[str] = mapped_column(Text, nullable=False)
     email: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
-    senha_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    # Nulo para quem entra por provedor externo (Google): essa conta não tem
+    # senha, e um hash de enfeite esconderia isso de quem lê a tabela.
+    senha_hash: Mapped[str | None] = mapped_column(Text)
     papel: Mapped[str] = mapped_column(Text, nullable=False,
                                        server_default=text("'estudante'"))
     situacao: Mapped[str] = mapped_column(Text, nullable=False,
@@ -390,6 +392,38 @@ class Notificacao(Base):
     link: Mapped[str | None] = mapped_column(String(200))
     lida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     criado_em: Mapped[datetime] = _criado()
+
+
+class IdentidadeExterna(Base):
+    """
+    Conta de provedor externo ligada a um usuário (D41).
+
+    A chave é o par (provedor, `sub`), nunca o e-mail: o `sub` do Google é
+    estável e único, enquanto o e-mail pode ser trocado ou reatribuído pelo
+    administrador do domínio.
+    """
+
+    __tablename__ = "identidades_externas"
+    __table_args__ = (
+        CheckConstraint("provedor IN ('google')", name="identidades_provedor_valido"),
+        UniqueConstraint("provedor", "sub", name="identidades_unica"),
+        Index("idx_identidades_usuario", "usuario_id"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    usuario_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"),
+        nullable=False)
+    provedor: Mapped[str] = mapped_column(Text, nullable=False)
+    sub: Mapped[str] = mapped_column(Text, nullable=False)
+    email: Mapped[str] = mapped_column(Text, nullable=False)
+    # Domínio do Google Workspace, quando houver: é ele que prova o vínculo
+    # institucional. Conta pessoal vem sem.
+    dominio: Mapped[str | None] = mapped_column(Text)
+    criado_em: Mapped[datetime] = _criado()
+    ultimo_acesso_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    usuario: Mapped["Usuario"] = relationship(foreign_keys=[usuario_id])
 
 
 class RegistroAuditoria(Base):

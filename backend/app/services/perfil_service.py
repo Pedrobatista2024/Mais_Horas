@@ -21,6 +21,7 @@ from app.core import auditoria
 from app.core.config import config
 from app.core.errors import ErroDeNegocio
 from app.db.models import PerfilEstudante, PerfilOng, Usuario
+from app.services import oauth_service
 
 TIPOS_DE_IMAGEM = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 EXTENSAO_POR_TIPO = {
@@ -84,6 +85,11 @@ async def obter(sessao: AsyncSession, usuario: Usuario) -> dict:
         "nome": usuario.nome,
         "email": usuario.email,
         "papel": usuario.papel,
+        # Domínio da instituição, quando a conta entrou por ele (D41). É o que
+        # sustenta o selo de vínculo verificado: não somos nós que afirmamos,
+        # é o Google do domínio da faculdade.
+        "vinculoInstitucional": await oauth_service.vinculo_institucional(
+            sessao, usuario.id),
         "perfil": {},
     }
 

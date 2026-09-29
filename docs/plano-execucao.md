@@ -12,6 +12,7 @@ Como sair do código atual e chegar ao sistema definido em
 | **D38** | Estratégia | **Fatia vertical** — uma funcionalidade completa por vez, do banco à tela | O sistema roda o tempo todo; dá para demonstrar em qualquer momento |
 | **D39** | E-mail | **Console em dev**, provedor real só no deploy | Destrava a recuperação de senha (D15) sem depender de serviço externo agora |
 | **D40** | Testes | **pytest junto com cada fatia** | Resolve a dívida de cobertura em vez de arrastá-la; `smoke_test.py` é aposentado ao final |
+| **D41** | Acesso | **Entrada pelo Google**, com selo para o domínio da instituição | Tira a senha do nosso banco e, na conta institucional, faz o vínculo do aluno ser afirmado por terceiro |
 
 ---
 
@@ -464,6 +465,37 @@ Decisões:
   a detecção acontecendo. Ele recusa rodar contra produção.
 - **O que ainda não temos ficou escrito**: a assinatura não é ICP-Brasil, o PDF não é PAdES
   e a geolocalização segue desligada. Melhor dizer antes que virar pergunta na banca.
+
+---
+
+### Fatia 12 — Entrada pelo Google ✅
+
+**Backend:** `GET /auth/provedores` · `GET /auth/google/inicio` ·
+`GET /auth/google/retorno` · `POST /auth/google/concluir`
+**Banco:** `identidades_externas`, `usuarios.senha_hash` passa a aceitar nulo
+**Frontend:** botão em `T7`/`T8`, tela de volta `/entrar/google`, selo no perfil
+
+Decisões:
+
+- **A identidade é o par (provedor, `sub`), nunca o e-mail.** O `sub` do Google é
+  estável; e-mail muda, e em domínio corporativo pode ser reatribuído a outra pessoa.
+- **O e-mail precisa vir verificado pelo Google.** Sem essa checagem, criar uma conta
+  Google com o e-mail de outra pessoa daria acesso à conta dela aqui.
+- **Conta nova não nasce no retorno do Google.** O Google não sabe dizer se a pessoa é
+  estudante ou ONG. O cadastro fica pendente num cookie curto até a escolha — criar antes
+  deixaria contas sem papel definido para quem desistisse na tela seguinte.
+- **E-mail já cadastrado com senha é vinculado, não recusado.** É a mesma pessoa, e o
+  Google acabou de provar que o e-mail é dela. O vínculo entra na auditoria.
+- **Nada de token na URL.** O retorno grava o cookie de sessão de sempre e a tela seguinte
+  o recolhe. Endereço vaza em histórico, log de proxy e print de tela.
+- **Quem nasce pelo Google fica sem senha** (`senha_hash` nulo), em vez de guardar um hash
+  inútil. O login por senha nessa conta responde o mesmo erro genérico de sempre — dizer
+  "esta conta é do Google" contaria a estranhos como a pessoa entra.
+- **Selo institucional pelo domínio.** Quando o Google informa `hd = unicearense.edu.br`,
+  a conta ganha vínculo verificado: não somos nós afirmando que a pessoa é da UniC, é o
+  Workspace da instituição. Conta pessoal entra igual, só não ganha o selo.
+- **Sem credencial configurada, o botão não existe** e as rotas respondem `503`. Botão que
+  leva a erro é pior que botão ausente.
 
 ---
 

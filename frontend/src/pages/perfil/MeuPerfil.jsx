@@ -4,7 +4,7 @@ import {
   TextInput, Textarea, Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconAlertTriangle, IconCheck } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCheck, IconSchool } from "@tabler/icons-react";
 
 import FotoPerfil from "../../components/perfil/FotoPerfil";
 import Loading from "../../components/ui/Loading";
@@ -96,6 +96,15 @@ export default function MeuPerfil() {
             {eOng ? "Dados da ONG" : "Seus dados"}
           </Title>
         </Stack>
+
+        {perfil?.vinculoInstitucional && (
+          <Alert icon={<IconSchool size={18} />} color="navy" variant="light"
+                 title="Vínculo institucional verificado">
+            Você entrou com a conta <b>{perfil.vinculoInstitucional}</b>. Quem
+            receber seus certificados sabe que sua identidade foi confirmada pela
+            instituição, e não só por nós.
+          </Alert>
+        )}
 
         {!eOng && faltantes.length > 0 && (
           <Alert icon={<IconAlertTriangle size={18} />} color="clay" variant="light">

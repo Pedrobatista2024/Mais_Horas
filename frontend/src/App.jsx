@@ -13,6 +13,7 @@ import RotaPrivada from "./routes/RotaPrivada";
 // Acesso — Fatia 1
 const Entrar = lazy(() => import("./pages/auth/Entrar"));
 const CriarConta = lazy(() => import("./pages/auth/CriarConta"));
+const EntrarComGoogle = lazy(() => import("./pages/auth/EntrarComGoogle"));
 const EsqueciSenha = lazy(() => import("./pages/auth/EsqueciSenha"));
 const RedefinirSenha = lazy(() => import("./pages/auth/RedefinirSenha"));
 
@@ -104,6 +105,7 @@ export default function App() {
 
           <Route path="/entrar" element={<Entrar />} />
           <Route path="/criar-conta" element={<CriarConta />} />
+          <Route path="/entrar/google" element={<EntrarComGoogle />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
           <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           {/* Destino do QR do certificado: nunca exige login */}

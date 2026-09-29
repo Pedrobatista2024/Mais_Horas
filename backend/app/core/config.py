@@ -58,6 +58,14 @@ class Configuracao(BaseSettings):
     # ===== Modo "entrar como" (D13, RN-31) =====
     espelho_minutos: int = 30
 
+    # ===== Entrada pelo Google (D41) =====
+    # Vazios: o botão não aparece e as rotas respondem 503. O projeto roda sem.
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    # Domínio do Workspace da instituição: quem entra por ele ganha o selo de
+    # vínculo verificado. Vazio desliga o selo.
+    dominio_institucional: str = "unicearense.edu.br"
+
     # ===== Portal (T2) =====
     # Código de um certificado de demonstração, emitido para uma conta de teste.
     # Vazio: o botão "Ver uma verificação de exemplo" não aparece.

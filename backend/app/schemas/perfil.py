@@ -77,6 +77,7 @@ class PerfilSaida(BaseModel):
     email: str
     papel: str
     perfil: dict
+    vinculoInstitucional: str | None = None
     perfilCompleto: bool | None = None
     camposFaltantes: list[str] | None = None
 
