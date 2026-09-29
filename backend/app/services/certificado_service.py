@@ -206,6 +206,39 @@ async def _buscar_por_codigo(sessao: AsyncSession, codigo: str) -> Certificado |
         select(Certificado).where(Certificado.codigo_verificacao == codigo))
 
 
+async def prova(sessao: AsyncSession, codigo: str) -> dict:
+    """
+    A prova crua de um certificado: o texto exato que foi assinado, a
+    assinatura e a chave usada.
+
+    Existe para tirar a verificação das nossas mãos. Com isto e a chave
+    pública, qualquer pessoa confere o certificado sozinha, no computador
+    dela — sem precisar acreditar no que esta API responde. Um certificado
+    revogado também tem prova: a assinatura continua válida, o que mudou foi
+    a decisão da instituição.
+    """
+    cert = await _buscar_por_codigo(sessao, codigo)
+    if cert is None:
+        raise ErroDeNegocio("nao_encontrado", "Certificado não encontrado",
+                            status.HTTP_404_NOT_FOUND)
+
+    return {
+        "codigo": cert.codigo_verificacao,
+        "algoritmo": "Ed25519",
+        "formatoDoTexto": security.VERSAO_TEXTO_CERTIFICADO,
+        "textoAssinado": _texto_assinado(cert),
+        "assinatura": cert.assinatura,
+        "chavePublica": security.chave_publica_pem(),
+        "impressaoDigitalDaChave": security.impressao_digital_chave(),
+        "revogado": cert.revogado_em is not None,
+        "comoConferir": (
+            "Verifique a assinatura Ed25519 sobre o texto assinado, byte a byte, "
+            "usando a chave pública acima. O texto é uma lista JSON com versão, "
+            "código, nome, organização, atividade, horas, data e emissão em "
+            "segundos UTC — os mesmos campos impressos no certificado."),
+    }
+
+
 def _desfecho(cert: Certificado | None, codigo: str) -> dict:
     """
     Monta a resposta pronta para a tela (RN-56).

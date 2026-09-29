@@ -426,10 +426,15 @@ e os dados do certificado. O texto exato de cada mensagem está em
 | Botão | Quando aparece | Ação |
 |---|---|---|
 | Baixar PDF oficial | resultado válido | Baixa o PDF **da fonte**, não o arquivo recebido |
+| Ver a prova | há certificado | Mostra o texto assinado, a assinatura e a chave pública |
 | Verificar outro código | sempre | Limpa e mostra o campo de código |
 
 > O botão do PDF oficial é sutil e decisivo: o verificador para de depender do arquivo que
 > lhe entregaram.
+>
+> **"Conferir por conta própria"** vai além: mostra a matéria-prima da assinatura para que
+> a conferência seja refeita fora daqui. Uma validação que só o emissor sabe fazer não
+> prova nada — ver [como-provar.md](como-provar.md).
 
 ---
 

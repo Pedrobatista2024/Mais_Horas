@@ -86,6 +86,7 @@ publicado em produção** — o servidor busca o commit testado e se atualiza so
 | [docs/arquitetura.md](docs/arquitetura.md) | Estrutura de pastas, rotas de tela, schema do banco |
 | [docs/autenticacao.md](docs/autenticacao.md) | Como funciona a sessão: tokens, rotação, detecção de roubo |
 | [docs/desafio-tecnico.md](docs/desafio-tecnico.md) | O problema difícil do projeto: presença que não se falsifica |
+| [docs/como-provar.md](docs/como-provar.md) | Roteiro para demonstrar que a validação funciona, incluindo a conferência independente |
 | [docs/deploy.md](docs/deploy.md) | Servidor, publicação automática, variáveis de ambiente, backup |
 | [docs/historico/](docs/historico/) | A versão anterior do sistema: requisitos, API e a auditoria com as 10 lacunas |
 | [presentation/roteiro.md](presentation/roteiro.md) | Roteiro da apresentação do projeto de extensão |

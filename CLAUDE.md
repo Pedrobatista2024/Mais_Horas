@@ -208,6 +208,7 @@ Ao mudar algo estrutural, atualize o doc correspondente:
 | Login, token, sessão | [docs/autenticacao.md](docs/autenticacao.md) |
 | Env, build, deploy | [docs/deploy.md](docs/deploy.md) |
 | Estratégia de certificado ou presença | [docs/desafio-tecnico.md](docs/desafio-tecnico.md) |
+| Como demonstrar que a validação funciona | [docs/como-provar.md](docs/como-provar.md) |
 
 `docs/historico/` guarda a documentação do sistema anterior (requisitos, API e
 refatoração do backend Node/Express). Serve como registro; quem manda hoje é

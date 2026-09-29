@@ -9,7 +9,9 @@ from fastapi.responses import JSONResponse
 
 from app.core.deps import Estudante, Sessao, UsuarioAtual
 from app.core.rate_limit import limite_de_verificacao
-from app.schemas.certificado import PaginaDeCertificados, VerificacaoSaida
+from app.schemas.certificado import (
+    PaginaDeCertificados, ProvaSaida, VerificacaoSaida,
+)
 from app.services import certificado_service
 
 router = APIRouter(prefix="/certificados", tags=["certificados"])
@@ -48,6 +50,16 @@ async def verificar(codigo: str, request: Request, sessao: Sessao):
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                             content=VerificacaoSaida(**resposta).model_dump(mode="json"))
     return resposta
+
+
+@router.get("/verificar/{codigo}/prova", response_model=ProvaSaida,
+            dependencies=[Depends(limite_de_verificacao)])
+async def prova(codigo: str, sessao: Sessao) -> dict:
+    """
+    Pública: a matéria-prima da verificação, para quem quiser conferir por
+    conta própria em vez de confiar nesta resposta.
+    """
+    return await certificado_service.prova(sessao, codigo)
 
 
 @router.get("/verificar/{codigo}/pdf",

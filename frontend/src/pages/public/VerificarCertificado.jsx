@@ -9,6 +9,7 @@ import {
   IconDownload, IconSearch, IconShieldCheck, IconWifiOff,
 } from "@tabler/icons-react";
 
+import ProvaIndependente from "../../components/certificado/ProvaIndependente";
 import PublicPage from "../../components/layout/PublicPage";
 import Loading from "../../components/ui/Loading";
 import { api, mensagemDoErro } from "../../services/api";
@@ -255,6 +256,8 @@ export default function VerificarCertificado() {
             )}
           </Card>
         )}
+
+        {cert && <ProvaIndependente codigo={cert.codigo} />}
 
         <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
           <Text fw={700} mb="sm">Verificar outro código</Text>

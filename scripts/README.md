@@ -6,6 +6,8 @@ Ferramentas de apoio à apresentação do projeto. Não fazem parte da aplicaç�
 
 | Arquivo | O que faz |
 |---|---|
+| `verificar_certificado.py` | **Verificador independente** de certificado: confere a assinatura com a chave pública, sem depender do site. Só precisa de `cryptography` |
+| `demonstrar_validacao.py` | Roteiro ao vivo do ciclo completo, da publicação à detecção de adulteração. Só em base local |
 | `rebuild_visual_presentation.py` | Reconstrói visualmente o PDF da apresentação, redesenhando os slides |
 | `adjust_presentation_pdf.py` | Aplica ajustes pontuais sobre o PDF já gerado |
 | `generate-maishoras-presentation.ps1` | Gerador original em PowerShell, anterior aos dois acima |

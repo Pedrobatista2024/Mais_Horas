@@ -353,6 +353,7 @@ A rota exige atividade `em_andamento` e devolve `403 checkin_fora_da_janela` for
 | `GET` | `/certificados/meus` | 🎓 | Certificados do aluno. Paginada, com `horasValidas` |
 | `GET` | `/certificados/{id}/pdf` | 🔒 | PDF do próprio certificado |
 | `GET` | `/certificados/verificar/{codigo}` | 🌐 | **Verificação pública.** 60/min por IP (RN-52) |
+| `GET` | `/certificados/verificar/{codigo}/prova` | 🌐 | Texto assinado, assinatura e chave pública, para conferência independente |
 | `GET` | `/certificados/verificar/{codigo}/pdf` | 🌐 | PDF oficial pelo código |
 
 **`GET /certificados/verificar/{codigo}`** — a resposta mais importante da API:
@@ -520,6 +521,7 @@ revogados. `tipo` do destaque: `checkin_disponivel` · `validar_presencas` ·
 | Método | Rota | Acesso | Descrição |
 |---|---|:---:|---|
 | `GET` | `/portal/resumo` | 🌐 | Números de impacto de `T1` |
+| `GET` | `/portal/chave-publica` | 🌐 | PEM da chave que valida todo certificado |
 | `GET` | `/portal/ongs` | 🌐 | ONGs parceiras (`T5`). Paginada (`tamanho` até 48). Filtro `busca` (nome ou cidade) |
 | `GET` | `/portal/ongs/{id}` | 🌐 | Perfil público da ONG, com as próximas atividades |
 

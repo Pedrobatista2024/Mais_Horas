@@ -436,6 +436,37 @@ Decisões:
 
 ---
 
+### Fatia 11 — Prova pública da validação ✅
+
+**Backend:** `GET /certificados/verificar/{codigo}/prova` · `GET /portal/chave-publica`
+**Ferramentas:** `scripts/verificar_certificado.py`, `scripts/demonstrar_validacao.py`
+**Frontend:** bloco "Conferir por conta própria" em `T6`
+**Documento:** [como-provar.md](como-provar.md)
+
+Nasceu de um desafio: *provar* que a validação funciona, em vez de afirmar. Até aqui a API
+só dizia "confere" ou "não confere" — quem aceitasse a resposta estava confiando em nós.
+
+Decisões:
+
+- **A prova é pública, e a chave também.** Uma chave de verificação escondida não protege
+  nada: ela existe para circular. Ficava só no console do admin, o que obrigava quem
+  quisesse conferir sozinho a pedir a chave para nós.
+- **A prova devolve o texto assinado inteiro**, e não só os campos formatados: é ele, byte
+  a byte, que entra na conferência. Qualquer reformatação no meio do caminho mudaria o
+  resultado sem mudar o sentido.
+- **Certificado revogado também tem prova, e ela confere.** A assinatura continua válida:
+  o que mudou foi a decisão da instituição, não a autenticidade do registro. A resposta
+  marca `revogado` para a distinção ficar clara.
+- **O teste que mais importa não usa o nosso verificador.** `tests/test_prova.py` confere a
+  assinatura direto na biblioteca de criptografia — se um dia o nosso código de verificação
+  mentir, esse teste denuncia.
+- **O roteiro de demonstração adultera o banco de propósito**, na base local, para mostrar
+  a detecção acontecendo. Ele recusa rodar contra produção.
+- **O que ainda não temos ficou escrito**: a assinatura não é ICP-Brasil, o PDF não é PAdES
+  e a geolocalização segue desligada. Melhor dizer antes que virar pergunta na banca.
+
+---
+
 ### Depois das fatias — melhorias pontuais
 
 **Certificado em PDF, redesenhado.** O layout anterior era verde, fora da paleta do

@@ -67,3 +67,17 @@ class RevogacaoEntrada(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     motivo: str = Field(min_length=5, max_length=300)
+
+
+class ProvaSaida(BaseModel):
+    """Prova pública de um certificado — ver `certificado_service.prova`."""
+
+    codigo: str
+    algoritmo: str
+    formatoDoTexto: str
+    textoAssinado: str
+    assinatura: str
+    chavePublica: str
+    impressaoDigitalDaChave: str
+    revogado: bool
+    comoConferir: str
