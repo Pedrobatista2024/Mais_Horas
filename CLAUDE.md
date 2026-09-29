@@ -218,5 +218,6 @@ refatoração do backend Node/Express). Serve como registro; quem manda hoje é
 - Uploads gravados em disco local. No servidor próprio ficam num volume e persistem; num
   serviço efêmero (Render) somem a cada deploy.
 - Rate limit em memória, por processo: não vale para mais de uma instância.
-- E-mail em modo console; não há envio real configurado.
-- Telas da versão anterior ainda não migradas, descritas em "Estado atual".
+- E-mail em modo console; não há envio real configurado. É a dívida que mais pesa para o
+  piloto: quem esquece a senha depende de alguém ler o log do servidor.
+- Backup do banco só no disco da própria VM: perder a máquina é perder o backup junto.
