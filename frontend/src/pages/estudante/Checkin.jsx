@@ -231,7 +231,7 @@ export default function Checkin() {
       </Button>
 
       <Stack gap={4}>
-        <Text tt="uppercase" c="brand.7" fw={700} size="xs">
+        <Text size="xs" c="dimmed">
           Presença
         </Text>
         <Title order={1} fz={{ base: 26, sm: 32 }}>

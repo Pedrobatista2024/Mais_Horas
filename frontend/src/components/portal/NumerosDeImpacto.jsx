@@ -15,11 +15,11 @@ export default function NumerosDeImpacto({ resumo }) {
   return (
     <SimpleGrid cols={{ base: 2, sm: 3, lg: visiveis.length }} spacing="md">
       {visiveis.map(({ chave, rotulo, icone: Icone, cor }) => (
-        <Paper key={chave} withBorder radius="lg" p="lg" ta="center">
-          <ThemeIcon size={44} radius="md" variant="light" color={cor} mx="auto" mb="sm">
-            <Icone size={24} />
+        <Paper key={chave} withBorder p="lg" ta="center">
+          <ThemeIcon size={34} radius="md" variant="light" color={cor} mx="auto" mb="sm">
+            <Icone size={19} />
           </ThemeIcon>
-          <Text fw={900} fz={{ base: 26, sm: 32 }} lh={1}>
+          <Text fw={600} fz={{ base: 26, sm: 32 }} lh={1}>
             {resumo[chave].toLocaleString("pt-BR")}
           </Text>
           <Text size="sm" c="dimmed" mt={4}>{rotulo[resumo[chave] === 1 ? 0 : 1]}</Text>

@@ -115,7 +115,7 @@ export default function PortalLayout() {
             <Stack gap="xs" maw={320}>
               <Group gap={10}>
                 <BrandIcon size={36} style={{ borderRadius: 10 }} />
-                <Text fw={900} fz="lg" c="white">
+                <Text fw={700} fz="lg" c="white">
                   Mais<Text span inherit c="brand.3">Horas</Text>
                 </Text>
               </Group>

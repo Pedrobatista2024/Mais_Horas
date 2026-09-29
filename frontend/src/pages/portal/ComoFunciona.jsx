@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Badge, Box, Button, Code, Container, Group, List, Paper, SimpleGrid, Stack, Text,
+  Box, Button, Code, Container, Group, List, Paper, SimpleGrid, Stack, Text,
   ThemeIcon, Timeline, Title,
 } from "@mantine/core";
 import {
@@ -68,9 +68,7 @@ export default function ComoFunciona() {
       <Box className="mh-hero">
         <Container size="xl" py={{ base: 48, md: 72 }}>
           <Stack gap="lg" maw={720}>
-            <Badge size="lg" radius="sm" color="clay" variant="filled" w="fit-content">
-              Como funciona
-            </Badge>
+            <Text c="clay.3" fw={600} size="sm">Como funciona</Text>
             <Title className="mh-display" c="white" fz={{ base: 34, sm: 46 }}>
               Do anúncio ao certificado conferido
             </Title>
@@ -99,7 +97,7 @@ export default function ComoFunciona() {
           {JORNADA.map(({ icone: Icone, cor, titulo, texto }) => (
             <Timeline.Item key={titulo} color={cor}
                            bullet={<Icone size={20} />}
-                           title={<Text fw={800} fz="lg">{titulo}</Text>}>
+                           title={<Text fw={600} fz="lg">{titulo}</Text>}>
               <Text c="dimmed" size="sm" mt={4} mb="lg">{texto}</Text>
             </Timeline.Item>
           ))}
@@ -125,8 +123,8 @@ export default function ComoFunciona() {
               códigos para vazar.
             </Text>
           </Stack>
-          <Paper withBorder radius="lg" p="lg">
-            <Text fw={800} mb="sm">O que o check-in registra</Text>
+          <Paper withBorder p="lg">
+            <Text fw={600} mb="sm">O que o check-in registra</Text>
             <List spacing="xs" size="sm" icon={
               <ThemeIcon size={20} radius="xl" color="brand"><IconCircleCheck size={13} /></ThemeIcon>
             }>
@@ -156,8 +154,8 @@ export default function ComoFunciona() {
               certificado aparecer como adulterado.
             </Text>
           </Stack>
-          <Paper withBorder radius="lg" p="lg">
-            <Text fw={800} mb="xs">Na prática</Text>
+          <Paper withBorder p="lg">
+            <Text fw={600} mb="xs">Na prática</Text>
             <Text size="sm" c="dimmed">
               Cada certificado tem um código de 16 caracteres, como{" "}
               <Code>a1b2c3d4e5f60718</Code>, impresso junto com o QR. O endereço de
@@ -166,15 +164,15 @@ export default function ComoFunciona() {
           </Paper>
         </SimpleGrid>
 
-        <Text fw={800} ta="center" mb="md">O que a verificação pode responder</Text>
+        <Text fw={600} ta="center" mb="md">O que a verificação pode responder</Text>
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
           {DESFECHOS.map(({ icone: Icone, cor, titulo, texto }) => (
-            <Paper key={titulo} withBorder radius="lg" p="lg" h="100%">
+            <Paper key={titulo} withBorder p="lg" h="100%">
               <Group gap="sm" mb={6} wrap="nowrap">
                 <ThemeIcon size={34} radius="md" variant="light" color={cor}>
                   <Icone size={20} />
                 </ThemeIcon>
-                <Text fw={800}>{titulo}</Text>
+                <Text fw={600}>{titulo}</Text>
               </Group>
               <Text size="sm" c="dimmed">{texto}</Text>
             </Paper>

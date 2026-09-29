@@ -38,19 +38,19 @@ export default function Painel() {
         <StatCard icon={IconClock} label="Horas validadas" value={data.horasValidadas}
                   helper="Somadas dos certificados válidos" />
         <StatCard icon={IconCertificate} label="Certificados" value={data.certificados}
-                  color="clay" helper="Prontos para baixar ou compartilhar" />
+                  helper="Prontos para baixar ou compartilhar" />
         <StatCard icon={IconTicket} label="Inscrições ativas" value={data.inscricoesAtivas}
-                  color="navy" helper={`Limite de ${data.limiteInscricoes} ao mesmo tempo`} />
+                  helper={`Limite de ${data.limiteInscricoes} ao mesmo tempo`} />
       </SimpleGrid>
 
       {proxima && (
-        <Card withBorder radius="md" p="lg" className="mh-card-hover"
+        <Card withBorder p="lg" className="mh-card-hover"
               style={{ cursor: "pointer" }}
               onClick={() => navegar(`/atividades/${proxima.id}`)}>
-          <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb={6}>
+          <Text size="xs" c="dimmed" mb={4}>
             Sua próxima atividade
           </Text>
-          <Title order={3} fz={22} lh={1.2}>{proxima.titulo}</Title>
+          <Title order={3}>{proxima.titulo}</Title>
           <Group gap="lg" mt="sm" wrap="wrap" c="dimmed">
             <Group gap={6} wrap="nowrap">
               <IconCalendarEvent size={16} />
@@ -72,10 +72,10 @@ export default function Painel() {
         <ActionCard icon={IconSearch} title="Buscar atividades"
                     description="Vagas abertas das organizações, da data mais próxima em diante."
                     actionLabel="Ver vagas" onClick={() => navegar("/atividades")} />
-        <ActionCard icon={IconTicket} title="Minhas inscrições" color="navy"
+        <ActionCard icon={IconTicket} title="Minhas inscrições"
                     description="Acompanhe o que está por vir, o que aguarda aprovação e o histórico."
                     actionLabel="Abrir" onClick={() => navegar("/minhas-inscricoes")} />
-        <ActionCard icon={IconQrcode} title="Fazer check-in" color="clay"
+        <ActionCard icon={IconQrcode} title="Fazer check-in"
                     description="Escaneie o QR da organização durante a atividade."
                     actionLabel="Abrir câmera" onClick={() => navegar("/check-in")} />
         <ActionCard icon={IconUser} title="Meu perfil"

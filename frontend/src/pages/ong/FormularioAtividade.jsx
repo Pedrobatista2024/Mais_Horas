@@ -16,6 +16,18 @@ import { notifyError, notifySuccess } from "../../utils/notify";
 /** Campos que a RN-12 trava assim que existe alguém inscrito. */
 const SO_VAGAS = ["vagas_min", "vagas_max"];
 
+/**
+ * Descrição **abaixo** do campo, e não entre o rótulo e ele.
+ *
+ * Na ordem padrão do Mantine, o campo que tem descrição começa mais embaixo
+ * que os vizinhos: na linha "Quando", a carga horária era a única com texto de
+ * apoio e ficava desalinhada dos outros três. A explicação da RN-12 faz o
+ * mesmo, aparecendo em uns campos e não em outros.
+ */
+const DESCRICAO_ABAIXO = {
+  inputWrapperOrder: ["label", "input", "description", "error"],
+};
+
 const VAZIO = {
   titulo: "", descricao: "", local: "", cidade: "", estado: "",
   data: null, hora_inicio: "08:00", hora_fim: "12:00",
@@ -130,6 +142,11 @@ export default function FormularioAtividade() {
     return { disabled: true, description: aviso };
   }
 
+  /** Um campo do formulário: trava da RN-12, ordem da descrição e ligação. */
+  function campo(nome) {
+    return { ...DESCRICAO_ABAIXO, ...trava(nome), ...form.getInputProps(nome) };
+  }
+
   function corpo(valores) {
     return {
       titulo: valores.titulo.trim(),
@@ -190,7 +207,7 @@ export default function FormularioAtividade() {
       </Button>
 
       <Stack gap={4}>
-        <Text tt="uppercase" c="brand.7" fw={700} size="xs">
+        <Text size="xs" c="dimmed">
           Organização
         </Text>
         <Title order={1} fz={{ base: 26, sm: 32 }}>
@@ -223,37 +240,37 @@ export default function FormularioAtividade() {
           <Stack gap="md">
             <TextInput label="Título" placeholder="Mutirão de limpeza da praia"
                        withAsterisk maxLength={40}
-                       {...trava("titulo")} {...form.getInputProps("titulo")} />
+                       {...campo("titulo")} />
 
             <Textarea label="Descrição"
                       placeholder="O que será feito, o que levar, o que esperar"
                       withAsterisk minRows={4} autosize maxLength={1500}
-                      {...trava("descricao")} {...form.getInputProps("descricao")} />
+                      {...campo("descricao")} />
 
             <Divider label="Onde" labelPosition="left" />
 
             <TextInput label="Local" placeholder="Praia do Futuro, posto 6"
                        withAsterisk maxLength={50}
-                       {...trava("local")} {...form.getInputProps("local")} />
+                       {...campo("local")} />
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
               <TextInput label="Cidade" placeholder="Fortaleza"
-                         {...trava("cidade")} {...form.getInputProps("cidade")} />
+                         {...campo("cidade")} />
               <TextInput label="Estado" placeholder="CE"
-                         {...trava("estado")} {...form.getInputProps("estado")} />
+                         {...campo("estado")} />
             </SimpleGrid>
 
             <Divider label="Quando" labelPosition="left" />
 
-            <SimpleGrid cols={{ base: 1, sm: 3, lg: 4 }}>
+            <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>
               <DatePickerInput
                 label="Data" placeholder="Escolha o dia" withAsterisk
                 valueFormat="DD/MM/YYYY" minDate={new Date()}
-                {...trava("data")} {...form.getInputProps("data")}
+                {...campo("data")}
               />
               <TimeInput label="Início" withAsterisk
-                         {...trava("hora_inicio")} {...form.getInputProps("hora_inicio")} />
+                         {...campo("hora_inicio")} />
               <TimeInput label="Término" withAsterisk
-                         {...trava("hora_fim")} {...form.getInputProps("hora_fim")} />
+                         {...campo("hora_fim")} />
               {/* Fica na mesma linha do horário: é dele que a carga é sugerida. */}
               <NumberInput
                 label="Carga horária"
@@ -263,8 +280,7 @@ export default function FormularioAtividade() {
                     : `Sugerida pelo horário${sugestao ? `: ${sugestao}h` : ""}`
                 }
                 min={1} max={24}
-                {...trava("carga_horaria")}
-                {...form.getInputProps("carga_horaria")}
+                {...campo("carga_horaria")}
                 onChange={(v) => {
                   setCargaManual(true);
                   form.setFieldValue("carga_horaria", v);
@@ -276,9 +292,9 @@ export default function FormularioAtividade() {
 
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
               <NumberInput label="Mínimo de participantes" min={1}
-                           {...form.getInputProps("vagas_min")} />
+                           {...campo("vagas_min")} />
               <NumberInput label="Máximo de vagas" min={1}
-                           {...form.getInputProps("vagas_max")} />
+                           {...campo("vagas_max")} />
             </SimpleGrid>
 
             <Switch

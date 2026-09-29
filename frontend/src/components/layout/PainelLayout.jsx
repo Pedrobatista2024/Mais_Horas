@@ -169,7 +169,7 @@ export default function PainelLayout() {
 
       <AppShell.Navbar className="mh-sidebar">
         <Stack h="100%" gap="sm" p="md">
-          <Text size="xs" fw={800} tt="uppercase" c="dimmed" px={8} pt={4}>
+          <Text size="xs" fw={600} c="dimmed" px={8} pt={4}>
             Menu
           </Text>
           <ScrollArea flex={1} type="auto" offsetScrollbars>

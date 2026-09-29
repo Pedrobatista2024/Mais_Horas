@@ -11,7 +11,7 @@ export default function Secao({ eyebrow, titulo, subtitulo, alternada = false, c
         {(eyebrow || titulo) && (
           <Stack align="center" gap={6} mb="xl">
             {eyebrow && (
-              <Text tt="uppercase" fw={800} c="brand.7" size="sm">{eyebrow}</Text>
+              <Text size="sm" fw={600} c="brand.7">{eyebrow}</Text>
             )}
             {titulo && <Title order={2} ta="center">{titulo}</Title>}
             {subtitulo && (

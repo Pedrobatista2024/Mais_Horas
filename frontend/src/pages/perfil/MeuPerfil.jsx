@@ -89,7 +89,7 @@ export default function MeuPerfil() {
   return (
     <Stack gap="lg" maw={940} mx="auto" w="100%">
         <Stack gap={4}>
-          <Text tt="uppercase" c="brand.7" fw={700} size="xs">
+          <Text size="xs" c="dimmed">
             {eOng ? "Perfil da organização" : "Meu perfil"}
           </Text>
           <Title order={2} fz={{ base: 26, sm: 32 }}>

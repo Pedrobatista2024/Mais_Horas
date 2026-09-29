@@ -30,7 +30,7 @@ export default function BrandMark({
     >
       <Text
         component="span"
-        fw={900}
+        fw={700}
         fz={fz}
         c="ink.8"
         style={{ display: "inline-flex", alignItems: "center", letterSpacing: "-0.01em", lineHeight: 1 }}

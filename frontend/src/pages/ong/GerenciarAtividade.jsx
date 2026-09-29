@@ -236,7 +236,7 @@ export default function GerenciarAtividade() {
             )}
             {!eRascunho && (
               <Button variant="light" leftSection={<IconEye size={16} />}
-                      onClick={() => navegar(`/atividades/${id}`)}>
+                      onClick={() => navegar(`/vagas/${id}`)}>
                 Ver como o aluno vê
               </Button>
             )}

@@ -8,18 +8,18 @@ export default function CartaoOng({ ong, aoClicar }) {
   const lugar = [ong.cidade, ong.estado].filter(Boolean).join(" · ");
 
   return (
-    <Card withBorder radius="lg" padding="lg" h="100%" className="mh-card-hover"
+    <Card withBorder padding="lg" h="100%" className="mh-card-hover"
           style={{ cursor: "pointer" }} onClick={aoClicar}
           role="link" tabIndex={0}
           onKeyDown={(e) => { if (e.key === "Enter") aoClicar(); }}>
       <Stack gap="sm" h="100%">
         <Group gap="sm" wrap="nowrap">
-          <Avatar src={resolveImage(ong.logo)} size={52} radius="md" color="navy">
-            <IconBuildingCommunity size={26} />
+          <Avatar src={resolveImage(ong.logo)} size={44} radius="md" color="navy">
+            <IconBuildingCommunity size={22} />
           </Avatar>
           <div style={{ minWidth: 0 }}>
             <Group gap={5} wrap="nowrap">
-              <Text fw={800} lineClamp={1}>{ong.nome}</Text>
+              <Text fw={600} lineClamp={1}>{ong.nome}</Text>
               {ong.verificada && (
                 <Tooltip label="Organização verificada pela administração">
                   <IconCircleCheckFilled size={17} color="var(--mantine-color-brand-6)"

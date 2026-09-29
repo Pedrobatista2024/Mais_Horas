@@ -193,7 +193,7 @@ export default function ValidarPresencas() {
       </Button>
 
       <Stack gap={4}>
-        <Text tt="uppercase" c="brand.7" fw={700} size="xs">
+        <Text size="xs" c="dimmed">
           Validar presenças
         </Text>
         <Title order={1} fz={{ base: 24, sm: 30 }} lh={1.15}>

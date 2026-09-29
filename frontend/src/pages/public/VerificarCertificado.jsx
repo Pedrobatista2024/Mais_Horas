@@ -273,7 +273,7 @@ export default function VerificarCertificado() {
         <Stack gap={4}>
           <Group gap={6}>
             <IconShieldCheck size={16} color="var(--mantine-color-brand-7)" />
-            <Text tt="uppercase" c="brand.7" fw={700} size="xs">
+            <Text size="xs" c="dimmed">
               Verificação de certificado
             </Text>
           </Group>

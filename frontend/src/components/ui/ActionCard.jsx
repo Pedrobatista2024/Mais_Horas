@@ -1,34 +1,40 @@
-import { Button, Group, Paper, Stack, Text, ThemeIcon } from "@mantine/core";
+import { Anchor, Group, Paper, Stack, Text } from "@mantine/core";
+import { IconArrowRight } from "@tabler/icons-react";
 
+/**
+ * Atalho para outra tela.
+ *
+ * Era um cartão com ícone grande colorido e botão cheio; virou uma linha
+ * clicável com o essencial. Num painel com quatro atalhos, quatro botões
+ * competem entre si e nenhum vence.
+ */
 export default function ActionCard({
   icon: Icon,
   title,
   description,
   actionLabel,
   onClick,
-  color = "brand",
 }) {
   return (
-    <Paper withBorder radius="md" p="lg" className="mh-card-hover">
-      <Stack gap="md" h="100%">
-        <Group align="flex-start" wrap="nowrap">
-          {Icon && (
-            <ThemeIcon color={color} variant="light" size={44} radius="md" style={{ flexShrink: 0 }}>
-              <Icon size={24} />
-            </ThemeIcon>
-          )}
-          <div style={{ minWidth: 0 }}>
-            <Text fw={800}>{title}</Text>
-            <Text c="dimmed" size="sm" mt={2}>
-              {description}
-            </Text>
-          </div>
+    <Paper withBorder p="md" className="mh-card-hover" onClick={onClick}
+           style={{ cursor: "pointer", height: "100%" }}
+           role="link" tabIndex={0}
+           onKeyDown={(e) => { if (e.key === "Enter") onClick?.(); }}>
+      <Stack gap={6} h="100%">
+        <Group gap={8} wrap="nowrap">
+          {Icon && <Icon size={17} color="var(--mantine-color-brand-7)" />}
+          <Text fw={600}>{title}</Text>
         </Group>
-
+        <Text c="dimmed" size="sm" style={{ flex: 1 }}>
+          {description}
+        </Text>
         {actionLabel && (
-          <Button variant="light" color={color} onClick={onClick} mt="auto">
-            {actionLabel}
-          </Button>
+          <Anchor component="span" size="sm" fw={500}>
+            <Group gap={4} wrap="nowrap">
+              {actionLabel}
+              <IconArrowRight size={14} />
+            </Group>
+          </Anchor>
         )}
       </Stack>
     </Paper>

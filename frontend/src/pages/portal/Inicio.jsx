@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Badge, Box, Button, Container, Divider, Group, Paper, SimpleGrid, Stack, Text,
-  ThemeIcon, Title,
+  Box, Button, Container, Group, Paper, SimpleGrid, Stack, Text, ThemeIcon, Title,
 } from "@mantine/core";
 import {
   IconArrowRight, IconBuildingCommunity, IconCalendarEvent, IconCertificate,
@@ -18,27 +17,27 @@ import { numerosVisiveis } from "../../components/portal/impacto";
 import { cadastroComo } from "../../components/portal/navegacao";
 import { useConsultaPublica } from "../../hooks/useConsultaPublica";
 
-function Publico({ icone: Icone, cor, titulo, texto, pontos, acao }) {
+function Publico({ icone: Icone, titulo, texto, pontos, acao }) {
   return (
-    <Paper withBorder radius="lg" p="xl" h="100%">
+    <Paper withBorder p="xl" h="100%">
       <Stack h="100%" gap="md">
-        <ThemeIcon size={54} radius="md" variant="light" color={cor}>
-          <Icone size={30} />
-        </ThemeIcon>
-        <div>
-          <Title order={3} fz="xl" mb={6}>{titulo}</Title>
-          <Text c="dimmed" size="sm">{texto}</Text>
-        </div>
+        <Group gap={10} wrap="nowrap">
+          <ThemeIcon size={34} radius="md" variant="light" color="brand">
+            <Icone size={19} />
+          </ThemeIcon>
+          <Title order={3}>{titulo}</Title>
+        </Group>
+        <Text c="dimmed" size="sm">{texto}</Text>
         <Stack gap={8} style={{ flex: 1 }}>
           {pontos.map((ponto) => (
             <Group key={ponto} gap={8} wrap="nowrap" align="flex-start">
-              <IconCircleCheck size={18} color={`var(--mantine-color-${cor}-6)`}
+              <IconCircleCheck size={17} color="var(--mantine-color-brand-6)"
                                style={{ flexShrink: 0, marginTop: 1 }} />
               <Text size="sm">{ponto}</Text>
             </Group>
           ))}
         </Stack>
-        <Button variant="light" color={cor} component={Link} to={acao.para}
+        <Button variant="default" component={Link} to={acao.para}
                 rightSection={<IconArrowRight size={16} />}>
           {acao.rotulo}
         </Button>
@@ -64,15 +63,13 @@ export default function Inicio() {
   return (
     <>
       <Box className="mh-hero">
-        <div className="mh-hero-orb" style={{ width: 460, height: 460, right: -120, top: -160 }} />
-        <div className="mh-hero-orb" style={{ width: 300, height: 300, right: 60, top: 40 }} />
         <Container size="xl" py={{ base: 48, md: 80 }}>
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing={48} style={{ alignItems: "center" }}>
             <Stack gap="lg">
-              <Badge size="lg" radius="sm" color="clay" variant="filled" w="fit-content">
+              <Text c="clay.3" fw={600} size="sm">
                 Conectando estudantes e ONGs
-              </Badge>
-              <Title className="mh-display" c="white" fz={{ base: 36, sm: 52, md: 58 }}>
+              </Text>
+              <Title className="mh-display" c="white" fz={{ base: 32, sm: 44, md: 50 }}>
                 Suas horas de extensão, finalmente{" "}
                 <Text span inherit c="clay.4">sem burocracia</Text>.
               </Title>
@@ -103,47 +100,18 @@ export default function Inicio() {
               </Group>
             </Stack>
 
-            <Box visibleFrom="md" style={{ position: "relative", minHeight: 420 }}>
+            <Box visibleFrom="md">
               <Box component="img" src="/hero-voluntariado.jpg"
                    alt="Voluntários sorrindo em uma ação social"
-                   className="mh-hero-photo" style={{ width: "100%", height: 420 }} />
-
+                   className="mh-hero-photo" style={{ width: "100%", height: 400 }} />
               {abertas > 0 && (
-                <Paper radius="xl" px="md" py={8} shadow="lg" component={Link} to="/vagas"
-                       style={{ position: "absolute", top: 22, left: 8, zIndex: 2,
-                                textDecoration: "none", color: "inherit" }}>
-                  <Group gap={8} wrap="nowrap">
-                    <ThemeIcon size={30} radius="xl" color="brand" variant="light">
-                      <IconUserPlus size={16} />
-                    </ThemeIcon>
-                    <div>
-                      <Text fw={800} fz="sm" lh={1}>
-                        {abertas} {abertas === 1 ? "vaga aberta" : "vagas abertas"}
-                      </Text>
-                      <Text size="xs" c="dimmed" lh={1.3}>agora na plataforma</Text>
-                    </div>
-                  </Group>
-                </Paper>
+                <Group gap={8} mt="sm" wrap="nowrap" c="rgba(255,255,255,0.75)">
+                  <IconUserPlus size={16} />
+                  <Text size="sm" component={Link} to="/vagas">
+                    {abertas} {abertas === 1 ? "vaga aberta" : "vagas abertas"} agora
+                  </Text>
+                </Group>
               )}
-
-              <Paper radius="lg" p="md" shadow="xl"
-                     style={{ position: "absolute", bottom: -24, right: -20, width: 290 }}>
-                <Group mb="sm" wrap="nowrap">
-                  <ThemeIcon size={42} radius="md" color="brand" variant="light">
-                    <IconShieldCheck size={24} />
-                  </ThemeIcon>
-                  <div>
-                    <Text fw={800} lh={1.1}>Certificado válido</Text>
-                    <Text size="xs" c="dimmed">Assinado digitalmente</Text>
-                  </div>
-                </Group>
-                <Divider mb="sm" />
-                <Text size="sm">Nome do aluno · 4h</Text>
-                <Group gap={8} mt="sm" wrap="nowrap">
-                  <IconQrcode size={18} color="var(--mantine-color-navy-6)" />
-                  <Text size="xs" c="dimmed">Ilustração — o real se confere pelo QR</Text>
-                </Group>
-              </Paper>
             </Box>
           </SimpleGrid>
         </Container>
@@ -152,13 +120,13 @@ export default function Inicio() {
       <Secao eyebrow="Como funciona" titulo="Da vaga ao certificado, em 4 passos"
              subtitulo="Sem planilha, sem lista de papel e sem certificado que qualquer um edita.">
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg">
-          <Passo icone={IconCalendarEvent} numero="1" titulo="A ONG publica" cor="navy">
+          <Passo icone={IconCalendarEvent} numero="1" titulo="A ONG publica">
             Cria a vaga com data, local, carga horária e número de participantes.
           </Passo>
           <Passo icone={IconSearch} numero="2" titulo="O aluno se inscreve">
             Encontra a vaga como uma oferta de trabalho e se inscreve com um clique.
           </Passo>
-          <Passo icone={IconQrcode} numero="3" titulo="Presença por QR" cor="clay">
+          <Passo icone={IconQrcode} numero="3" titulo="Presença por QR">
             No evento, escaneia um QR que muda a cada 30 segundos — foto não serve.
           </Passo>
           <Passo icone={IconCertificate} numero="4" titulo="Certificado assinado">
@@ -175,17 +143,17 @@ export default function Inicio() {
 
       <Secao alternada eyebrow="Para quem é" titulo="Todo mundo ganha">
         <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
-          <Publico icone={IconSchool} cor="brand" titulo="Estudantes"
+          <Publico icone={IconSchool} titulo="Estudantes"
                    texto="Encontre voluntariado e comprove suas horas sem dor de cabeça."
                    pontos={["Vagas num só lugar", "Inscrição com um clique",
                             "Certificados sempre à mão"]}
                    acao={{ para: "/para-estudantes", rotulo: "Para estudantes" }} />
-          <Publico icone={IconBuildingCommunity} cor="navy" titulo="ONGs"
+          <Publico icone={IconBuildingCommunity} titulo="ONGs"
                    texto="Divulgue ações e gerencie voluntários sem planilha."
                    pontos={["Publique vagas em minutos", "Presença validada no celular",
                             "Certificados emitidos na hora"]}
                    acao={{ para: "/para-ongs", rotulo: "Para ONGs" }} />
-          <Publico icone={IconShieldCheck} cor="clay" titulo="Instituições de ensino"
+          <Publico icone={IconShieldCheck} titulo="Instituições de ensino"
                    texto="Receba comprovações que se conferem sozinhas."
                    pontos={["Código único por certificado", "Verificação pública pelo QR",
                             "Adulteração detectada na hora"]}

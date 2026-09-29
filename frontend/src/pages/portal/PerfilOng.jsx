@@ -38,7 +38,7 @@ function instagram(valor) {
 function Numero({ valor, rotulo }) {
   return (
     <Paper withBorder radius="md" p="md" ta="center">
-      <Text fw={900} fz={26} lh={1}>{valor.toLocaleString("pt-BR")}</Text>
+      <Text fw={700} fz={26} lh={1}>{valor.toLocaleString("pt-BR")}</Text>
       <Text size="xs" c="dimmed" mt={4}>{rotulo}</Text>
     </Paper>
   );
@@ -98,9 +98,9 @@ export default function PerfilOng() {
       <Stack gap="lg">
         {voltar}
 
-        <Card withBorder radius="lg" p={{ base: "lg", sm: "xl" }}>
+        <Card withBorder p={{ base: "lg", sm: "xl" }}>
           <Group gap="lg" align="flex-start" wrap="wrap">
-            <Avatar src={resolveImage(ong.logo)} size={96} radius="lg" color="navy">
+            <Avatar src={resolveImage(ong.logo)} size={96} radius="md" color="navy">
               <IconBuildingCommunity size={44} />
             </Avatar>
             <Stack gap={6} style={{ flex: 1, minWidth: 220 }}>

@@ -2,31 +2,34 @@ import { createTheme } from "@mantine/core";
 
 /**
  * Tema da marca "Mais Horas".
- * Azul royal institucional (inspiração: universidades), botões em formato
- * "pill", tipografia display forte para títulos.
+ *
+ * A área logada é ferramenta de trabalho: tipografia em poucos tamanhos, raio
+ * discreto, sombra nenhuma e cor reservada para ação e estado. Título gigante
+ * e botão em formato de pílula competem com o conteúdo e envelhecem rápido.
  */
 export const theme = createTheme({
   primaryColor: "brand",
   primaryShade: 7,
-  defaultRadius: "md",
+  defaultRadius: "sm",
   fontFamily:
     "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   headings: {
     fontFamily: "Inter, 'Segoe UI', sans-serif",
-    fontWeight: "800",
+    fontWeight: "650",
     sizes: {
-      h1: { fontSize: "2.6rem", lineHeight: "1.1" },
-      h2: { fontSize: "2rem", lineHeight: "1.15" },
+      h1: { fontSize: "1.75rem", lineHeight: "1.2" },
+      h2: { fontSize: "1.375rem", lineHeight: "1.25" },
+      h3: { fontSize: "1.0625rem", lineHeight: "1.3" },
+      h4: { fontSize: "0.9375rem", lineHeight: "1.35" },
     },
   },
-  defaultGradient: { from: "brand.8", to: "brand.6", deg: 135 },
   components: {
-    Button: {
-      defaultProps: { radius: "xl" },
-    },
-    Badge: {
-      defaultProps: { radius: "sm" },
-    },
+    Button: { defaultProps: { radius: "sm" } },
+    // Sem caixa alta: "FINALIZADA" ao lado do título grita mais que o título.
+    Badge: { defaultProps: { radius: "sm", tt: "none", fw: 600 } },
+    Card: { defaultProps: { radius: "md", shadow: "none" } },
+    Paper: { defaultProps: { radius: "md" } },
+    Modal: { defaultProps: { radius: "md" } },
   },
   colors: {
     // Azul royal saturado (primária)

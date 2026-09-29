@@ -18,7 +18,7 @@ function Perfil({ icone: Icone, titulo, texto, cor, aoEscolher, enviando }) {
           <Icone size={26} />
         </ThemeIcon>
         <div>
-          <Text fw={800}>{titulo}</Text>
+          <Text fw={600}>{titulo}</Text>
           <Text size="sm" c="dimmed">{texto}</Text>
         </div>
         <Button color={cor} variant="light" fullWidth mt="auto" loading={enviando}

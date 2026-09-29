@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Accordion, Badge, Box, Button, Container, Group, Paper, SimpleGrid, Stack, Text,
+  Accordion, Box, Button, Container, Group, Paper, SimpleGrid, Stack, Text,
   ThemeIcon, Title,
 } from "@mantine/core";
 import { IconArrowRight } from "@tabler/icons-react";
@@ -25,9 +25,7 @@ export default function PaginaDePublico({
       <Box className="mh-hero">
         <Container size="xl" py={{ base: 48, md: 72 }}>
           <Stack gap="lg" maw={720}>
-            <Badge size="lg" radius="sm" color="clay" variant="filled" w="fit-content">
-              {eyebrow}
-            </Badge>
+            <Text c="clay.3" fw={600} size="sm">{eyebrow}</Text>
             <Title className="mh-display" c="white" fz={{ base: 34, sm: 46 }}>{titulo}</Title>
             <Text c="rgba(255,255,255,0.9)" fz={{ base: "md", md: "lg" }}>{subtitulo}</Text>
             <Group gap="md">
@@ -51,11 +49,11 @@ export default function PaginaDePublico({
       <Secao eyebrow="O que você ganha" titulo="Feito para o seu dia a dia">
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
           {vantagens.map(({ icone: Icone, titulo: t, texto }) => (
-            <Paper key={t} withBorder radius="lg" p="lg" h="100%">
-              <ThemeIcon size={46} radius="md" variant="light" color={cor} mb="md">
-                <Icone size={25} />
+            <Paper key={t} withBorder p="lg" h="100%">
+              <ThemeIcon size={34} radius="md" variant="light" color={cor} mb="md">
+                <Icone size={19} />
               </ThemeIcon>
-              <Text fw={800} mb={4}>{t}</Text>
+              <Text fw={600} mb={4}>{t}</Text>
               <Text size="sm" c="dimmed">{texto}</Text>
             </Paper>
           ))}
@@ -65,13 +63,13 @@ export default function PaginaDePublico({
       <Secao alternada eyebrow="Como começar" titulo="Em poucos minutos">
         <Stack gap="md" maw={720} mx="auto">
           {passos.map((passo, i) => (
-            <Paper key={passo.titulo} withBorder radius="lg" p="lg">
+            <Paper key={passo.titulo} withBorder p="lg">
               <Group gap="md" wrap="nowrap" align="flex-start">
-                <ThemeIcon size={36} radius="xl" color={cor} style={{ flexShrink: 0 }}>
-                  <Text fw={800} size="sm">{i + 1}</Text>
+                <ThemeIcon size={30} radius="xl" color={cor} style={{ flexShrink: 0 }}>
+                  <Text fw={600} size="sm">{i + 1}</Text>
                 </ThemeIcon>
                 <div>
-                  <Text fw={800}>{passo.titulo}</Text>
+                  <Text fw={600}>{passo.titulo}</Text>
                   <Text size="sm" c="dimmed">{passo.texto}</Text>
                 </div>
               </Group>
@@ -84,7 +82,7 @@ export default function PaginaDePublico({
         <Accordion variant="separated" radius="md" maw={760} mx="auto">
           {duvidas.map(({ pergunta, resposta }) => (
             <Accordion.Item key={pergunta} value={pergunta}>
-              <Accordion.Control fw={700}>{pergunta}</Accordion.Control>
+              <Accordion.Control fw={600}>{pergunta}</Accordion.Control>
               <Accordion.Panel>
                 <Text size="sm" c="dimmed">{resposta}</Text>
               </Accordion.Panel>

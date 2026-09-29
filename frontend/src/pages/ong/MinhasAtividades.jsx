@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Button, Center, Group, Pagination, SimpleGrid, Stack, Tabs,
+  Anchor, Box, Button, Center, Group, Pagination, Stack, Tabs, Text,
 } from "@mantine/core";
 import {
   IconCalendarPlus, IconClipboardCheck, IconEdit, IconPlus, IconQrcode,
   IconSettings, IconTrash, IconUsersGroup, IconX,
 } from "@tabler/icons-react";
 
-import CartaoAtividade from "../../components/atividade/CartaoAtividade";
+import LinhaAtividade from "../../components/atividade/LinhaAtividade";
 import ConfirmarAcao from "../../components/ui/ConfirmarAcao";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
@@ -53,6 +53,7 @@ export default function MinhasAtividades() {
   const [pagina, setPagina] = useState(1);
   const [carregando, setCarregando] = useState(true);
   const [resultado, setResultado] = useState({ itens: [], total: 0, paginas: 1 });
+  const [resumo, setResumo] = useState(null);
   const [confirmando, setConfirmando] = useState(null);
 
   const buscar = useCallback(async () => {
@@ -69,9 +70,25 @@ export default function MinhasAtividades() {
     }
   }, [aba, pagina]);
 
+  // Os números do topo vêm do mesmo lugar que o painel (O1): assim as duas
+  // telas nunca discordam, e não é preciso pedir uma página por aba só para
+  // contar. Falhar aqui não derruba a tela — a lista continua servindo.
+  const contar = useCallback(async () => {
+    try {
+      const { data } = await api.get("/painel/ong");
+      setResumo(data);
+    } catch {
+      setResumo(null);
+    }
+  }, []);
+
   useEffect(() => {
     buscar();
   }, [buscar]);
+
+  useEffect(() => {
+    contar();
+  }, [contar]);
 
   function trocarAba(valor) {
     setAba(valor);
@@ -83,6 +100,7 @@ export default function MinhasAtividades() {
     try {
       await api.post(`/atividades/${atividade.id}/publicar`);
       notifySuccess("Atividade publicada. Ela já aparece na vitrine.");
+      contar();
       trocarAba("publicada");
     } catch (erro) {
       notifyError(mensagemDoErro(erro, "Não foi possível publicar"));
@@ -93,6 +111,7 @@ export default function MinhasAtividades() {
     try {
       await api.post(`/atividades/${atividade.id}/cancelar`, { motivo });
       notifySuccess("Atividade cancelada e inscrições encerradas.");
+      contar();
       trocarAba("cancelada");
     } catch (erro) {
       notifyError(mensagemDoErro(erro, "Não foi possível cancelar"));
@@ -103,78 +122,72 @@ export default function MinhasAtividades() {
     try {
       await api.delete(`/atividades/${atividade.id}`);
       notifySuccess("Rascunho excluído.");
+      contar();
       buscar();
     } catch (erro) {
       notifyError(mensagemDoErro(erro, "Não foi possível excluir"));
     }
   }
 
-  function botoes(atividade) {
+  /** A ação que faz sentido *naquela* situação — só ela fica visível. */
+  function acaoPrincipal(atividade) {
+    const { situacao, id } = atividade;
+    if (situacao === "rascunho") {
+      return { rotulo: "Publicar", variante: "filled",
+               aoClicar: () => publicar(atividade) };
+    }
+    if (situacao === "em_andamento") {
+      return { rotulo: "Check-in", variante: "filled", icone: IconQrcode,
+               aoClicar: () => navegar(`/ong/atividades/${id}/check-in`) };
+    }
+    if (situacao === "aguardando_validacao") {
+      return { rotulo: "Validar presenças", variante: "filled",
+               icone: IconClipboardCheck,
+               aoClicar: () => navegar(`/ong/atividades/${id}/presencas`) };
+    }
+    if (situacao === "cancelada") return null;
+    return { rotulo: `Inscrições (${atividade.vagasOcupadas})`,
+             icone: IconUsersGroup,
+             aoClicar: () => navegar(`/ong/atividades/${id}/inscricoes`) };
+  }
+
+  function menu(atividade) {
     const { situacao, id } = atividade;
     const podeEditar = ["rascunho", "publicada"].includes(situacao);
+    // Enquanto "Inscrições" for o botão visível, repeti-lo no menu só ocupa
+    // espaço; quando não for, ele precisa continuar alcançável.
+    const inscricoesNoMenu = ["em_andamento", "aguardando_validacao"].includes(situacao);
 
-    return (
-      <Stack gap={6}>
-        <Group gap={6} grow>
-          {situacao === "rascunho" && (
-            <Button size="compact-sm" onClick={() => publicar(atividade)}>
-              Publicar
-            </Button>
-          )}
-          {podeEditar && (
-            <Button size="compact-sm" variant="light"
-                    leftSection={<IconEdit size={14} />}
-                    onClick={() => navegar(`/ong/atividades/${id}/editar`)}>
-              Editar
-            </Button>
-          )}
-          <Button size="compact-sm" variant="light"
-                  leftSection={<IconSettings size={14} />}
-                  onClick={() => navegar(`/ong/atividades/${id}`)}>
-            Gerenciar
-          </Button>
-        </Group>
-
-        {situacao === "em_andamento" && (
-          <Button size="compact-sm" leftSection={<IconQrcode size={14} />}
-                  onClick={() => navegar(`/ong/atividades/${id}/check-in`)}>
-            Abrir check-in
-          </Button>
-        )}
-        {situacao === "aguardando_validacao" && (
-          <Button size="compact-sm" leftSection={<IconClipboardCheck size={14} />}
-                  onClick={() => navegar(`/ong/atividades/${id}/presencas`)}>
-            Validar presenças
-          </Button>
-        )}
-
-        {situacao !== "rascunho" && (
-          <Button size="compact-sm" variant="subtle"
-                  leftSection={<IconUsersGroup size={14} />}
-                  onClick={() => navegar(`/ong/atividades/${id}/inscricoes`)}>
-            Inscrições ({atividade.vagasOcupadas})
-          </Button>
-        )}
-
-        {situacao === "rascunho" && (
-          <Button size="compact-sm" variant="subtle" color="red"
-                  leftSection={<IconTrash size={14} />}
-                  onClick={() => setConfirmando({ tipo: "excluir", atividade })}>
-            Excluir rascunho
-          </Button>
-        )}
-        {situacao === "publicada" && (
-          <Button size="compact-sm" variant="subtle" color="red"
-                  leftSection={<IconX size={14} />}
-                  onClick={() => setConfirmando({ tipo: "cancelar", atividade })}>
-            Cancelar atividade
-          </Button>
-        )}
-      </Stack>
-    );
+    return [
+      { rotulo: "Gerenciar atividade", icone: IconSettings,
+        aoClicar: () => navegar(`/ong/atividades/${id}`) },
+      podeEditar && { rotulo: "Editar", icone: IconEdit,
+                      aoClicar: () => navegar(`/ong/atividades/${id}/editar`) },
+      inscricoesNoMenu && {
+        rotulo: `Inscrições (${atividade.vagasOcupadas})`, icone: IconUsersGroup,
+        aoClicar: () => navegar(`/ong/atividades/${id}/inscricoes`),
+      },
+      situacao === "rascunho" && {
+        rotulo: "Excluir rascunho", icone: IconTrash, cor: "red",
+        aoClicar: () => setConfirmando({ tipo: "excluir", atividade }),
+      },
+      situacao === "publicada" && {
+        rotulo: "Cancelar atividade", icone: IconX, cor: "red",
+        aoClicar: () => setConfirmando({ tipo: "cancelar", atividade }),
+      },
+    ].filter(Boolean);
   }
 
   const eExcluir = confirmando?.tipo === "excluir";
+
+  const numeros = (resumo ? [
+    { chave: "publicada", valor: resumo.atividadesPublicadas,
+      singular: "publicada", plural: "publicadas" },
+    { chave: "aguardando_validacao", valor: resumo.aguardandoValidacao,
+      singular: "a validar", plural: "a validar" },
+    { chave: "rascunho", valor: resumo.rascunhos,
+      singular: "rascunho", plural: "rascunhos" },
+  ] : []).filter((item) => item.valor > 0);
 
   return (
     <>
@@ -190,7 +203,20 @@ export default function MinhasAtividades() {
         }
       />
 
-      <Tabs value={aba} onChange={trocarAba} mb="lg" variant="outline">
+      {numeros.length > 0 && (
+        <Group gap={8} mt={-10} mb="md">
+          {numeros.map((item, indice) => (
+            <Group key={item.chave} gap={8}>
+              {indice > 0 && <Text size="sm" c="dimmed">·</Text>}
+              <Anchor size="sm" c="dimmed" onClick={() => trocarAba(item.chave)}>
+                {item.valor} {item.valor === 1 ? item.singular : item.plural}
+              </Anchor>
+            </Group>
+          ))}
+        </Group>
+      )}
+
+      <Tabs value={aba} onChange={trocarAba} mb="md" variant="outline">
         <Tabs.List>
           {ABAS.map((item) => (
             <Tabs.Tab key={item.valor} value={item.valor}>
@@ -213,13 +239,18 @@ export default function MinhasAtividades() {
           }}
         />
       ) : (
-        <Stack gap="lg">
-          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+        <Stack gap="md">
+          <Box className="mh-lista">
             {resultado.itens.map((atividade) => (
-              <CartaoAtividade key={atividade.id} atividade={atividade}
-                               rodape={botoes(atividade)} />
+              <LinhaAtividade
+                key={atividade.id}
+                atividade={atividade}
+                aoAbrir={() => navegar(`/ong/atividades/${atividade.id}`)}
+                acao={acaoPrincipal(atividade)}
+                menu={menu(atividade)}
+              />
             ))}
-          </SimpleGrid>
+          </Box>
 
           {resultado.paginas > 1 && (
             <Center>
