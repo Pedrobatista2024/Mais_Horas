@@ -39,6 +39,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 SENHA = "demonstracao-mais-horas-1"
 PASSO = 0
 
+# O console do Windows abre em cp1252 e engasga com acento: sem isto, a
+# demonstração morre no meio por causa de uma letra.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 
 def passo(titulo: str) -> None:
     global PASSO
@@ -47,7 +51,7 @@ def passo(titulo: str) -> None:
 
 
 def item(rotulo: str, valor: object = "") -> None:
-    print(f"   {rotulo:<34}{valor}")
+    print(f"   {rotulo:<34} {valor}")
 
 
 def confere_por_fora(prova: dict) -> bool:
@@ -78,11 +82,11 @@ async def main(api: str) -> int:
         for papel, nome in (("ong", f"ONG Demonstração {marca}"),
                             ("estudante", "Aluno de Demonstração")):
             resposta = await http.post("/auth/cadastro", json={
-                "nome": nome, "email": f"{papel}-{marca}@demo.local",
+                "nome": nome, "email": f"{papel}-{marca}@mais-horas-demo.org",
                 "senha": SENHA, "papel": papel})
             resposta.raise_for_status()
             contas[papel] = resposta.json()["token"]
-            item(f"{papel} criada", f"{papel}-{marca}@demo.local")
+            item(f"{papel} criada", f"{papel}-{marca}@mais-horas-demo.org")
 
         ong = {"Authorization": f"Bearer {contas['ong']}"}
         aluno = {"Authorization": f"Bearer {contas['estudante']}"}
@@ -92,7 +96,7 @@ async def main(api: str) -> int:
             "instituicao": "UniC", "curso": "Sistemas de Informação"})
         item("perfil do aluno", "completo (exigido antes da inscrição)")
 
-        passo("A ONG publica uma atividade acontecendo agora")
+        passo("A ONG publica uma atividade")
         criada = await http.post("/atividades", headers=ong, json={
             "titulo": f"Mutirão de demonstração {marca}",
             "descricao": "Atividade criada pelo roteiro de demonstração.",
@@ -105,6 +109,14 @@ async def main(api: str) -> int:
         await http.post(f"/atividades/{atividade['id']}/publicar", headers=ong)
         item("atividade", atividade["titulo"])
 
+        passo("O aluno se inscreve")
+        inscricao = await http.post("/inscricoes", headers=aluno,
+                                    json={"atividadeId": atividade["id"]})
+        inscricao.raise_for_status()
+        item("inscrição", inscricao.json()["situacao"])
+        item("quando", "antes de a atividade começar (RN-20)")
+
+        passo("Chega o dia: a atividade entra em andamento")
         async with CriarSessao() as db:
             gravada = await db.get(Atividade, uuid.UUID(atividade["id"]))
             gravada.data = hoje()
@@ -113,17 +125,11 @@ async def main(api: str) -> int:
             await db.commit()
         item("situação", "em andamento (a data foi ajustada para hoje)")
 
-        passo("O aluno se inscreve")
-        inscricao = await http.post("/inscricoes", headers=aluno,
-                                    json={"atividadeId": atividade["id"]})
-        inscricao.raise_for_status()
-        item("inscrição", inscricao.json()["situacao"])
-
         passo("Check-in com o QR de verdade")
         token = (await http.get(f"/atividades/{atividade['id']}/checkin/token",
                                 headers=ong)).json()
         item("token exibido pela ONG", token["token"])
-        item("validade", f"{token['expiraEmSegundos']}s")
+        item("validade", f"{token['validoPor']}s")
         registro = await http.post("/checkin", headers=aluno,
                                    json={"token": token["token"]})
         registro.raise_for_status()
@@ -145,7 +151,8 @@ async def main(api: str) -> int:
         fim = await http.post(f"/atividades/{atividade['id']}/finalizar",
                               headers=ong)
         fim.raise_for_status()
-        item("certificados emitidos", fim.json().get("certificados", "?"))
+        item("presentes", fim.json()["presentes"])
+        item("certificados emitidos", fim.json()["certificadosEmitidos"])
 
         async with CriarSessao() as db:
             cert = await db.scalar(
@@ -167,8 +174,8 @@ async def main(api: str) -> int:
         item("assinatura confere", "SIM" if confere_por_fora(prova) else "NÃO")
 
         passo("A foto do QR não serve")
-        espera = max(0, token["expiraEmSegundos"] + 2)
-        item("esperando o token vencer", f"{espera}s")
+        espera = max(0, token["validoPor"] + 12)
+        item("esperando o token vencer", f"{espera}s (janela + folga)")
         time.sleep(espera)
         repetido = await http.post("/checkin", headers=aluno, json={"token": velho})
         item("check-in com o token antigo",
@@ -180,7 +187,7 @@ async def main(api: str) -> int:
             antes = alvo.horas
             alvo.horas = antes + 40
             await db.commit()
-        item("horas no banco", f"{antes} → {antes + 40}")
+        item("horas no banco", f"de {antes} para {antes + 40}")
 
         depois = (await http.get(f"/certificados/verificar/{codigo}")).json()
         prova_adulterada = (
@@ -191,8 +198,18 @@ async def main(api: str) -> int:
         item("PDF oficial",
              (await http.get(f"/certificados/verificar/{codigo}/pdf")).status_code)
 
+        passo("Desfazendo a alteração")
+        async with CriarSessao() as db:
+            alvo = await db.get(Certificado, cert.id)
+            alvo.horas = antes
+            await db.commit()
+        restaurado = (await http.get(f"/certificados/verificar/{codigo}")).json()
+        item("horas no banco", f"de volta a {antes}")
+        item("verificação pública", restaurado["desfecho"])
+        item("o que isso mostra", "a detecção é sobre o dado, não uma marca no registro")
+
         passo("Resumo")
-        item("certificado emitido pelo fluxo real", codigo)
+        item("certificado emitido", codigo)
         item("assinatura conferida por fora", "sim")
         item("adulteração detectada", "sim")
         item("token de QR reaproveitado", "recusado")

@@ -29,10 +29,17 @@ cd backend
 ```
 
 O roteiro percorre o ciclo inteiro narrando cada passo: cria as contas, publica a
-atividade, faz o **check-in com um QR real**, confirma a presença, emite o certificado,
-verifica publicamente, confere a assinatura **fora do nosso código**, tenta reusar o QR
-antigo (e é recusado) e, no fim, altera o registro direto no banco para mostrar o sistema
-acusando a adulteração.
+atividade, o aluno se inscreve, chega o dia, acontece o **check-in com um QR real**, a ONG
+confirma a presença, o certificado é emitido, a verificação pública confirma, a assinatura
+é conferida **fora do nosso código**, o QR antigo é recusado e, no fim, o registro é
+alterado direto no banco para mostrar a detecção — e depois **restaurado**, mostrando a
+verificação voltar a conferir.
+
+Esse último par é o que fecha o argumento: a detecção é sobre o dado, não uma marca que
+alguém colocou no registro.
+
+Ele leva cerca de 50 segundos, quase tudo esperando o QR vencer. Ao final, imprime o
+código do certificado pronto para a conferência independente do passo 2.
 
 > Ele escreve no banco de propósito. Rode só na base local.
 
@@ -67,6 +74,10 @@ Para provar que funciona **offline**, salve a prova e desligue a internet:
 python scripts/verificar_certificado.py CODIGO --salvar prova.json
 python scripts/verificar_certificado.py --arquivo prova.json
 ```
+
+Para mostrar que não é teatro, edite uma letra do `textoAssinado` dentro do `prova.json` e
+rode de novo: a resposta vira **ASSINATURA NÃO CONFERE**. O script sai com código `0`
+quando confere e `1` quando não — dá para usar em automação.
 
 O que o script faz cabe em três linhas: carrega a chave pública, pega o texto assinado e
 pede à biblioteca de criptografia que confira a assinatura. Nenhum dos nossos serviços
