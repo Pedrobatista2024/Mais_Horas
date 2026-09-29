@@ -45,6 +45,11 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
+      # As migrations rodam de verdade: a suíte monta o schema a partir dos
+      # modelos, então um erro aqui só apareceria no deploy.
+      - run: alembic upgrade head
+      - run: alembic downgrade base
+      - run: alembic upgrade head
       - run: pytest -q
 
   frontend:

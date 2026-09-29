@@ -13,8 +13,6 @@ Revises: 0001
 
 from __future__ import annotations
 
-from alembic import op
-
 from app.db.migration_utils import executar_script
 
 revision = "0002"
@@ -51,8 +49,8 @@ ALTER TABLE usuarios ALTER COLUMN senha_hash SET NOT NULL;
 
 
 def upgrade() -> None:
-    executar_script(op, CRIAR)
+    executar_script(CRIAR)
 
 
 def downgrade() -> None:
-    executar_script(op, DESFAZER)
+    executar_script(DESFAZER)
