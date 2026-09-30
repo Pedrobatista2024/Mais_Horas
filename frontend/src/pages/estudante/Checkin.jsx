@@ -13,6 +13,12 @@ import { api, codigoDoErro, mensagemDoErro } from "../../services/api";
 import { notifyError } from "../../utils/notify";
 
 /**
+ * Quanto o check-in espera pela localização antes de seguir sem ela. O QR vale
+ * 30 s (mais 10 de folga), então esperar muito aqui faria o código vencer.
+ */
+const LIMITE_DA_LOCALIZACAO = 4000;
+
+/**
  * Resultados que a tela trata de formas diferentes.
  *
  * Código vencido **não é erro do aluno**: o QR roda a cada 30 segundos, então
@@ -79,8 +85,15 @@ export default function Checkin() {
       // se falsifica. Se o aluno negar, o check-in segue sem ela.
       posicao = await new Promise((ok) => {
         if (!navigator.geolocation) return ok(null);
+        // O `timeout` da API só começa a contar depois que a pessoa responde
+        // o aviso de permissão. Com o aviso ignorado, a promessa nunca
+        // resolvia: a tela girava para sempre e o código do QR vencia na
+        // espera. Este relógio é nosso e corre desde já.
+        const desistir = setTimeout(() => ok(null), LIMITE_DA_LOCALIZACAO);
         navigator.geolocation.getCurrentPosition(
-          (p) => ok(p), () => ok(null), { timeout: 4000 });
+          (p) => { clearTimeout(desistir); ok(p); },
+          () => { clearTimeout(desistir); ok(null); },
+          { timeout: LIMITE_DA_LOCALIZACAO, maximumAge: 60_000 });
       });
     } catch {
       posicao = null;
