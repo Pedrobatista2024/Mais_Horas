@@ -496,9 +496,11 @@ Decisões:
   Workspace da instituição. Conta pessoal entra igual, só não ganha o selo.
 - **Sem credencial configurada, o botão não existe** e as rotas respondem `503`. Botão que
   leva a erro é pior que botão ausente.
-- **O app do Google fica em modo "Testing"** (até 100 usuários listados, sem revisão e sem
-  custo). Publicar exigiria verificar o domínio no Search Console, e o endereço atual é um
-  subdomínio da Microsoft — abrir ao público passa por registrar um domínio próprio.
+- **O app do Google está publicado ("In production"), aberto a qualquer conta.** A revisão
+  do Google — com verificação de domínio e política de privacidade — só vale para escopos
+  sensíveis (Gmail, Drive, Agenda). Pedimos apenas `openid`, `email` e `profile`, que são
+  básicos: publicar é imediato, sem revisão e sem custo. A primeira versão ficou em
+  "Testing" por precaução, e a limitação de 100 contas de teste não existe mais.
 
 ---
 
