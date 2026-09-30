@@ -246,6 +246,23 @@ async def test_evento_de_hoje_antes_de_comecar(cliente, sessao):
     assert "Praia do Futuro" in destaque["mensagem"]
 
 
+async def test_evento_de_hoje_que_ja_terminou_nao_e_mais_destaque(cliente, sessao):
+    """Encontrado em produção: às 17h o painel ainda dizia "é hoje, às 14:48"."""
+    aluno = await _usuario(sessao, "estudante", "Maria")
+    ong = await _usuario(sessao, "ong", "Verde Vida")
+    agora = atividade_service.agora()
+    if agora.hour < 1:
+        pytest.skip("logo depois da meia-noite não há horário passado no mesmo dia")
+    fim = (agora - timedelta(minutes=30)).time()
+    encerrada = await _atividade(sessao, ong, dia=atividade_service.hoje(),
+                                 inicio=time(0, 0), fim=fim)
+    await _inscrever(sessao, encerrada, aluno)
+
+    destaque = (await _painel_do_aluno(cliente, aluno))["destaque"]
+
+    assert destaque["tipo"] == "nenhum"
+
+
 async def test_certificado_novo_so_enquanto_o_aviso_nao_foi_lido(cliente, sessao):
     aluno = await _usuario(sessao, "estudante", "Maria")
     aviso = Notificacao(destinatario_id=aluno.id, tipo="certificado.emitido",

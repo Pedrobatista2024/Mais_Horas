@@ -65,10 +65,14 @@ async def _destaque_do_aluno(sessao: AsyncSession, aluno: Usuario) -> dict:
                 "mensagem": "Faça o check-in pelo QR Code exibido pela organização.",
                 "atividade": _no_fuso(acontecendo)}
 
-    hoje = atividade_service.hoje()
+    # "É hoje" vale até a atividade acabar, não até a meia-noite: sem o
+    # horário de término, a das 8h continuava anunciada como "é hoje" à noite,
+    # já esperando validação da ONG.
+    hoje, agora = atividade_service.hoje(), atividade_service.agora().time()
     de_hoje = await sessao.scalar(_primeira(
         _minhas_atividades(aluno, "confirmada")
-        .where(Atividade.situacao == "publicada", Atividade.data == hoje)
+        .where(Atividade.situacao == "publicada", Atividade.data == hoje,
+               Atividade.hora_fim >= agora)
     ))
     if de_hoje is not None:
         ja_fez_checkin = await sessao.scalar(
