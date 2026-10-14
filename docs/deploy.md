@@ -154,8 +154,10 @@ Em desenvolvimento, acrescente `http://localhost:3000/api/v1/auth/microsoft/reto
 
 1. **Certificados e segredos → Novo segredo do cliente.** O *valor* — não o ID do segredo —
    vai em `MICROSOFT_CLIENT_SECRET`; o *ID do aplicativo (cliente)*, da visão geral, vai em
-   `MICROSOFT_CLIENT_ID`. O segredo vence: anote a data.
-2. **Configuração de token → Adicionar declaração opcional → ID → `xms_edov`.** Sem ela,
+   `MICROSOFT_CLIENT_ID`. O segredo vence — o de produção foi criado com 24 meses e
+   **vence em outubro de 2028**; sem um novo antes disso, a entrada pela Microsoft para.
+2. **Configuração de token → Adicionar declaração opcional → ID → `email` e `xms_edov`**,
+   aceitando ligar a permissão `email` do Microsoft Graph. Sem a `xms_edov`,
    **toda conta de escola ou de trabalho é recusada**: é a claim que garante que o e-mail é
    do domínio do tenant (o "nOAuth", em `docs/autenticacao.md`). Se o portal não a listar,
    acrescente no **Manifesto**, em `optionalClaims.idToken`:
@@ -178,9 +180,10 @@ Em [**Settings → Developer settings → OAuth Apps → New OAuth App**](https:
 | Homepage URL | `https://<seu-endereço>` |
 | Authorization callback URL | `https://<seu-endereço>/api/v1/auth/github/retorno` |
 
-Gere um *client secret* e copie o par para `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`. Não
-há revisão nem limite de usuários. Um OAuth App aceita uma URL de retorno só: para
-desenvolvimento, crie um segundo app apontando para `http://localhost:3000`.
+O app aceita até 10 URLs de retorno: cadastre também
+`http://localhost:3000/api/v1/auth/github/retorno` para desenvolvimento. Gere um *client
+secret* — o GitHub pede confirmação em duas etapas antes — e copie o par para
+`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`. Não há revisão nem limite de usuários.
 
 ## Render (alternativa)
 
