@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 Papel = Literal["estudante", "ong"]  # superadmin nunca entra por aqui (RN-27)
+NomeDoProvedor = Literal["google", "microsoft", "github"]
 
 SENHA_MINIMA = 8
 
@@ -81,7 +82,7 @@ class MensagemSaida(BaseModel):
 
 
 class PapelEntrada(BaseModel):
-    """Escolha do perfil na primeira entrada pelo Google."""
+    """Escolha do perfil na primeira entrada por um provedor externo."""
 
     model_config = ConfigDict(extra="forbid")
 

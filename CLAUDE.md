@@ -140,9 +140,11 @@ O resumo curto:
 
 Leia [docs/autenticacao.md](docs/autenticacao.md) antes de mexer em qualquer coisa de login.
 
-- **Entrada pelo Google é `(provedor, sub)`, nunca e-mail**, e exige `email_verified`.
-  Conta criada por lá fica sem senha; o login por senha responde o erro genérico de
-  sempre.
+- **Entrada externa (Google, Microsoft, GitHub) é `(provedor, sub)`, nunca e-mail**, e
+  exige e-mail verificado pelo provedor — na Microsoft, isso só vale em conta pessoal ou
+  com a claim `xms_edov` (o "nOAuth"). Não afrouxe: é o que torna seguro vincular contas
+  por e-mail. Conta criada por lá fica sem senha; o login por senha responde o erro
+  genérico de sempre.
 - **O access token nunca vai para o `localStorage`.** Ele vive em memória, em
   `services/api.js`. Persistir o token desfaz a proteção contra XSS.
 - **O refresh token nunca aparece no corpo da resposta.** Só no cookie `httpOnly`.

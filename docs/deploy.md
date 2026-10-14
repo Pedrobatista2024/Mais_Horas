@@ -139,6 +139,49 @@ de "app não verificado" e **sem limite de usuários**.
 > `APP_URL`. Divergência de barra final ou de `http`/`https` faz o Google recusar com
 > `redirect_uri_mismatch`.
 
+### Configurar a entrada pela Microsoft
+
+No [portal do Azure](https://portal.azure.com), em **Microsoft Entra ID → Registros de
+aplicativo → Novo registro**:
+
+| Campo | Valor |
+|---|---|
+| Tipos de conta | Contas em qualquer diretório organizacional **e** contas pessoais da Microsoft |
+| URI de redirecionamento (Web) | `https://<seu-endereço>/api/v1/auth/microsoft/retorno` |
+
+Em desenvolvimento, acrescente `http://localhost:3000/api/v1/auth/microsoft/retorno` em
+**Autenticação**. Depois:
+
+1. **Certificados e segredos → Novo segredo do cliente.** O *valor* — não o ID do segredo —
+   vai em `MICROSOFT_CLIENT_SECRET`; o *ID do aplicativo (cliente)*, da visão geral, vai em
+   `MICROSOFT_CLIENT_ID`. O segredo vence: anote a data.
+2. **Configuração de token → Adicionar declaração opcional → ID → `xms_edov`.** Sem ela,
+   **toda conta de escola ou de trabalho é recusada**: é a claim que garante que o e-mail é
+   do domínio do tenant (o "nOAuth", em `docs/autenticacao.md`). Se o portal não a listar,
+   acrescente no **Manifesto**, em `optionalClaims.idToken`:
+   `{ "name": "xms_edov", "essential": false }`.
+
+`MICROSOFT_TENANT` fica `common`. O ID de um diretório específico restringiria a entrada às
+contas daquela organização.
+
+> Conta pessoal (Outlook, Hotmail) entra na hora. Conta da faculdade depende da política de
+> consentimento do tenant dela: se aparecer **"Aprovação do administrador necessária"**, a
+> TI da instituição precisa aprovar o app uma vez. Os escopos pedidos são só
+> `openid email profile`.
+
+### Configurar a entrada pelo GitHub
+
+Em [**Settings → Developer settings → OAuth Apps → New OAuth App**](https://github.com/settings/applications/new):
+
+| Campo | Valor |
+|---|---|
+| Homepage URL | `https://<seu-endereço>` |
+| Authorization callback URL | `https://<seu-endereço>/api/v1/auth/github/retorno` |
+
+Gere um *client secret* e copie o par para `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`. Não
+há revisão nem limite de usuários. Um OAuth App aceita uma URL de retorno só: para
+desenvolvimento, crie um segundo app apontando para `http://localhost:3000`.
+
 ## Render (alternativa)
 
 O `render.yaml` é um blueprint que provisiona os três serviços de uma vez: banco
@@ -191,6 +234,9 @@ client-side do React Router funcionar em links diretos (ex.: alguém abrindo
 | `REFRESH_TOKEN_DIAS` | não | Padrão `7` |
 | `EMAIL_MODO` | não | Padrão `console` (escreve no log) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | não | Credenciais OAuth. Sem elas, a entrada pelo Google fica desligada |
+| `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | não | Idem, para a Microsoft. Exige a claim opcional `xms_edov` no registro do app |
+| `MICROSOFT_TENANT` | não | Padrão `common` (contas pessoais e de organizações) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | não | Idem, para o GitHub |
 | `DOMINIO_INSTITUCIONAL` | não | Padrão `unicearense.edu.br`. Domínio que ganha o selo de vínculo verificado |
 | `CERTIFICADO_DEMONSTRACAO` | não | Código de um certificado de conta de teste, mostrado em "Ver uma verificação de exemplo" (T2). Vazio esconde o botão |
 | `APP_URL` | sim | URL pública da API |

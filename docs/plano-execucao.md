@@ -12,7 +12,7 @@ Como sair do código atual e chegar ao sistema definido em
 | **D38** | Estratégia | **Fatia vertical** — uma funcionalidade completa por vez, do banco à tela | O sistema roda o tempo todo; dá para demonstrar em qualquer momento |
 | **D39** | E-mail | **Console em dev**, provedor real só no deploy | Destrava a recuperação de senha (D15) sem depender de serviço externo agora |
 | **D40** | Testes | **pytest junto com cada fatia** | Resolve a dívida de cobertura em vez de arrastá-la; `smoke_test.py` é aposentado ao final |
-| **D41** | Acesso | **Entrada pelo Google**, com selo para o domínio da instituição | Tira a senha do nosso banco e, na conta institucional, faz o vínculo do aluno ser afirmado por terceiro |
+| **D41** | Acesso | **Entrada por Google, Microsoft e GitHub**, com selo para o domínio da instituição | Tira a senha do nosso banco e, na conta institucional, faz o vínculo do aluno ser afirmado por terceiro |
 
 ---
 
@@ -501,6 +501,35 @@ Decisões:
   sensíveis (Gmail, Drive, Agenda). Pedimos apenas `openid`, `email` e `profile`, que são
   básicos: publicar é imediato, sem revisão e sem custo. A primeira versão ficou em
   "Testing" por precaução, e a limitação de 100 contas de teste não existe mais.
+
+### Fatia 13 — Microsoft e GitHub ✅
+
+**Backend:** as rotas viraram `/auth/{provedor}/inicio|retorno|concluir`, com `provedor` em
+`google`, `microsoft` ou `github` — as do Google mantêm o mesmo endereço, então a credencial
+cadastrada continua valendo. Migration `0003` amplia o `CHECK` de `identidades_externas`.
+
+**Frontend:** `BotoesExternos` mostra um botão por provedor configurado; a volta é
+`/entrar/:provedor`; as mensagens de erro chegam como `?externo=…&provedor=…`.
+
+**Por que estes dois:** a Microsoft é a conta que a faculdade costuma dar ao aluno (e que
+muitas ONGs usam pelo programa para organizações sem fins lucrativos); o GitHub atende o
+aluno de computação. Ficaram de fora o **gov.br** (só órgão público obtém credencial), a
+**Apple** (US$ 99 por ano) e o **LinkedIn** (exige criar uma página de empresa para
+registrar o app).
+
+**Decisões que valem a leitura:**
+
+- **O GitHub fala OAuth 2.0 puro, sem OpenID Connect.** Não há `id_token` assinado: a
+  identidade vem da API do GitHub, consultada com o token que nós mesmos trocamos. É a
+  diferença entre autorização e autenticação, na prática.
+- **Na Microsoft, o e-mail de conta de escola não é confiável por padrão** (o "nOAuth"). Só
+  vale em conta pessoal ou com a claim `xms_edov`; sem ela a entrada é recusada, em vez de
+  arriscar entregar uma conta a quem escreveu o e-mail de outra pessoa no próprio tenant.
+- **Vínculo por e-mail entre provedores.** Mesmo e-mail verificado é a mesma pessoa: entrar
+  pelo GitHub com o e-mail de uma conta criada pelo Google acrescenta uma identidade, não
+  cria outra conta. Só é seguro porque os três exigem e-mail verificado.
+- **Um provedor não fecha o fluxo de outro.** O cookie de ida e o de cadastro pendente levam
+  o provedor; trocar no meio do caminho é tratado como estado inválido.
 
 ---
 

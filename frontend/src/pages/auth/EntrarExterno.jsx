@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button, Paper, SimpleGrid, Stack, Text, ThemeIcon } from "@mantine/core";
 import { IconBuildingCommunity, IconSchool } from "@tabler/icons-react";
 
+import { comArtigo, pelo, provedorPorChave, sujeito } from "../../components/auth/provedores";
 import AuthLayout from "../../components/layout/AuthLayout";
 import Loading from "../../components/ui/Loading";
 import { useAuth } from "../../context/AuthContext";
@@ -12,10 +13,10 @@ import { notifyError, notifySuccess } from "../../utils/notify";
 
 function Perfil({ icone: Icone, titulo, texto, cor, aoEscolher, enviando }) {
   return (
-    <Paper withBorder radius="md" p="lg" className="mh-card-hover">
+    <Paper withBorder p="lg" className="mh-card-hover">
       <Stack gap="sm" align="flex-start" h="100%">
-        <ThemeIcon size={46} radius="md" variant="light" color={cor}>
-          <Icone size={26} />
+        <ThemeIcon size={36} radius="md" variant="light" color={cor}>
+          <Icone size={20} />
         </ThemeIcon>
         <div>
           <Text fw={600}>{titulo}</Text>
@@ -31,18 +32,20 @@ function Perfil({ icone: Icone, titulo, texto, cor, aoEscolher, enviando }) {
 }
 
 /**
- * Volta do Google.
+ * Volta do provedor externo (Google, Microsoft ou GitHub).
  *
  * Dois caminhos: quem já tem conta chega com o cookie de sessão pronto e só
- * precisa recolhê-lo; quem é novo escolhe o perfil aqui, porque o Google não
- * sabe dizer se a pessoa é estudante ou organização.
+ * precisa recolhê-lo; quem é novo escolhe o perfil aqui, porque nenhum
+ * provedor sabe dizer se a pessoa é estudante ou organização.
  */
-export default function EntrarComGoogle() {
+export default function EntrarExterno() {
   const navegar = useNavigate();
+  const { provedor: chave } = useParams();
   const [parametros] = useSearchParams();
   const { entrar } = useAuth();
   const [enviando, setEnviando] = useState(null);
 
+  const p = provedorPorChave(chave);
   const novo = parametros.get("novo") === "1";
   const volta = destinoSeguro(parametros.get("volta"));
 
@@ -53,19 +56,19 @@ export default function EntrarComGoogle() {
       notifySuccess(`Bem-vindo(a), ${dados.usuario.nome}!`);
       navegar(volta ?? painelDe(dados.usuario.papel), { replace: true });
     } catch {
-      notifyError("A entrada pelo Google não foi concluída. Tente de novo.");
+      notifyError(`A entrada ${pelo(p)} não foi concluída. Tente de novo.`);
       navegar("/entrar", { replace: true });
     }
-  }, [entrar, navegar, volta]);
+  }, [entrar, navegar, volta, p]);
 
   useEffect(() => {
-    if (!novo) recolherSessao();
-  }, [novo, recolherSessao]);
+    if (p && !novo) recolherSessao();
+  }, [p, novo, recolherSessao]);
 
   async function escolher(papel) {
     setEnviando(papel);
     try {
-      const { data } = await api.post("/auth/google/concluir", { papel });
+      const { data } = await api.post(`/auth/${p.chave}/concluir`, { papel });
       entrar(data);
       notifySuccess("Conta criada. Bem-vindo(a) ao Mais Horas!");
       navegar(painelDe(data.usuario.papel), { replace: true });
@@ -75,11 +78,12 @@ export default function EntrarComGoogle() {
     }
   }
 
-  if (!novo) return <Loading label="Entrando com o Google..." />;
+  if (!p) return <Navigate to="/entrar" replace />;
+  if (!novo) return <Loading label={`Entrando ${comArtigo(p)}...`} />;
 
   return (
     <AuthLayout title="Falta só uma escolha"
-                subtitle="O Google confirmou quem você é. Como você usa o Mais Horas?">
+                subtitle={`${sujeito(p)} confirmou quem você é. Como você usa o Mais Horas?`}>
       <Stack gap="md">
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Perfil icone={IconSchool} cor="brand" titulo="Estudante"

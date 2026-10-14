@@ -51,13 +51,14 @@ async def cliente(sessao):
 def _identidade(email: str, *, sub: str | None = None, nome: str = "Maria Silva",
                 dominio: str | None = None) -> oauth_service.Identidade:
     return oauth_service.Identidade(
-        sub=sub or uuid.uuid4().hex, email=email, nome=nome, dominio=dominio)
+        provedor="google", sub=sub or uuid.uuid4().hex, email=email, nome=nome,
+        dominio=dominio)
 
 
 def _do_google(monkeypatch, identidade: oauth_service.Identidade) -> None:
     """Substitui só a conversa com o Google."""
-    async def falso(codigo: str, verificador: str) -> oauth_service.Identidade:
-        assert codigo and verificador
+    async def falso(p, codigo: str, verificador: str) -> oauth_service.Identidade:
+        assert p.chave == "google" and codigo and verificador
         return identidade
 
     monkeypatch.setattr(oauth_service, "identidade_do_codigo", falso)
@@ -69,7 +70,7 @@ async def _ida(cliente) -> tuple[str, str]:
     assert resposta.status_code == 307
     destino = resposta.headers["location"]
     estado = destino.split("state=")[1].split("&")[0]
-    return estado, resposta.cookies["mh_google"]
+    return estado, resposta.cookies["mh_externo"]
 
 
 async def _entrar(cliente, monkeypatch, identidade) -> object:
@@ -77,7 +78,7 @@ async def _entrar(cliente, monkeypatch, identidade) -> object:
     estado, cookie = await _ida(cliente)
     return await cliente.get("/api/v1/auth/google/retorno",
                              params={"code": "codigo-do-google", "state": estado},
-                             cookies={"mh_google": cookie})
+                             cookies={"mh_externo": cookie})
 
 
 # ===================== A ida =====================
@@ -93,7 +94,7 @@ async def test_ida_leva_ao_google_com_pkce(cliente):
     assert "scope=openid+email+profile" in destino
     # O segredo do cliente nunca sai daqui.
     assert "segredo-de-teste" not in destino
-    assert resposta.cookies["mh_google"]
+    assert resposta.cookies["mh_externo"]
 
 
 async def test_sem_configuracao_a_rota_avisa(cliente, monkeypatch):
@@ -102,8 +103,9 @@ async def test_sem_configuracao_a_rota_avisa(cliente, monkeypatch):
     resposta = await cliente.get("/api/v1/auth/google/inicio")
 
     assert resposta.status_code == 503
-    assert resposta.json()["codigo"] == "google_indisponivel"
-    assert (await cliente.get("/api/v1/auth/provedores")).json() == {"google": False}
+    assert resposta.json()["codigo"] == "externo_indisponivel"
+    assert (await cliente.get("/api/v1/auth/provedores")).json() == {
+        "google": False, "microsoft": False, "github": False}
 
 
 # ===================== O retorno =====================
@@ -115,10 +117,10 @@ async def test_estado_trocado_nao_passa(cliente, monkeypatch):
 
     resposta = await cliente.get("/api/v1/auth/google/retorno",
                                  params={"code": "x", "state": "outro-estado"},
-                                 cookies={"mh_google": cookie})
+                                 cookies={"mh_externo": cookie})
 
     assert resposta.status_code == 303
-    assert "google=google_estado_invalido" in resposta.headers["location"]
+    assert "externo=externo_estado_invalido" in resposta.headers["location"]
 
 
 async def test_retorno_sem_cookie_nao_passa(cliente, monkeypatch):
@@ -131,7 +133,7 @@ async def test_retorno_sem_cookie_nao_passa(cliente, monkeypatch):
     resposta = await cliente.get("/api/v1/auth/google/retorno",
                                  params={"code": "x", "state": estado})
 
-    assert "google=google_estado_invalido" in resposta.headers["location"]
+    assert "externo=externo_estado_invalido" in resposta.headers["location"]
 
 
 async def test_desistencia_no_google_volta_sem_barulho(cliente):
@@ -139,7 +141,7 @@ async def test_desistencia_no_google_volta_sem_barulho(cliente):
                                  params={"error": "access_denied"})
 
     assert resposta.status_code == 303
-    assert resposta.headers["location"].endswith("/entrar?google=cancelado")
+    assert resposta.headers["location"].endswith("/entrar?externo=cancelado&provedor=google")
 
 
 # ===================== Conta nova =====================
@@ -149,7 +151,7 @@ async def test_conta_nova_pede_o_papel_antes_de_existir(cliente, sessao, monkeyp
     resposta = await _entrar(cliente, monkeypatch, _identidade("nova@gmail.com"))
 
     assert resposta.headers["location"].endswith("/entrar/google?novo=1")
-    assert resposta.cookies["mh_google_cadastro"]
+    assert resposta.cookies["mh_externo_cadastro"]
     # Nada foi criado ainda: a pessoa ainda pode desistir na tela seguinte.
     assert await sessao.scalar(
         select(Usuario).where(Usuario.email == "nova@gmail.com")) is None
@@ -161,7 +163,7 @@ async def test_concluir_cria_a_conta_com_o_papel_escolhido(cliente, sessao, monk
 
     criada = await cliente.post(
         "/api/v1/auth/google/concluir", json={"papel": "ong"},
-        cookies={"mh_google_cadastro": retorno.cookies["mh_google_cadastro"]})
+        cookies={"mh_externo_cadastro": retorno.cookies["mh_externo_cadastro"]})
 
     assert criada.status_code == 201
     corpo = criada.json()
@@ -181,7 +183,7 @@ async def test_concluir_cria_a_conta_com_o_papel_escolhido(cliente, sessao, monk
 async def test_conta_sem_senha_nao_entra_por_senha(cliente, monkeypatch):
     retorno = await _entrar(cliente, monkeypatch, _identidade("nova@gmail.com"))
     await cliente.post("/api/v1/auth/google/concluir", json={"papel": "estudante"},
-                       cookies={"mh_google_cadastro": retorno.cookies["mh_google_cadastro"]})
+                       cookies={"mh_externo_cadastro": retorno.cookies["mh_externo_cadastro"]})
 
     resposta = await cliente.post("/api/v1/auth/entrar",
                                   json={"email": "nova@gmail.com", "senha": SENHA})
@@ -195,7 +197,7 @@ async def test_papel_de_admin_e_recusado(cliente, monkeypatch):
 
     resposta = await cliente.post(
         "/api/v1/auth/google/concluir", json={"papel": "superadmin"},
-        cookies={"mh_google_cadastro": retorno.cookies["mh_google_cadastro"]})
+        cookies={"mh_externo_cadastro": retorno.cookies["mh_externo_cadastro"]})
 
     assert resposta.status_code == 400
 
@@ -205,7 +207,7 @@ async def test_concluir_sem_cadastro_pendente(cliente):
                                   json={"papel": "estudante"})
 
     assert resposta.status_code == 400
-    assert resposta.json()["codigo"] == "google_estado_invalido"
+    assert resposta.json()["codigo"] == "externo_estado_invalido"
 
 
 # ===================== Conta conhecida =====================
@@ -215,7 +217,7 @@ async def test_segunda_entrada_reaproveita_a_conta(cliente, sessao, monkeypatch)
     identidade = _identidade("maria@gmail.com")
     retorno = await _entrar(cliente, monkeypatch, identidade)
     await cliente.post("/api/v1/auth/google/concluir", json={"papel": "estudante"},
-                       cookies={"mh_google_cadastro": retorno.cookies["mh_google_cadastro"]})
+                       cookies={"mh_externo_cadastro": retorno.cookies["mh_externo_cadastro"]})
 
     de_novo = await _entrar(cliente, monkeypatch, identidade)
 
@@ -258,7 +260,7 @@ async def test_conta_suspensa_nao_entra_pelo_google(cliente, sessao, monkeypatch
 
     resposta = await _entrar(cliente, monkeypatch, _identidade("maria@gmail.com"))
 
-    assert "google=conta_suspensa" in resposta.headers["location"]
+    assert "externo=conta_suspensa&provedor=google" in resposta.headers["location"]
 
 
 # ===================== Selo institucional =====================
@@ -269,7 +271,7 @@ async def test_dominio_da_faculdade_vira_vinculo_verificado(cliente, sessao, mon
         f"maria@{INSTITUCIONAL}", dominio=INSTITUCIONAL))
     criada = await cliente.post(
         "/api/v1/auth/google/concluir", json={"papel": "estudante"},
-        cookies={"mh_google_cadastro": retorno.cookies["mh_google_cadastro"]})
+        cookies={"mh_externo_cadastro": retorno.cookies["mh_externo_cadastro"]})
 
     usuario_id = uuid.UUID(criada.json()["usuario"]["id"])
     assert await oauth_service.vinculo_institucional(sessao, usuario_id) == INSTITUCIONAL
@@ -284,7 +286,7 @@ async def test_conta_pessoal_nao_ganha_selo(cliente, sessao, monkeypatch):
     retorno = await _entrar(cliente, monkeypatch, _identidade("maria@gmail.com"))
     criada = await cliente.post(
         "/api/v1/auth/google/concluir", json={"papel": "estudante"},
-        cookies={"mh_google_cadastro": retorno.cookies["mh_google_cadastro"]})
+        cookies={"mh_externo_cadastro": retorno.cookies["mh_externo_cadastro"]})
 
     usuario_id = uuid.UUID(criada.json()["usuario"]["id"])
 
@@ -299,7 +301,7 @@ async def test_perfil_do_aluno_nasce_junto(cliente, sessao, monkeypatch):
     retorno = await _entrar(cliente, monkeypatch, _identidade("maria@gmail.com"))
     criada = await cliente.post(
         "/api/v1/auth/google/concluir", json={"papel": "estudante"},
-        cookies={"mh_google_cadastro": retorno.cookies["mh_google_cadastro"]})
+        cookies={"mh_externo_cadastro": retorno.cookies["mh_externo_cadastro"]})
 
     usuario_id = uuid.UUID(criada.json()["usuario"]["id"])
 

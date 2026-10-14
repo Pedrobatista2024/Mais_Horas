@@ -89,16 +89,17 @@ frontend/src/
                        AuthLayout, PublicPage (verificação)
     portal/            Secao, Passo, CartaoOng, NumerosDeImpacto, ChamadaFinal,
                        PaginaDePublico, ConteudoDoPortal, navegacao.js, impacto.js
-    atividade/         CartaoAtividade, SituacaoBadge, situacoes.js,
-                       BotaoInscricao
+    atividade/         CartaoAtividade (vitrine), LinhaAtividade (lista da ONG),
+                       SituacaoBadge, situacoes.js, BotaoInscricao
+    auth/              BotoesExternos, IconesProvedores, provedores.js
     perfil/            FotoPerfil
     notificacao/       Sino (cabeçalho), ItemDeAviso, eventos.js
     painel/            Destaque (faixa do topo de E1/O1), destaques.js
     admin/             TarjaEspelho (topo do PainelLayout no "entrar como")
     ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, StatCard,
-                       ActionCard, WelcomeBanner, BrandMark, BrandIcon, ClockGlyph
+                       ActionCard, BrandMark, BrandIcon, ClockGlyph
   pages/
-    auth/              Entrar, CriarConta, EsqueciSenha, RedefinirSenha
+    auth/              Entrar, CriarConta, EntrarExterno, EsqueciSenha, RedefinirSenha
     perfil/            MeuPerfil (serve aos dois papéis)
     Notificacoes.jsx   todos os avisos, com filtro de não lidas
     admin/             VisaoGeral, Auditoria, Usuarios, DetalheUsuario, Ongs,
@@ -138,6 +139,7 @@ endpoint inexistente, e tela quebrada é pior que tela ausente.
 | `/vagas/:id` | público | Detalhe público (E3 com `base="/vagas"`) |
 | `/entrar` | público | Entrar. `?volta=` leva de volta à tela de origem |
 | `/criar-conta` | público | Criar conta. `?papel=` pré-seleciona o perfil; `?volta=` vale só para estudante |
+| `/entrar/:provedor` | público | Volta do Google, da Microsoft ou do GitHub. Com `?novo=1`, escolha do perfil |
 | `/esqueci-senha` | público | Pedir redefinição |
 | `/redefinir-senha` | público | Definir nova senha |
 | `/verificar` | público | `T6` Verificar certificado — campo de código |

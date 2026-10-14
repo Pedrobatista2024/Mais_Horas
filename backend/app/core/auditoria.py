@@ -28,6 +28,7 @@ ACOES = {
     "sessao.encerrada", "sessao.reuso_detectado", "sessoes.revogadas",
     "senha.redefinicao_disparada", "senha.redefinida", "perfil.atualizado",
     "conta.suspensa", "conta.reativada", "conta.vinculada_google",
+    "conta.vinculada_microsoft", "conta.vinculada_github",
     # Atividade
     "atividade.rascunho_criado", "atividade.publicada", "atividade.editada",
     "atividade.editada_por_admin", "atividade.cancelada", "atividade.excluida",

@@ -4,7 +4,8 @@ import { Anchor, Button, Group, PasswordInput, Stack, Text, TextInput } from "@m
 import { useForm } from "@mantine/form";
 import { IconLock, IconMail } from "@tabler/icons-react";
 
-import BotaoGoogle from "../../components/auth/BotaoGoogle";
+import BotoesExternos from "../../components/auth/BotoesExternos";
+import { comArtigo, pelo, provedorOuGenerico, sujeito } from "../../components/auth/provedores";
 import AuthLayout from "../../components/layout/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
 import { destinoSeguro, painelDe } from "../../routes/destinos";
@@ -12,11 +13,11 @@ import { api, mensagemDoErro } from "../../services/api";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
 const MOTIVOS = {
-  conta_suspensa: "Esta conta está suspensa. Procure a administração.",
-  google_email_nao_verificado:
-    "Esta conta Google não tem o e-mail verificado, então não dá para entrar por ela.",
-  google_estado_invalido: "A entrada pelo Google demorou demais. Tente de novo.",
-  padrao: "Não foi possível entrar com o Google. Tente de novo.",
+  conta_suspensa: () => "Esta conta está suspensa. Procure a administração.",
+  externo_email_nao_verificado: (p) =>
+    `${sujeito(p)} não confirmou o e-mail desta conta, então não dá para entrar por ela.`,
+  externo_estado_invalido: (p) => `A entrada ${pelo(p)} demorou demais. Tente de novo.`,
+  padrao: (p) => `Não foi possível entrar ${comArtigo(p)}. Tente de novo.`,
 };
 
 /** T7 — Entrar. Ponto de acesso único para os três perfis (D9). */
@@ -30,14 +31,16 @@ export default function Entrar() {
   const volta = destinoSeguro(parametros.get("volta"))
     ?? destinoSeguro(local.state?.de?.pathname);
 
-  // A volta do Google traz o motivo quando algo deu errado: o texto fica aqui
-  // porque o redirecionamento não carrega corpo de resposta.
-  const falhaDoGoogle = parametros.get("google");
+  // A volta do provedor traz o motivo quando algo deu errado: o texto fica
+  // aqui porque o redirecionamento não carrega corpo de resposta.
+  const falhaExterna = parametros.get("externo");
+  const provedorDaFalha = parametros.get("provedor");
   useEffect(() => {
-    if (falhaDoGoogle && falhaDoGoogle !== "cancelado") {
-      notifyError(MOTIVOS[falhaDoGoogle] ?? MOTIVOS.padrao);
+    if (falhaExterna && falhaExterna !== "cancelado") {
+      const p = provedorOuGenerico(provedorDaFalha);
+      notifyError((MOTIVOS[falhaExterna] ?? MOTIVOS.padrao)(p));
     }
-  }, [falhaDoGoogle]);
+  }, [falhaExterna, provedorDaFalha]);
   const [enviando, setEnviando] = useState(false);
 
   const form = useForm({
@@ -91,7 +94,7 @@ export default function Entrar() {
             Entrar
           </Button>
 
-          <BotaoGoogle />
+          <BotoesExternos />
 
           <Text size="sm" c="dimmed" ta="center">
             Ainda não tem conta?{" "}

@@ -58,11 +58,19 @@ class Configuracao(BaseSettings):
     # ===== Modo "entrar como" (D13, RN-31) =====
     espelho_minutos: int = 30
 
-    # ===== Entrada pelo Google (D41) =====
-    # Vazios: o botão não aparece e as rotas respondem 503. O projeto roda sem.
+    # ===== Entrada por provedor externo (D41) =====
+    # Cada par vazio esconde o botão daquele provedor e faz as rotas dele
+    # responderem 503. O projeto roda sem nenhum.
     google_client_id: str = ""
     google_client_secret: str = ""
-    # Domínio do Workspace da instituição: quem entra por ele ganha o selo de
+    microsoft_client_id: str = ""
+    microsoft_client_secret: str = ""
+    # `common`: contas pessoais e de trabalho ou escola. Um tenant específico
+    # restringiria a uma organização só.
+    microsoft_tenant: str = "common"
+    github_client_id: str = ""
+    github_client_secret: str = ""
+    # Domínio da instituição: quem o comprova pelo provedor ganha o selo de
     # vínculo verificado. Vazio desliga o selo.
     dominio_institucional: str = "unicearense.edu.br"
 

@@ -110,10 +110,10 @@ Banco em `snake_case`, **JSON em `camelCase`**. A tradução mora em um único l
 |---|---|:---:|---|
 | `POST` | `/auth/cadastro` | 🌐 | Cria conta e inicia sessão. **Rate limit** |
 | `POST` | `/auth/entrar` | 🌐 | Autentica. **Rate limit** |
-| `GET` | `/auth/provedores` | 🌐 | Quais entradas sociais o servidor oferece: `{ "google": true }` |
-| `GET` | `/auth/google/inicio` | 🌐 | Redireciona ao Google (code + PKCE). Guarda `state` em cookie curto |
-| `GET` | `/auth/google/retorno` | 🌐 | Volta do Google. Grava o cookie de sessão e redireciona a `/entrar/google`; conta nova vai para `/entrar/google?novo=1` |
-| `POST` | `/auth/google/concluir` | 🌐 | Cria a conta com o papel escolhido (`estudante` ou `ong`). Exige o cookie de cadastro pendente |
+| `GET` | `/auth/provedores` | 🌐 | Quais entradas externas o servidor oferece: `{ "google": true, "microsoft": true, "github": false }` |
+| `GET` | `/auth/{provedor}/inicio` | 🌐 | `provedor` é `google`, `microsoft` ou `github`. Redireciona ao provedor (code + PKCE) e guarda `state` em cookie curto. **Rate limit** |
+| `GET` | `/auth/{provedor}/retorno` | 🌐 | Volta do provedor. Grava o cookie de sessão e redireciona a `/entrar/{provedor}`; conta nova vai para `/entrar/{provedor}?novo=1`; falha vai para `/entrar?externo={codigo}&provedor={provedor}` |
+| `POST` | `/auth/{provedor}/concluir` | 🌐 | Cria a conta com o papel escolhido (`estudante` ou `ong`). Exige o cookie de cadastro pendente **do mesmo provedor** |
 | `POST` | `/auth/renovar` | 🍪 | Rotaciona a sessão pelo cookie |
 | `POST` | `/auth/sair` | 🍪 | Revoga a família e limpa o cookie |
 | `POST` | `/auth/senha/esqueci` | 🌐 | Dispara o e-mail de redefinição. **Rate limit** |
@@ -150,6 +150,11 @@ O refresh **não aparece no corpo** — vai no cookie.
 | `conta_suspensa` | `403` |
 | `sessao_invalida` | `401` na renovação |
 | `token_expirado` | `400` na redefinição |
+| `externo_indisponivel` | `503` — provedor sem credencial configurada neste servidor |
+| `externo_estado_invalido` | `400` — ida vencida, `state` trocado ou cookie de outro provedor |
+| `externo_recusou` | `400` — o provedor não confirmou a troca do código, ou a resposta não confere |
+| `externo_email_nao_verificado` | `400` — o provedor não garante o e-mail da conta |
+| `conta_ja_criada` | `409` — o cadastro pendente já virou conta; basta entrar de novo |
 
 ---
 
@@ -661,6 +666,7 @@ hora torna a busca inútil.
 | `senha.redefinida` | Senha trocada |
 | `perfil.atualizado` | Perfil salvo |
 | `conta.suspensa` / `conta.reativada` | Ação do admin |
+| `conta.vinculada_google` / `_microsoft` / `_github` | Identidade externa ligada a uma conta que já existia (mesmo e-mail verificado) |
 
 ### Atividade
 

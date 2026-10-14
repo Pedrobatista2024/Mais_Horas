@@ -6,7 +6,7 @@ import {
 import { useForm } from "@mantine/form";
 import { IconLock, IconMail, IconUser } from "@tabler/icons-react";
 
-import BotaoGoogle from "../../components/auth/BotaoGoogle";
+import BotoesExternos from "../../components/auth/BotoesExternos";
 import AuthLayout from "../../components/layout/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
 import { destinoSeguro, painelDe } from "../../routes/destinos";
@@ -125,7 +125,7 @@ export default function CriarConta() {
             Criar conta
           </Button>
 
-          <BotaoGoogle rotulo="Criar conta com o Google" />
+          <BotoesExternos acao="Criar conta" />
 
           <Text size="sm" c="dimmed" ta="center">
             Já tem conta?{" "}

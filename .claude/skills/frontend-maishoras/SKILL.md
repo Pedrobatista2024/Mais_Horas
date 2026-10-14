@@ -24,13 +24,16 @@ Stack: **React 19 + Vite + Mantine v8** (`@mantine/core`, `/hooks`, `/form`, `/d
    - `ui/EmptyState` — estado vazio (`icon`, `title`, `description`, `action`)
    - `ui/Loading` — spinner centralizado (`label`)
    - `ui/ConfirmarAcao` — modal de confirmação, com motivo obrigatório quando preciso
-   - `ui/WelcomeBanner` — faixa azul do topo dos painéis
    - `ui/BrandMark` / `ui/BrandIcon` — logo "MaisHoras"
-   - `atividade/CartaoAtividade` — cartão de atividade (`atividade`, `rodape`, `aoClicar`)
+   - `atividade/CartaoAtividade` — cartão de atividade, para a **vitrine** (`atividade`, `rodape`, `aoClicar`)
+   - `atividade/LinhaAtividade` — atividade como **linha**, para quem administra: uma ação
+     visível (`acao`) e o resto no menu (`menu`). Vai dentro de um `Box className="mh-lista"`
    - `atividade/SituacaoBadge` — selo da situação da atividade
    - `atividade/BotaoInscricao` — decide sozinho o botão a partir do estado do servidor
    - `painel/Destaque` — faixa da ação mais urgente em E1 e O1
    - `portal/` — peças das páginas públicas (`Secao`, `CartaoOng`, `ChamadaFinal`…)
+   - `auth/BotoesExternos` — entrada por Google, Microsoft e GitHub; só mostra o provedor
+     que o servidor tem configurado (`acao="Criar conta"` muda o texto)
 3. **Layouts:** `PainelLayout` (área logada, AppShell + navbar), `PortalLayout` (portal
    público), `AuthLayout` (login/registro), `PublicPage` (verificação de certificado).
 4. **Dados:** `useFetch(url)` para GET simples, `useListagem(url, params)` para listas
@@ -44,16 +47,31 @@ Stack: **React 19 + Vite + Mantine v8** (`@mantine/core`, `/hooks`, `/form`, `/d
 
 ## Paleta (tema em src/theme.js)
 
-- `brand` (verde, primária, shade 6 `#27ae60`) — ações principais, identidade
-- `navy` (azul, shade 6 `#2e5aac`) — área/itens da ONG
-- `clay` (terracota) — destaques secundários (ex.: badge de carga horária)
-- `ink` (cinza-esverdeado) — textos/neutros
-- Texto secundário: `c="dimmed"`. Títulos de seção: `fw={800}` ou eyebrow `tt="uppercase" c="brand.7"`.
+- `brand` (azul royal, primária, `primaryShade` 7 `#1839b0`) — ações principais, identidade
+- `navy` (azul escuro, shade 7 `#21397e`) — área/itens da ONG
+- `clay` (âmbar, shade 6 `#ef9504`) — destaque secundário (badge de carga horária, CTA do portal)
+- `ink` (cinza-azulado) — textos/neutros
+- Texto secundário: `c="dimmed"`.
+
+## Tom visual: ferramenta sóbria
+
+A interface foi refeita para **não** ter cara de modelo pronto. Mantenha:
+
+- **Cor marca estado e ação, não enfeite.** Número de `StatCard` não leva cor; botão
+  secundário é `variant="default"`; uma ação principal por tela.
+- **Pesos 600 e 700.** Nada de `fw={800}`/`900`. Títulos de página vêm do tema (`Title order={1}`).
+- **Rótulo acima do título é discreto:** `<Text size="xs" c="dimmed">`. Sem caixa alta
+  colorida em cima de cada título — é o que faz todas as telas parecerem a mesma.
+- **Raio médio** (o padrão do tema). `radius="lg"`/`"xl"` só em avatar redondo.
+- **Lista de gestão é linha, não cartão.** Cartão com pilha de botões vira parede; use
+  `LinhaAtividade` / `.mh-lista` + `.mh-linha`.
+- **Sem gradiente, sombra grande ou cartão flutuando** sobre foto.
 
 ## Classes CSS utilitárias (src/index.css)
 
 - `.mh-page-band` — superfície de conteúdo (cartão grande de página)
-- `.mh-card-hover` — hover elevado em cartões clicáveis
+- `.mh-card-hover` — hover discreto (borda e fundo) em cartões clicáveis
+- `.mh-lista` / `.mh-linha` / `.mh-linha-seta` — lista em linhas com borda única
 - `.mh-topbar`, `.mh-sidebar`, `.mh-main`, `.mh-app-shell` — chrome do AppShell
 - `.mh-auth-page`, `.mh-public-page` — fundo das páginas públicas
 - `.mh-nav-button[data-active]` — item de navegação

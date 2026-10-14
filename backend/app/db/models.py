@@ -398,14 +398,16 @@ class IdentidadeExterna(Base):
     """
     Conta de provedor externo ligada a um usuário (D41).
 
-    A chave é o par (provedor, `sub`), nunca o e-mail: o `sub` do Google é
-    estável e único, enquanto o e-mail pode ser trocado ou reatribuído pelo
-    administrador do domínio.
+    A chave é o par (provedor, `sub`), nunca o e-mail: o `sub` é estável e
+    único dentro de cada provedor, enquanto o e-mail pode ser trocado ou
+    reatribuído pelo administrador do domínio. Uma pessoa pode ter várias —
+    Google e GitHub, por exemplo — ligadas à mesma conta.
     """
 
     __tablename__ = "identidades_externas"
     __table_args__ = (
-        CheckConstraint("provedor IN ('google')", name="identidades_provedor_valido"),
+        CheckConstraint("provedor IN ('google', 'microsoft', 'github')",
+                        name="identidades_provedor_valido"),
         UniqueConstraint("provedor", "sub", name="identidades_unica"),
         Index("idx_identidades_usuario", "usuario_id"),
     )
@@ -417,8 +419,9 @@ class IdentidadeExterna(Base):
     provedor: Mapped[str] = mapped_column(Text, nullable=False)
     sub: Mapped[str] = mapped_column(Text, nullable=False)
     email: Mapped[str] = mapped_column(Text, nullable=False)
-    # Domínio do Google Workspace, quando houver: é ele que prova o vínculo
-    # institucional. Conta pessoal vem sem.
+    # Domínio institucional comprovado pelo provedor, quando houver: o `hd` do
+    # Google, o domínio verificado da Microsoft, um e-mail verificado no GitHub.
+    # É ele que sustenta o selo de vínculo. Conta pessoal vem sem.
     dominio: Mapped[str | None] = mapped_column(Text)
     criado_em: Mapped[datetime] = _criado()
     ultimo_acesso_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

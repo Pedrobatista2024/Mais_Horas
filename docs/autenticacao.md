@@ -128,24 +128,44 @@ existem na base só pela diferença da resposta.
 - **Papéis na rota**: `Estudante`, `Ong` e `Admin` são declarados na assinatura do endpoint,
   não checado no meio da lógica — some a classe de bug de esquecer a verificação.
 
-## Entrada pelo Google (D41)
+## Entrada por provedor externo (D41)
 
-*Authorization code* com PKCE, tudo do lado do servidor. O navegador nunca vê token do
-Google: o código volta para a API, que o troca pelo `id_token`, confere a assinatura
-contra as chaves públicas do Google e só então abre a sessão **normal** do Mais Horas —
-mesmo access token, mesmo refresh em cookie.
+Google, Microsoft e GitHub. *Authorization code* com PKCE, tudo do lado do servidor e igual
+para os três: o navegador nunca vê token de provedor. O código volta para a API, que o
+troca, descobre quem é a pessoa e só então abre a sessão **normal** do Mais Horas — mesmo
+access token, mesmo refresh em cookie.
 
-- `state` em cookie assinado protege contra CSRF de login; o PKCE protege o código
-  interceptado. Os dois expiram em 10 minutos.
+| | Google | Microsoft | GitHub |
+|---|---|---|---|
+| Protocolo | OpenID Connect | OpenID Connect | **OAuth 2.0 puro** |
+| A identidade vem de | `id_token` assinado | `id_token` assinado | API (`/user`, `/user/emails`) |
+| `sub` guardado | `sub` | `sub` (único por app) | `id` numérico — o `login` muda |
+| E-mail aceito quando | `email_verified` | conta pessoal, ou `xms_edov` verdadeiro | principal **e** verificado |
+| Selo institucional | `hd` do Workspace | domínio do e-mail verificado | algum e-mail verificado no domínio |
+
+- `state` e verificador PKCE viajam num cookie assinado (`mh_externo`, 10 minutos), que
+  carrega também o provedor: a ida ao Google não fecha a volta da Microsoft.
 - A identidade guardada é `(provedor, sub)`, em `identidades_externas`. O e-mail é copiado
   junto, mas **não** é chave.
-- `email_verified` é obrigatório. `hd` (domínio do Workspace) é o que sustenta o selo de
-  vínculo institucional.
+- **E-mail verificado é obrigatório nos três**, e é isso que torna seguro vincular por
+  e-mail: quem já tem conta — com senha ou por outro provedor — e entra com o mesmo e-mail
+  ganha mais uma identidade na mesma conta, sem duplicar.
+- **Microsoft e o "nOAuth".** Em conta de trabalho ou escola, o `email` do token é escrito
+  pelo administrador do tenant e não é verificado: qualquer um que crie um tenant põe nele
+  o e-mail de outra pessoa. Por isso ele só vale em conta pessoal (a Microsoft verificou no
+  cadastro) ou com a claim opcional `xms_edov`, que diz que o domínio do e-mail pertence ao
+  tenant. Fora disso, a entrada é recusada. O emissor é conferido contra o `tid` do próprio
+  token, porque com `common` ele muda de tenant para tenant.
+- **O GitHub não tem `id_token`.** Sem assinatura para conferir, a confiança vem de o token
+  ter sido trocado por nós, servidor a servidor, com o nosso segredo, por HTTPS. O GitHub
+  responde erro na troca com status `200`: é a falta do `access_token` que o denuncia.
+- Conta nova não nasce no retorno: nenhum provedor sabe se a pessoa é estudante ou ONG. Os
+  dados ficam num cookie assinado (`mh_externo_cadastro`, 15 minutos) até a escolha.
 - Conta criada por aqui fica **sem senha**. O login por senha responde
   `credenciais_invalidas`, como para qualquer senha errada: dizer "esta conta é do Google"
   entregaria a estranhos como a pessoa entra.
-- Sem `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`, as rotas respondem `503` e o botão não
-  aparece.
+- Cada provedor só existe com o seu par `*_CLIENT_ID` / `*_CLIENT_SECRET`. Sem ele, as rotas
+  daquele provedor respondem `503` e o botão não aparece.
 
 ## Sessão espelho ("entrar como")
 

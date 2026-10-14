@@ -349,22 +349,23 @@ Refresh tokens, com rotação e detecção de reuso.
 
 ### `identidades_externas` (D41)
 
-Conta de provedor externo ligada a um usuário.
+Conta de provedor externo ligada a um usuário. Uma pessoa pode ter mais de uma: Google e
+GitHub com o mesmo e-mail verificado apontam para a mesma conta.
 
 | Coluna | Tipo | Regra |
 |---|---|---|
 | `usuario_id` | `UUID` | FK `usuarios`, `ON DELETE CASCADE` |
-| `provedor` | `TEXT` | hoje só `google` |
+| `provedor` | `TEXT` | `google`, `microsoft` ou `github` (`CHECK`) |
 | `sub` | `TEXT` | identificador estável no provedor |
 | `email` | `TEXT` | cópia do e-mail no provedor, **não** é chave |
-| `dominio` | `TEXT` | `hd` do Workspace, quando houver — sustenta o selo institucional |
+| `dominio` | `TEXT` | domínio institucional comprovado pelo provedor: `hd` do Google, domínio verificado da Microsoft, e-mail verificado no GitHub. Sustenta o selo |
 | `ultimo_acesso_em` | `TIMESTAMPTZ` | atualizado a cada entrada |
 
 `UNIQUE (provedor, sub)` é a chave de busca. O e-mail muda no provedor e, em domínio
 corporativo, pode ser reatribuído a outra pessoa — usá-lo como chave transformaria isso em
 troca silenciosa de dono da conta.
 
-`usuarios.senha_hash` passa a aceitar nulo: quem nasce pelo Google não tem senha.
+`usuarios.senha_hash` passa a aceitar nulo: quem nasce por provedor externo não tem senha.
 
 ## 4. Domínios
 
