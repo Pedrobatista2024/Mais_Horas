@@ -4,20 +4,26 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, Spacer, PageBreak, NextPageTemplate
+import pathlib
+
+from reportlab.platypus import Image, Paragraph, Spacer, PageBreak, NextPageTemplate
 from reportlab.platypus.tableofcontents import TableOfContents
 
 import diagramas as dg
 from documento import E, F, FB, LARG_UTIL, p, h1, h2, figura, quadro, tabela
 
 L = LARG_UTIL
+PASTA = pathlib.Path(__file__).resolve().parent
 
 
 # ===================== Pré-textuais =====================
 
 def capa():
+    # Mesma marca e tamanho da capa dos outros trabalhos da turma.
+    marca = Image(str(PASTA / "unic.jpg"), width=4 * cm, height=4 * cm * 85 / 298)
     return [
-        Spacer(1, 0.5 * cm),
+        marca,
+        Spacer(1, 0.7 * cm),
         Paragraph("CENTRO UNIVERSITÁRIO CEARENSE — UniC", E["capa_inst"]),
         Paragraph("CURSO DE SISTEMAS DE INFORMAÇÃO", E["capa_inst"]),
         Spacer(1, 3.5 * cm),
@@ -30,7 +36,7 @@ def capa():
         Paragraph("DOCUMENTO DE REQUISITOS DE UMA PLATAFORMA DE GESTÃO "
                   "DE HORAS DE EXTENSÃO COM CERTIFICAÇÃO VERIFICÁVEL "
                   "POR QR CODE", E["capa_sub"]),
-        Spacer(1, 6 * cm),
+        Spacer(1, 4.4 * cm),
         Paragraph("FORTALEZA — CE", E["capa_inst"]),
         Paragraph("2026", E["capa_inst"]),
         PageBreak(),
