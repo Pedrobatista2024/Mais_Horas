@@ -42,9 +42,11 @@ def estilos():
                                   alignment=TA_JUSTIFY, leftIndent=4 * cm,
                                   spaceBefore=6, spaceAfter=6, textColor=TINTA)
     e["h1"] = ParagraphStyle("h1", fontName=FB, fontSize=12, leading=ENTRE,
-                             spaceBefore=18, spaceAfter=12, textColor=TINTA)
+                             spaceBefore=18, spaceAfter=12, textColor=TINTA,
+                             keepWithNext=1)
     e["h2"] = ParagraphStyle("h2", fontName=FB, fontSize=12, leading=ENTRE,
-                             spaceBefore=12, spaceAfter=8, textColor=TINTA)
+                             spaceBefore=12, spaceAfter=8, textColor=TINTA,
+                             keepWithNext=1)
     e["h3"] = ParagraphStyle("h3", fontName=FI, fontSize=12, leading=ENTRE,
                              spaceBefore=10, spaceAfter=6, textColor=TINTA)
     e["capa_inst"] = ParagraphStyle("ci", fontName=FB, fontSize=12, leading=18,
@@ -166,17 +168,25 @@ def figura(desenho, titulo, fonte="Elaborado pelos autores (2026)."):
         desenho.scale(fator, fator)
         desenho.width *= fator
         desenho.height *= fator
-    return [
-        Paragraph(f"<b>Figura {_fig['n']}</b> — {titulo}", E["legenda"]),
-        desenho,
-        Paragraph(f"Fonte: {fonte}", E["fonte_fig"]),
-    ]
+    legenda = Paragraph(f"<b>Figura {_fig['n']}</b> — {titulo}", E["legenda"])
+    legenda.keepWithNext = 1
+    return [legenda, desenho, Paragraph(f"Fonte: {fonte}", E["fonte_fig"])]
+
+
+# Quadro até este tamanho não se divide: partido, deixava uma ou duas linhas
+# soltas, às vezes sozinhas numa página.
+LINHAS_SEM_QUEBRA = 16
 
 
 def quadro(titulo, dados, larguras, fonte="Elaborado pelos autores (2026)."):
     _tab["n"] += 1
-    return [
-        Paragraph(f"<b>Quadro {_tab['n']}</b> — {titulo}", E["legenda"]),
-        tabela(dados, larguras),
-        Paragraph(f"Fonte: {fonte}", E["fonte_fig"]),
-    ]
+    legenda = Paragraph(f"<b>Quadro {_tab['n']}</b> — {titulo}", E["legenda"])
+    t = tabela(dados, larguras)
+    # Encadeado por keepWithNext, e não por KeepTogether: o reportlab não junta
+    # um KeepTogether ao título de seção que vem antes, que ficava sozinho no
+    # pé da página. Quadro grande fica de fora: preso à legenda, pularia
+    # inteiro para a página seguinte e deixaria a da seção quase vazia.
+    if len(dados) <= LINHAS_SEM_QUEBRA:
+        legenda.keepWithNext = 1
+        t.keepWithNext = 1
+    return [legenda, t, Paragraph(f"Fonte: {fonte}", E["fonte_fig"])]

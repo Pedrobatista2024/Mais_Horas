@@ -131,7 +131,9 @@ def objetivos():
         "Especificar mecanismo de registro de presença resistente a fraude, baseado "
         "em código QR de validade temporária;",
         "Especificar mecanismo de verificação pública de certificados, apoiado em "
-        "assinatura digital;",
+        "assinatura digital e conferível por ferramenta independente da plataforma;",
+        "Especificar a entrada por contas Google, Microsoft e GitHub sem enfraquecer "
+        "o controle de acesso;",
         "Definir o modelo de dados e o contrato da interface de programação que "
         "sustentam os processos especificados;",
         "Estabelecer os controles de segurança, autenticação e auditoria "
@@ -164,8 +166,14 @@ def metodologia():
           "funcionais, das regras de negócio e dos fluxos de uso — contemplando não "
           "apenas o caminho principal, mas também variações válidas e situações de erro."),
         p("Por fim, a quarta etapa traduziu a especificação em modelo de dados e "
-          "contrato de interface de programação, artefatos que orientarão diretamente "
+          "contrato de interface de programação, artefatos que orientaram diretamente "
           "a implementação."),
+        p("A construção ocorreu por fatias verticais, cada uma entregando interface, "
+          "serviço e testes de uma parte utilizável do sistema. Os requisitos surgidos "
+          "nesse percurso foram incorporados a esta versão do documento: a entrada por "
+          "provedores externos, a prova pública da assinatura dos certificados, os "
+          "painéis de entrada, o portal institucional e a publicação contínua em "
+          "servidor próprio."),
     ]
 
 
@@ -174,9 +182,11 @@ def metodologia():
 def escopo():
     incluido = [
         ["Módulo", "Funcionalidades contempladas"],
-        ["Portal público", "Apresentação da plataforma, listagem de atividades abertas "
-                           "e verificação pública de certificados"],
-        ["Contas e acesso", "Cadastro, autenticação, recuperação de senha e manutenção "
+        ["Portal público", "Apresentação da plataforma, listagem de atividades abertas, "
+                           "organizações parceiras, verificação pública de certificados "
+                           "e prova da assinatura"],
+        ["Contas e acesso", "Cadastro, autenticação por senha ou por conta Google, "
+                            "Microsoft e GitHub, recuperação de senha e manutenção "
                             "de perfil"],
         ["Atividades", "Criação em rascunho, publicação, edição, cancelamento e "
                        "encerramento"],
@@ -185,7 +195,10 @@ def escopo():
         ["Presença", "Registro por leitura de código QR rotativo e confirmação pela "
                      "organização"],
         ["Certificação", "Emissão assinada digitalmente, verificação pública e revogação"],
-        ["Administração", "Console operacional com auditoria de todas as ações do sistema"],
+        ["Painéis e avisos", "Painel de entrada com a próxima ação pendente e "
+                             "notificações dentro do sistema"],
+        ["Administração", "Console operacional, visualização como usuário em modo "
+                          "somente leitura e auditoria de todas as ações do sistema"],
     ]
     excluido = [
         ["Item", "Justificativa"],
@@ -199,6 +212,13 @@ def escopo():
          "A plataforma não intermedeia pagamento, doação ou qualquer valor"],
         ["Avaliação mútua entre participantes",
          "Não é essencial ao problema de comprovação de horas"],
+        ["Entrada por gov.br, Apple e LinkedIn",
+         "O gov.br concede credencial apenas a órgão público; a Apple exige "
+         "assinatura anual paga; o LinkedIn exige página de empresa para registrar "
+         "o aplicativo"],
+        ["Assinatura no padrão ICP-Brasil",
+         "Exigiria certificado digital pago em nome da instituição; a assinatura "
+         "Ed25519 própria já permite a conferência pública e independente"],
     ]
     itens = [h1("4", "Escopo do sistema"), h2("4.1", "Escopo incluído")]
     itens += quadro("Módulos contemplados pela primeira versão", incluido,
@@ -215,7 +235,8 @@ def atores():
     dados = [
         ["Ator", "Autenticação", "Objetivo no sistema"],
         ["Visitante", "Não requer",
-         "Conhecer a plataforma e criar conta"],
+         "Conhecer a plataforma, as vagas abertas e as organizações parceiras, e "
+         "criar conta"],
         ["Estudante", "Requer",
          "Encontrar atividades, participar e comprovar suas horas de extensão"],
         ["Organização", "Requer",
@@ -224,21 +245,27 @@ def atores():
          "Confirmar a autenticidade de um certificado apresentado"],
         ["Administrador", "Requer",
          "Operar, auditar e destravar o sistema"],
+        ["Provedor de identidade", "Sistema externo",
+         "Confirmar a identidade e o e-mail de quem entra com conta Google, "
+         "Microsoft ou GitHub"],
     ]
     itens = [h1("5", "Atores do sistema")]
-    itens.append(p("O sistema reconhece cinco atores, dos quais três possuem conta "
-                   "autenticada. O <b>verificador</b> merece destaque: embora não "
-                   "possua cadastro, é o ator que justifica a existência da "
-                   "plataforma, pois é para ele que a verificação pública de "
-                   "certificados foi projetada."))
+    itens.append(p("O sistema reconhece seis atores. Três possuem conta autenticada, "
+                   "dois atuam sem cadastro e um é sistema externo. O "
+                   "<b>verificador</b> merece destaque: embora não possua cadastro, "
+                   "é o ator que justifica a existência da plataforma, pois é para "
+                   "ele que a verificação pública de certificados foi projetada."))
     itens += quadro("Atores e seus objetivos", dados,
                     [3.2 * cm, 2.8 * cm, L - 6 * cm])
     itens.append(p("O <b>administrador</b> é operador da plataforma, e não usuário do "
                    "domínio: não se inscreve em atividades nem publica vagas. Sua conta "
-                   "não pode ser criada pelo formulário público de cadastro, sendo "
-                   "gerada exclusivamente por comando executado no servidor ou por "
-                   "outro administrador já existente."))
-    itens.append(PageBreak())
+                   "não pode ser criada pelo formulário público de cadastro nem pela "
+                   "entrada externa, sendo gerada exclusivamente por comando executado "
+                   "no servidor ou por outro administrador já existente."))
+    itens.append(p("O <b>provedor de identidade</b> é ator secundário. Google, "
+                   "Microsoft e GitHub autenticam a pessoa em seus próprios sites e "
+                   "informam à plataforma um identificador estável e o e-mail "
+                   "verificado. A senha digitada no provedor nunca chega ao sistema."))
     itens += figura(dg.casos_de_uso(), "Diagrama de casos de uso")
     itens.append(PageBreak())
     return itens
@@ -246,57 +273,75 @@ def atores():
 
 # ===================== 6 Requisitos funcionais =====================
 
+# Numerados na montagem do quadro: inserir um requisito no módulo certo não
+# obriga a renumerar os seguintes à mão.
 RF = [
-    ("RF-01", "Cadastro", "Permitir a criação de conta de estudante ou de organização, "
+    ("Cadastro", "Permitir a criação de conta de estudante ou de organização, "
      "com nome, e-mail e senha", "Alta"),
-    ("RF-02", "Autenticação", "Permitir o acesso mediante e-mail e senha, "
+    ("Autenticação", "Permitir o acesso mediante e-mail e senha, "
      "direcionando o usuário conforme seu perfil", "Alta"),
-    ("RF-03", "Sessão", "Manter a sessão ativa entre acessos e renová-la "
+    ("Entrada externa", "Permitir a entrada e o cadastro com conta Google, "
+     "Microsoft ou GitHub, sem que a senha do provedor passe pela plataforma", "Alta"),
+    ("Entrada externa", "Solicitar a quem entra pela primeira vez por provedor "
+     "externo a escolha entre estudante e organização antes de criar a conta", "Alta"),
+    ("Vínculo", "Reunir na mesma conta as entradas por senha e por provedores "
+     "diferentes que comprovem o mesmo e-mail", "Média"),
+    ("Sessão", "Manter a sessão ativa entre acessos e renová-la "
      "automaticamente, sem interromper a navegação", "Alta"),
-    ("RF-04", "Senha", "Permitir a recuperação de senha esquecida por meio de "
+    ("Senha", "Permitir a recuperação de senha esquecida por meio de "
      "vínculo enviado ao e-mail cadastrado", "Alta"),
-    ("RF-05", "Perfil", "Permitir o preenchimento e a atualização dos dados de "
+    ("Perfil", "Permitir o preenchimento e a atualização dos dados de "
      "perfil, incluindo fotografia", "Média"),
-    ("RF-06", "Atividade", "Permitir que a organização crie atividades em rascunho "
+    ("Perfil", "Exibir selo de vínculo institucional quando o provedor externo "
+     "comprovar domínio da instituição de ensino", "Baixa"),
+    ("Atividade", "Permitir que a organização crie atividades em rascunho "
      "e as publique quando concluídas", "Alta"),
-    ("RF-07", "Atividade", "Permitir a edição e o cancelamento de atividades pela "
+    ("Atividade", "Permitir a edição e o cancelamento de atividades pela "
      "organização responsável", "Alta"),
-    ("RF-08", "Vitrine", "Exibir publicamente as atividades disponíveis, com busca "
+    ("Vitrine", "Exibir publicamente as atividades disponíveis, com busca "
      "por título, local e organização", "Alta"),
-    ("RF-09", "Inscrição", "Permitir que o estudante se inscreva em atividades "
+    ("Portal", "Exibir publicamente as organizações parceiras e indicadores da "
+     "plataforma calculados a partir da base", "Média"),
+    ("Inscrição", "Permitir que o estudante se inscreva em atividades "
      "com vagas disponíveis", "Alta"),
-    ("RF-10", "Inscrição", "Permitir que a organização exija aprovação prévia das "
-     "inscrições, decidindo individualmente", "Alta"),
-    ("RF-11", "Inscrição", "Permitir que o estudante cancele sua inscrição até o "
+    ("Inscrição", "Permitir que a organização exija aprovação prévia das "
+     "inscrições, decidindo individualmente ou em lote", "Alta"),
+    ("Inscrição", "Permitir que o estudante cancele sua inscrição até o "
      "início da atividade", "Média"),
-    ("RF-12", "Presença", "Gerar código QR de validade temporária durante a "
+    ("Presença", "Gerar código QR de validade temporária durante a "
      "atividade, para registro de presença", "Alta"),
-    ("RF-13", "Presença", "Permitir que o estudante registre presença pela leitura "
-     "do código QR exibido pela organização", "Alta"),
-    ("RF-14", "Presença", "Permitir o registro manual de presença para estudantes "
+    ("Presença", "Permitir que o estudante registre presença pela leitura "
+     "do código QR exibido pela organização ou pela digitação do código", "Alta"),
+    ("Presença", "Permitir o registro manual de presença para estudantes "
      "sem acesso a dispositivo móvel", "Alta"),
-    ("RF-15", "Presença", "Permitir que a organização confirme ou ajuste as "
+    ("Presença", "Permitir que a organização confirme ou ajuste as "
      "presenças antes de encerrar a atividade", "Alta"),
-    ("RF-16", "Certificado", "Emitir certificado assinado digitalmente para cada "
+    ("Certificado", "Emitir certificado assinado digitalmente para cada "
      "presença confirmada, ao encerrar a atividade", "Alta"),
-    ("RF-17", "Certificado", "Permitir ao estudante consultar e obter seus "
+    ("Certificado", "Permitir ao estudante consultar e obter seus "
      "certificados em formato PDF com código QR", "Alta"),
-    ("RF-18", "Verificação", "Permitir que qualquer pessoa, sem autenticação, "
+    ("Verificação", "Permitir que qualquer pessoa, sem autenticação, "
      "verifique a autenticidade de um certificado", "Alta"),
-    ("RF-19", "Notificação", "Notificar o usuário, dentro do sistema, sobre "
+    ("Verificação", "Publicar o texto assinado, a assinatura e a chave pública de "
+     "cada certificado, para conferência sem depender da plataforma", "Alta"),
+    ("Notificação", "Notificar o usuário, dentro do sistema, sobre "
      "aprovações, cancelamentos e emissões", "Média"),
-    ("RF-20", "Painel", "Apresentar ao estudante o total de horas validadas, "
+    ("Painel", "Apresentar ao estudante o total de horas validadas, "
      "certificados e inscrições em andamento", "Média"),
-    ("RF-21", "Administração", "Disponibilizar console administrativo para gestão "
+    ("Painel", "Apresentar à organização os números de suas atividades e destacar, "
+     "nos dois painéis, a próxima ação pendente", "Média"),
+    ("Administração", "Disponibilizar console administrativo para gestão "
      "de contas, atividades e certificados", "Alta"),
-    ("RF-22", "Auditoria", "Registrar todas as ações relevantes executadas no "
+    ("Administração", "Permitir ao administrador visualizar a plataforma como "
+     "determinado usuário, em modo somente leitura", "Alta"),
+    ("Auditoria", "Registrar todas as ações relevantes executadas no "
      "sistema, em trilha somente de inserção", "Alta"),
 ]
 
 
 def requisitos_funcionais():
     dados = [["Código", "Módulo", "Descrição", "Prior."]]
-    dados += [[c, m, d, pr] for c, m, d, pr in RF]
+    dados += [[f"RF-{i:02d}", m, d, pr] for i, (m, d, pr) in enumerate(RF, 1)]
     itens = [h1("6", "Requisitos funcionais")]
     itens.append(p("Os requisitos funcionais descrevem o que o sistema deve fazer. "
                    "A coluna de prioridade indica a criticidade do requisito para a "
@@ -310,36 +355,46 @@ def requisitos_funcionais():
 # ===================== 7 Requisitos não funcionais =====================
 
 RNF = [
-    ("RNF-01", "Usabilidade", "A interface deve ser utilizável em telas a partir de "
+    ("Usabilidade", "A interface deve ser utilizável em telas a partir de "
      "375 pixels de largura, atendendo ao acesso por telefone celular"),
-    ("RNF-02", "Usabilidade", "Toda a interface e as mensagens de erro devem estar "
+    ("Usabilidade", "Toda a interface e as mensagens de erro devem estar "
      "em língua portuguesa"),
-    ("RNF-03", "Segurança", "As senhas devem ser armazenadas por meio de função de "
+    ("Usabilidade", "O registro de presença não deve aguardar indefinidamente a "
+     "localização: sem resposta em quatro segundos, o envio prossegue sem ela"),
+    ("Segurança", "As senhas devem ser armazenadas por meio de função de "
      "derivação de chave resistente (Argon2id), nunca em texto legível"),
-    ("RNF-04", "Segurança", "O token de acesso não deve ser persistido no navegador, "
+    ("Segurança", "O token de acesso não deve ser persistido no navegador, "
      "permanecendo apenas em memória"),
-    ("RNF-05", "Segurança", "O token de renovação deve trafegar exclusivamente em "
+    ("Segurança", "O token de renovação deve trafegar exclusivamente em "
      "cookie inacessível a scripts e ser armazenado apenas como resumo criptográfico"),
-    ("RNF-06", "Segurança", "Deve ser possível revogar qualquer sessão ativa a "
+    ("Segurança", "Deve ser possível revogar qualquer sessão ativa a "
      "partir do servidor"),
-    ("RNF-07", "Segurança", "A autenticidade do certificado deve ser verificável por "
+    ("Segurança", "A autenticidade do certificado deve ser verificável por "
      "assinatura digital, independentemente do arquivo apresentado"),
-    ("RNF-08", "Segurança", "Tentativas de autenticação devem ser limitadas por "
+    ("Segurança", "Tentativas de autenticação devem ser limitadas por "
      "origem, mitigando ataques de força bruta"),
-    ("RNF-09", "Integridade", "As restrições de unicidade e integridade referencial "
+    ("Segurança", "A entrada externa deve usar o fluxo de código de autorização com "
+     "PKCE e parâmetro de estado, sem expor credencial na URL"),
+    ("Segurança", "Credenciais dos provedores e chave privada de assinatura devem "
+     "residir apenas na configuração do servidor, fora do código e do banco"),
+    ("Segurança", "Toda comunicação deve ocorrer sob HTTPS, com certificado "
+     "renovado automaticamente"),
+    ("Integridade", "As restrições de unicidade e integridade referencial "
      "devem ser garantidas pelo banco de dados, e não apenas pela aplicação"),
-    ("RNF-10", "Auditabilidade", "A trilha de auditoria deve ser somente de inserção, "
+    ("Auditabilidade", "A trilha de auditoria deve ser somente de inserção, "
      "sem caminho de alteração ou exclusão para qualquer perfil"),
-    ("RNF-11", "Manutenibilidade", "O sistema deve manter separação entre camadas de "
+    ("Manutenibilidade", "O sistema deve manter separação entre camadas de "
      "apresentação, regra de negócio e acesso a dados"),
-    ("RNF-12", "Disponibilidade", "A verificação pública de certificados não deve "
+    ("Confiabilidade", "Nova versão só deve ser publicada após aprovação dos testes "
+     "automatizados e da aplicação e reversão das migrações de banco"),
+    ("Disponibilidade", "A verificação pública de certificados não deve "
      "depender de autenticação nem de sessão ativa"),
 ]
 
 
 def requisitos_nao_funcionais():
     dados = [["Código", "Categoria", "Descrição"]]
-    dados += [[c, cat, d] for c, cat, d in RNF]
+    dados += [[f"RNF-{i:02d}", cat, d] for i, (cat, d) in enumerate(RNF, 1)]
     itens = [h1("7", "Requisitos não funcionais")]
     itens.append(p("Os requisitos não funcionais estabelecem restrições de qualidade, "
                    "segurança e desempenho que o sistema deve observar."))
@@ -351,6 +406,8 @@ def requisitos_nao_funcionais():
 
 # ===================== 8 Regras de negócio =====================
 
+# Aqui a numeração é fixa: os casos de uso citam regras pelo código, então
+# regra nova entra no fim.
 RN = [
     ("RN-01", "Um estudante não pode possuir mais de uma inscrição ativa na mesma "
      "atividade"),
@@ -377,7 +434,8 @@ RN = [
      "simultâneas"),
     ("RN-15", "O registro de presença por código QR só é aceito durante a realização "
      "da atividade"),
-    ("RN-16", "Cada código QR de presença expira em aproximadamente trinta segundos"),
+    ("RN-16", "O código QR de presença é renovado a cada trinta segundos e aceito "
+     "por, no máximo, quarenta"),
     ("RN-17", "O registro de presença constitui evidência; a decisão final cabe à "
      "organização"),
     ("RN-18", "Todo certificado é assinado digitalmente no momento da emissão"),
@@ -395,6 +453,30 @@ RN = [
     ("RN-25", "O administrador pode revogar certificados, mas nunca emiti-los"),
     ("RN-26", "A suspensão de conta preserva o histórico, os certificados emitidos e "
      "a trilha de auditoria"),
+    ("RN-27", "A identidade externa é reconhecida pelo par provedor e identificador "
+     "estável; o e-mail nunca é chave de acesso"),
+    ("RN-28", "A entrada externa só é aceita com e-mail verificado pelo provedor"),
+    ("RN-29", "Na Microsoft, o e-mail de conta institucional só é aceito quando o "
+     "provedor atesta sua verificação; sem a atestação, a entrada é recusada"),
+    ("RN-30", "Entrada externa com e-mail já cadastrado vincula-se à conta "
+     "existente, sem criar outra"),
+    ("RN-31", "A conta nova por entrada externa só é criada após a escolha do "
+     "perfil; o cadastro pendente expira em quinze minutos"),
+    ("RN-32", "A conta criada por entrada externa não possui senha; a tentativa de "
+     "acesso por senha recebe a resposta genérica de credencial inválida"),
+    ("RN-33", "O selo de vínculo institucional decorre de domínio comprovado pelo "
+     "provedor, nunca de declaração do usuário"),
+    ("RN-34", "Provedor sem credencial configurada não é oferecido na interface"),
+    ("RN-35", "Certificado revogado mantém a assinatura válida; a verificação "
+     "informa a revogação separadamente da autenticidade"),
+    ("RN-36", "Indicadores públicos são calculados a partir da base, e valor zero "
+     "não é exibido"),
+    ("RN-37", "A organização só figura entre as parceiras depois de publicar ao "
+     "menos uma atividade"),
+    ("RN-38", "O destaque do painel segue prioridade definida pelo servidor, e o "
+     "evento do dia deixa de ser destacado quando termina"),
+    ("RN-39", "Na visualização como outro usuário, o código QR de presença não é "
+     "exibido, por constituir credencial"),
 ]
 
 

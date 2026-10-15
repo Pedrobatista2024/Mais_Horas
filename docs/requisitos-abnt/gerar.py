@@ -11,7 +11,8 @@ SAIDA = str(pathlib.Path(__file__).resolve().parents[2]
 
 historia = []
 historia += c1.capa()
-historia += c1.folha_rosto()
+# A folha de rosto (NBR 14724) saiu: lida em sequência, parecia a capa repetida.
+# Se a avaliação cobrar a norma à risca, basta voltar com c1.folha_rosto() aqui.
 historia += c1.sumario()
 historia += c1.introducao()
 historia += c1.objetivos()

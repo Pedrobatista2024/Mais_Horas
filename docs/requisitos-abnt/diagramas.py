@@ -8,6 +8,7 @@ from reportlab.graphics.shapes import (
     Drawing, Rect, String, Line, Ellipse, Circle, Polygon,
 )
 from reportlab.lib import colors
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 TINTA = colors.HexColor("#1a1a1a")
 CINZA = colors.HexColor("#5a5a5a")
@@ -73,22 +74,22 @@ def _cotovelo(d, x1, y1, xm, y2, x2, rotulo=None):
 # ===================== 1. Casos de uso =====================
 
 def casos_de_uso() -> Drawing:
-    d = Drawing(450, 430)
-    L, B, LB, AB = 118, 20, 214, 392
+    d = Drawing(450, 452)
+    B, AB, LB = 40, 404, 214
     d.add(Rect(LB - 96, B, 224, AB, fillColor=colors.white, strokeColor=BORDA, strokeWidth=1))
     _txt(d, LB + 16, B + AB - 14, "Sistema Mais Horas", 8.5, FB)
 
     # Ordenados para agrupar por ator e reduzir cruzamento.
     casos = [
-        (352, "Criar conta e|autenticar-se"),
-        (310, "Manter perfil"),
-        (268, "Inscrever-se em|atividade"),
-        (226, "Registrar presença|por QR Code"),
-        (184, "Publicar|atividade"),
-        (142, "Aprovar ou|recusar inscrição"),
-        (100, "Validar presenças e|emitir certificados"),
-        (58, "Verificar|certificado"),
-        (16, "Administrar e|auditar o sistema"),
+        (400, "Criar conta e|autenticar-se"),
+        (358, "Manter perfil"),
+        (316, "Inscrever-se em|atividade"),
+        (274, "Registrar presença|por QR Code"),
+        (232, "Publicar|atividade"),
+        (190, "Aprovar ou|recusar inscrição"),
+        (148, "Validar presenças e|emitir certificados"),
+        (106, "Verificar|certificado"),
+        (64, "Administrar e|auditar o sistema"),
     ]
     for cy, s in casos:
         d.add(Ellipse(LB + 16, cy, 100, 18, fillColor=colors.white,
@@ -104,23 +105,27 @@ def casos_de_uso() -> Drawing:
         for a, b, c, e in ((x, y + 19.5, x, y + 8), (x - 7, y + 16, x + 7, y + 16),
                            (x, y + 8, x - 6, y - 1), (x, y + 8, x + 6, y - 1)):
             d.add(Line(a, b, c, e, strokeColor=BORDA, strokeWidth=0.9))
-        _txt(d, x, y - 11, nome, 7.5, FB)
+        for i, parte in enumerate(nome.split("|")):
+            _txt(d, x, y - 11 - 9 * i, parte, 7.5, FB)
 
-    ator(38, 292, "Estudante")
-    ator(38, 120, "ONG")
-    ator(412, 60, "Verificador")
-    ator(412, 250, "Superadmin")
+    ator(38, 320, "Estudante")
+    ator(38, 160, "ONG")
+    ator(412, 368, "Provedor de|identidade")
+    ator(412, 200, "Verificador")
+    ator(412, 46, "Superadmin")
 
-    for cy in (352, 310, 268, 226):                       # Estudante
-        _seta(d, 52, 300, LB - 88, cy)
-    for cy in (352, 310, 184, 142, 100, 226):             # ONG
-        _seta(d, 52, 128, LB - 88, cy)
-    _seta(d, 398, 68, LB + 122, 58)                       # Verificador
-    for cy in (16, 58):                                   # Superadmin
-        _seta(d, 398, 258, LB + 122, cy, tracejada=True)
+    esq, dir_ = LB - 88, LB + 122       # onde as setas tocam as elipses
+    for cy in (400, 358, 316, 274):                       # Estudante
+        _seta(d, 52, 328, esq, cy)
+    for cy in (400, 358, 232, 190, 148, 274):             # ONG
+        _seta(d, 52, 168, esq, cy)
+    _seta(d, dir_, 400, 400, 384)                         # Provedor (secundário)
+    _seta(d, 404, 214, dir_, 106)                         # Verificador
+    for cy in (64, 106):                                  # Superadmin
+        _seta(d, 404, 62, dir_, cy, tracejada=True)
 
-    _txt(d, 225, 4, "Tracejado: acesso administrativo. O verificador atua sem "
-                    "possuir conta no sistema.", 7, F, CINZA)
+    _txt(d, 225, 12, "Tracejado: acesso administrativo. O verificador atua sem "
+                     "conta; o provedor de identidade é sistema externo.", 7, F, CINZA)
     return d
 
 
@@ -129,7 +134,8 @@ def casos_de_uso() -> Drawing:
 def der_principal() -> Drawing:
     d = Drawing(450, 580)
 
-    usu = ["PK id : UUID", "nome", "email  UK", "senha_hash", "papel", "situacao"]
+    usu = ["PK id : UUID", "nome", "email  UK", "senha_hash (opcional)", "papel",
+           "situacao"]
     b_usu = _caixa(d, 152, 575, 140, "usuarios", usu)
 
     est = ["PK,FK usuario_id", "nome_completo", "instituicao", "curso", "cidade, foto"]
@@ -169,22 +175,27 @@ def der_apoio() -> Drawing:
     b = 228 - altura_caixa(["PK id : UUID"])
 
     tabelas = [
-        (5, "tokens_sessao", ["PK id", "FK usuario_id", "token_hash UK",
-                              "familia_id", "expira_em", "usado_em", "em_nome_de"]),
-        (118, "tokens_redefinicao", ["PK id", "FK usuario_id", "token_hash UK",
-                                     "expira_em", "usado_em", "disparado_por"]),
-        (231, "notificacoes", ["PK id", "FK destinatario_id", "tipo", "titulo",
-                               "mensagem, link", "lida_em"]),
-        (344, "registros_auditoria", ["PK id BIGSERIAL", "ator_id", "em_nome_de_id",
-                                      "acao, entidade", "antes / depois", "ip",
-                                      "ocorrido_em"]),
+        ("tokens_sessao", ["PK id", "FK usuario_id", "token_hash UK",
+                           "familia_id", "expira_em", "usado_em", "em_nome_de"]),
+        ("tokens_redefinicao", ["PK id", "FK usuario_id", "token_hash UK",
+                                "expira_em", "usado_em", "disparado_por"]),
+        ("identidades_externas", ["PK id", "FK usuario_id", "provedor, sub",
+                                  "UK (provedor, sub)", "email", "dominio",
+                                  "ultimo_acesso_em"]),
+        ("notificacoes", ["PK id", "FK destinatario_id", "tipo", "titulo",
+                          "mensagem, link", "lida_em"]),
+        ("registros_auditoria", ["PK id BIGSERIAL", "ator_id", "em_nome_de_id",
+                                 "acao, entidade", "antes / depois", "ip",
+                                 "ocorrido_em"]),
     ]
-    for x, nome, linhas in tabelas:
-        _caixa(d, x, 140, 101, nome, linhas)
+    larg, vao = 86, 3
+    for i, (nome, linhas) in enumerate(tabelas):
+        _caixa(d, 2 + i * (larg + vao), 140, larg, nome, linhas)
 
-    for x in (55, 168, 281):
-        _seta(d, 225, b, x, 142, rotulo="1:N", dy=10)
-    _seta(d, 285, b + 4, 394, 142, tracejada=True, rotulo="sem FK", dy=10)
+    centro = [2 + i * (larg + vao) + larg / 2 for i in range(5)]
+    for i, x in enumerate(centro[:4]):
+        _seta(d, 190 + 20 * i, b, x, 142, rotulo="1:N", dy=10)
+    _seta(d, 285, b + 4, centro[4], 142, tracejada=True, rotulo="sem FK", dy=10)
 
     _txt(d, 225, 6, "registros_auditoria não tem chave estrangeira: a trilha "
                     "sobrevive à remoção da conta investigada.", 7, F, CINZA)
@@ -230,6 +241,74 @@ def fluxo_processo() -> Drawing:
     _txt(d, 225, 314, "Do anúncio ao certificado verificado", 8.5, FB, CINZA)
     _txt(d, 225, 8, "O QR do passo 5 rotaciona a cada 30 s; o do passo 8 é permanente.",
          7, F, CINZA)
+    return d
+
+
+def _rotulo_sobre(d, x, y, s):
+    """Rótulo com fundo branco, para cruzar uma linha de vida sem se misturar."""
+    lw = stringWidth(s, F, 7) + 6
+    d.add(Rect(x - lw / 2, y - 2.5, lw, 9, fillColor=colors.white, strokeColor=None))
+    _txt(d, x, y, s, 7)
+
+
+def fluxo_oauth() -> Drawing:
+    """Diagrama de sequência da entrada por provedor externo."""
+    d = Drawing(450, 300)
+    nav, api, prov = 62, 225, 388
+    for x, nome, destaque in ((nav, "Navegador", False), (api, "API Mais Horas", True),
+                              (prov, "Provedor", False)):
+        d.add(Rect(x - 52, 268, 104, 22, fillColor=CLARO if destaque else colors.white,
+                   strokeColor=BORDA, strokeWidth=0.9))
+        _txt(d, x, 276, nome, 8, FB)
+        vida = Line(x, 268, x, 22, strokeColor=CINZA, strokeWidth=0.6)
+        vida.strokeDashArray = [3, 2]
+        d.add(vida)
+
+    mensagens = [
+        (nav, api, "1. clica em Entrar com o provedor"),
+        (api, nav, "2. grava state e PKCE em cookie e redireciona"),
+        (nav, prov, "3. a pessoa se autentica no site do provedor"),
+        (prov, api, "4. retorno com código de uso único"),
+        (api, prov, "5. troca o código, o verificador e o segredo"),
+        (prov, api, "6. id_token ou access_token (GitHub)"),
+        (api, nav, "7. sessão aberta ou escolha do perfil"),
+    ]
+    y = 244
+    for x1, x2, rotulo in mensagens:
+        sentido = 1 if x2 > x1 else -1
+        _seta(d, x1 + 2 * sentido, y, x2 - 2 * sentido, y)
+        _rotulo_sobre(d, (x1 + x2) / 2, y + 5, rotulo)
+        y -= 31
+
+    _txt(d, 225, 8, "Os passos 2 a 4 passam pelo navegador; a troca do passo 5 é "
+                    "direta, entre servidores.", 7, F, CINZA)
+    return d
+
+
+def implantacao() -> Drawing:
+    """Onde cada parte roda e por onde chega uma versão nova."""
+    d = Drawing(450, 228)
+    d.add(Rect(110, 20, 220, 205, fillColor=CLARO, strokeColor=CINZA, strokeWidth=0.6))
+    _txt(d, 220, 214, "Máquina virtual no Microsoft Azure", 7.5, FB, CINZA)
+
+    b_nav = _caixa(d, 5, 200, 85, "Navegador", ["interface React"])
+    _caixa(d, 130, 200, 180, "Caddy", ["HTTPS com certificado renovado sozinho",
+                                       "entrega a interface e repassa /api"])
+    _caixa(d, 130, 138, 180, "API FastAPI", ["regras de negócio, assinatura Ed25519",
+                                             "e entrada externa"])
+    _caixa(d, 130, 76, 180, "PostgreSQL", ["sem porta exposta fora da máquina",
+                                           "cópia diária guardada por 14 dias"])
+    _caixa(d, 5, 98, 85, "GitHub Actions", ["testes", "migrações", "compilação"])
+    _caixa(d, 350, 138, 95, "Provedores", ["Google", "Microsoft", "GitHub"])
+
+    _seta(d, 90, b_nav + 16, 130, b_nav + 16, rotulo="HTTPS", dx=-10)
+    _seta(d, 220, 157, 220, 140, rotulo="/api", dx=14, dy=-3)
+    _seta(d, 220, 95, 220, 78)
+    _seta(d, 310, 129, 350, 129, rotulo="OAuth")
+    _seta(d, 90, 72, 130, 104, tracejada=True, rotulo="SSH", dx=-10, dy=6)
+
+    _txt(d, 225, 6, "Tracejado: publicação automática, feita só depois de testes, "
+                    "migrações e compilação aprovados.", 7, F, CINZA)
     return d
 
 
