@@ -243,8 +243,10 @@ export default function GerenciarAtividade() {
           </Box>
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 8 }} order={{ base: 2, md: 1 }}>
-          <Title order={2} fz="lg" mb="xs">Descrição</Title>
-          <Text maw={680} style={{ whiteSpace: "pre-wrap" }}>{atividade.descricao}</Text>
+          <Box className="mh-bloco" p={{ base: "md", sm: "lg" }}>
+            <Title order={2} fz="lg" mb="xs">Descrição</Title>
+            <Text maw={680} style={{ whiteSpace: "pre-wrap" }}>{atividade.descricao}</Text>
+          </Box>
         </Grid.Col>
       </Grid>
 

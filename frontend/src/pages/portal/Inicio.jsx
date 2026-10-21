@@ -50,13 +50,13 @@ const PERGUNTAS = [
 
 /** As três telas do caminho do aluno, capturadas do app rodando. */
 const TELAS = [
-  { tela: "/portal/telas/vitrine.webp", hora: "16:02", legenda: "Encontre a vaga",
+  { tela: "/portal/telas/vitrine.webp", hora: "16:58", legenda: "Encontre a vaga",
     texto: "Data, local e horas de cada atividade.",
     alt: "Tela Buscar atividades do app, com vagas e a carga horária de cada uma" },
-  { tela: "/portal/telas/presenca.webp", hora: "16:19", legenda: "Registre a presença",
+  { tela: "/portal/telas/presenca.webp", hora: "17:05", legenda: "Registre a presença",
     texto: "Pelo QR Code, no local da atividade.",
     alt: "Tela do app mostrando Presença registrada depois do check-in" },
-  { tela: "/portal/telas/certificados.webp", hora: "16:24", legenda: "Some suas horas",
+  { tela: "/portal/telas/certificados.webp", hora: "17:09", legenda: "Some suas horas",
     texto: "Certificados em PDF e o total validado.",
     alt: "Tela Certificados do app, com dois certificados e o total de 8 horas validadas" },
 ];

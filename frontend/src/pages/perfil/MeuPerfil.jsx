@@ -94,7 +94,9 @@ export default function MeuPerfil() {
                     ? "Estes dados aparecem na página pública da sua organização."
                     : "Nome completo, instituição e curso são o que sai no certificado."} />
 
-      <Stack gap="md" mb="xl">
+      {/* Sem aviso, nada de espaço: a pilha vazia empurrava o formulário. */}
+      <Stack gap="md" mb={perfil?.vinculoInstitucional || (!eOng && faltantes.length > 0)
+        ? "xl" : 0}>
         {perfil?.vinculoInstitucional && (
           <Alert icon={<IconSchool size={18} />} color="brand"
                  title="Vínculo institucional verificado">
@@ -112,7 +114,7 @@ export default function MeuPerfil() {
         )}
       </Stack>
 
-      <form onSubmit={form.onSubmit(salvar)}>
+      <form onSubmit={form.onSubmit(salvar)} className="mh-bloco mh-formulario">
         <SecaoDeFormulario titulo={eOng ? "Logo" : "Foto"}
                texto={eOng ? "Aparece na lista de organizações parceiras."
                            : "Opcional. Só as ONGs das suas inscrições veem."}>

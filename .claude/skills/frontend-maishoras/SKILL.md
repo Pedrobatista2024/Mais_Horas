@@ -38,7 +38,22 @@ O portal (páginas públicas) fala diferente da área logada:
   `ChamadaFinal` (azul-noite).
 - Fotos em `public/portal/`, com origem e licença em `LEIA-ME.md`. Foto nova: registre lá.
 
-A área logada continua ferramenta: sem Fraunces, sem foto, cantos de 8px.
+## Área logada: a mesma marca, com espaço para trabalhar
+
+A área logada usa a identidade do portal na moldura e deixa o miolo claro, porque é onde
+se lê e se trabalha:
+
+- Menu lateral azul-noite (`--mh-noite`) de altura inteira, com o logotipo claro
+  (`<BrandMark claro />`) no topo; item ativo é uma pílula branca. No celular o menu abre
+  sobre um véu escuro que fecha ao toque.
+- Fundo azul-claro (`--mh-azul-claro`) e conteúdo em blocos brancos de canto 16px
+  (`.mh-bloco`, `.mh-lista`). Nada de texto corrido solto no fundo azul: descrição,
+  formulário (`.mh-formulario`) e caderneta vão dentro de um bloco.
+- Título de página em Fraunces (o `PageHeader` já aplica). Títulos de seção continuam em
+  Plex.
+- Azul-noite no miolo só na **capa do painel** (`painel/CapaDoPainel`), em E1 e O1. Nas
+  outras telas, a cor fica na moldura.
+- Foto só nas telas de acesso (`AuthLayout`), nunca dentro da área logada.
 
 ## O que não fazer (cara de modelo pronto)
 
@@ -70,29 +85,35 @@ A área logada continua ferramenta: sem Fraunces, sem foto, cantos de 8px.
   no menu; `comSituacao={false}` quando a lista já é de uma situação só.
 - `atividade/BotaoInscricao` — decide o botão pelo estado do servidor; `compacto` no cartão.
 - `certificado/Caderneta` — horas por certificado, total com traço duplo.
-- `painel/Destaque` — a ação mais urgente; não é desenhado quando não há nada urgente.
+- `painel/CapaDoPainel` — capa azul-noite de E1 e O1: título em Fraunces, `children`
+  para a linha de situação, `lateral` para os números, `acao` e `rodape`.
+- `painel/Destaque` — a ação mais urgente, como faixa no `rodape` da capa; não é desenhado
+  quando não há nada urgente.
 - `portal/*` — `Secao` (título à esquerda, `nevoa`), `Passo`, `CartaoOng`,
   `ExemplarCertificado`, `ChamadaFinal`, `PaginaDePublico`.
 - `auth/BotoesExternos` — Google, Microsoft e GitHub, só os configurados no servidor.
 
 ## Layouts
 
-- `PainelLayout` (área logada): o conteúdo vive em `.mh-pagina` (1120px, margens
-  responsivas). **Página não define `maw`/`mx` no topo**: é o layout que alinha todas.
+- `PainelLayout` (área logada): menu azul-noite de altura inteira (`layout="alt"`), topo
+  só com avisos e conta, e o conteúdo em `.mh-pagina` (1120px, margens responsivas). **Página não define `maw`/`mx` no topo**: é o layout que alinha todas.
   Formulário e páginas de foco estreitam por dentro (`<Box maw={…}>`), alinhadas à esquerda.
 - `PortalLayout` (público): `Container size={LARGURA_DO_PORTAL}` de `portal/navegacao.js`.
-- `AuthLayout` (acesso): formulário à esquerda, certificado de exemplo à direita no
-  computador.
+- `AuthLayout` (acesso): formulário à esquerda; à direita, no computador, foto sob véu
+  azul-noite com o certificado de exemplo por cima.
 - `PublicPage` (verificação): topo mínimo, 760px.
 
 ## Classes de `src/index.css`
 
 - Tokens em `:root`: `--mh-tinta`, `--mh-tinta-2`, `--mh-tinta-3`, `--mh-royal`,
-  `--mh-hora*`, `--mh-nevoa`, `--mh-linha`, `--mh-linha-forte`, `--mh-foco`.
+  `--mh-hora*`, `--mh-nevoa`, `--mh-linha`, `--mh-linha-forte`, `--mh-foco`,
+  `--mh-noite`, `--mh-azul-claro`, `--mh-serif`.
 - `.mh-bloco` (superfície com fio), `.mh-lista` + `.mh-linha` (lista em linhas;
   `data-clicavel` dá hover e cursor), `.mh-link-titulo` (link que cobre o bloco; o que
   precisa continuar clicável por cima leva `.mh-acima-do-link`).
 - `.mh-num` (dígitos tabulares), `.mh-horas`, `.mh-data`, `.mh-caderneta`, `.mh-numeros`.
+- `.mh-capa*` (capa do painel), `.mh-formulario` + `.mh-secao-formulario` (formulário num
+  bloco branco só), `.mh-sidebar` / `.mh-nav-button` (menu azul-noite), `.mh-veu-menu`.
 - `.mh-abas-rolam` (abas que rolam de lado no celular), `.mh-secao`, `.mh-hero`,
   `.mh-exemplar`, `.mh-footer`, `.mh-qr`.
 

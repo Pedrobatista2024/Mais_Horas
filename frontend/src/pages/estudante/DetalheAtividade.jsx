@@ -126,12 +126,12 @@ export default function DetalheAtividade({ base = "/atividades" }) {
           <BotaoInscricao atividade={atividade} aoMudar={buscar} />
           <Group gap="xs" grow>
             {atividade.local && (
-              <Button component="a" href={mapa} target="_blank" rel="noreferrer"
+              <Button component="a" href={mapa} target="_blank" rel="noreferrer" px="xs"
                       variant="default" leftSection={<IconMapPin size={16} />}>
                 Como chegar
               </Button>
             )}
-            <Button variant="default" leftSection={<IconShare size={16} />}
+            <Button variant="default" leftSection={<IconShare size={16} />} px="xs"
                     onClick={compartilhar}>
               Compartilhar
             </Button>
@@ -186,8 +186,10 @@ export default function DetalheAtividade({ base = "/atividades" }) {
           <Box style={{ position: "sticky", top: 84 }}>{ficha}</Box>
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 8 }} order={{ base: 2, md: 1 }}>
-          <Title order={2} fz="lg" mb="xs">Sobre a atividade</Title>
-          <Text maw={680} style={{ whiteSpace: "pre-wrap" }}>{atividade.descricao}</Text>
+          <Box className="mh-bloco" p={{ base: "md", sm: "lg" }}>
+            <Title order={2} fz="lg" mb="xs">Sobre a atividade</Title>
+            <Text maw={680} style={{ whiteSpace: "pre-wrap" }}>{atividade.descricao}</Text>
+          </Box>
         </Grid.Col>
       </Grid>
     </>

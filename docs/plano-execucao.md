@@ -574,6 +574,12 @@ mudou:
   em âmbar, grande, na seção escura; perguntas frequentes em cartões. As quatro fotos são
   do Unsplash, com licença livre (`frontend/public/portal/LEIA-ME.md`), e são ilustrativas:
   devem dar lugar a fotos de ações reais quando houver.
+- **Área logada com a mesma marca do portal.** O menu lateral virou azul-noite, de
+  altura inteira e com o logotipo; o fundo, azul-claro, com o conteúdo em blocos brancos
+  de canto 16px; os títulos de página, Fraunces. Os painéis abrem com uma capa azul-noite:
+  a do aluno mostra as horas validadas em âmbar, a da ONG os três números, e a ação do
+  momento vira a faixa do pé. Entrar e criar conta ganharam a foto do portal sob o véu
+  azul. O miolo continua claro: é onde se lê e se trabalha.
 - **Painéis sem atalho repetido.** Os cartões que repetiam o menu lateral saíram. O painel
   do aluno ganhou a **caderneta de horas**: cada certificado numa linha, horas à direita e
   o total com traço duplo, como a ficha de horas que a coordenação já conhece.

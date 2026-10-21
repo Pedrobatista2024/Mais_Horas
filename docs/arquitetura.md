@@ -99,7 +99,8 @@ frontend/src/
     auth/              BotoesExternos, IconesProvedores, provedores.js
     perfil/            FotoPerfil
     notificacao/       Sino (cabeçalho), ItemDeAviso, eventos.js
-    painel/            Destaque (faixa do topo de E1/O1), destaques.js
+    painel/            CapaDoPainel (capa azul-noite de E1/O1), Destaque (faixa do
+                       pé da capa), destaques.js
     admin/             TarjaEspelho (topo do PainelLayout no "entrar como")
     ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, Numeros,
                        Horas, DataBloco, SecaoDeFormulario, BrandMark, ClockGlyph

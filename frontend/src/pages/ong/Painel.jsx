@@ -5,13 +5,12 @@ import {
   IconUsersGroup,
 } from "@tabler/icons-react";
 
+import CapaDoPainel from "../../components/painel/CapaDoPainel";
 import Destaque from "../../components/painel/Destaque";
 import { DESTAQUE_DA_ONG } from "../../components/painel/destaques";
 import DataBloco from "../../components/ui/DataBloco";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
-import Numeros from "../../components/ui/Numeros";
-import PageHeader from "../../components/ui/PageHeader";
 import { useAuth } from "../../context/AuthContext";
 import { useFetch } from "../../hooks/useFetch";
 import { formatHorario } from "../../utils/format";
@@ -39,11 +38,25 @@ function Pendencia({ icone: Icone, quantidade, singular, plural, para }) {
 }
 
 /**
+ * Um número da capa: o valor grande e, embaixo, o que ele conta. No HTML o
+ * rótulo vem antes (é o termo da lista); o CSS inverte a ordem na tela.
+ */
+function NumeroDaCapa({ valor, rotulos: [singular, plural] }) {
+  return (
+    <div>
+      <dt className="mh-capa-rotulo">{valor === 1 ? singular : plural}</dt>
+      <dd className="mh-capa-valor mh-num">{valor}</dd>
+    </div>
+  );
+}
+
+/**
  * O1 — Painel da ONG.
  *
- * O destaque (o que fazer agora) vem do servidor; embaixo, os números da
- * organização, o que está esperando uma decisão e as próximas atividades.
- * Os atalhos que repetiam o menu lateral saíram.
+ * A capa azul-noite traz os números da organização e, no pé, o destaque (o
+ * que fazer agora, escolhido pelo servidor). Embaixo, as próximas atividades
+ * e o que está esperando uma decisão. Os atalhos que repetiam o menu lateral
+ * saíram.
  */
 export default function Painel() {
   const { usuario } = useAuth();
@@ -59,30 +72,30 @@ export default function Painel() {
 
   return (
     <>
-      <PageHeader
-        title={usuario?.nome ?? "Painel"}
-        action={
-          <Button component={Link} to="/ong/atividades/nova"
-                  leftSection={<IconPlus size={17} />}>
+      <CapaDoPainel
+        titulo={usuario?.nome ?? "Seu painel"}
+        acao={
+          <Button component={Link} to="/ong/atividades/nova" variant="outline"
+                  color="gray.0" radius="xl" leftSection={<IconPlus size={17} />}>
             Nova atividade
           </Button>
         }
+        lateral={
+          <dl className="mh-capa-numeros">
+            <NumeroDaCapa valor={dados.atividadesPublicadas}
+                          rotulos={["atividade no ar", "atividades no ar"]} />
+            <NumeroDaCapa valor={dados.voluntariosEngajados}
+                          rotulos={["voluntário", "voluntários"]} />
+            <NumeroDaCapa valor={dados.certificadosEmitidos}
+                          rotulos={["certificado emitido", "certificados emitidos"]} />
+          </dl>
+        }
+        rodape={dados.destaque?.tipo !== "nenhum" && (
+          <Destaque destaque={dados.destaque} catalogo={DESTAQUE_DA_ONG} />
+        )}
       />
 
       <Stack gap={36}>
-        {dados.destaque?.tipo !== "nenhum" && (
-          <Destaque destaque={dados.destaque} catalogo={DESTAQUE_DA_ONG} />
-        )}
-
-        <Numeros itens={[
-          { rotulo: "Atividades no ar", valor: dados.atividadesPublicadas,
-            detalhe: "Publicadas ou acontecendo agora" },
-          { rotulo: "Voluntários", valor: dados.voluntariosEngajados,
-            detalhe: "Pessoas diferentes, não inscrições" },
-          { rotulo: "Certificados emitidos", valor: dados.certificadosEmitidos,
-            detalhe: "Sem contar os revogados" },
-        ]} />
-
         <SimpleGrid cols={{ base: 1, lg: temPendencia ? 2 : 1 }} spacing={40}
                     verticalSpacing={36}>
           <Box component="section">
@@ -110,8 +123,12 @@ export default function Painel() {
                       <Text size="sm" c="dimmed" lineClamp={1}>
                         {formatHorario(a.horaInicio, a.horaFim)}, {a.local}
                       </Text>
+                      {/* No celular a contagem desce para não espremer o título. */}
+                      <Text size="sm" c="dimmed" className="mh-num" hiddenFrom="sm">
+                        {a.vagasOcupadas}/{a.vagasMax} inscritos
+                      </Text>
                     </Box>
-                    <Text size="sm" c="dimmed" className="mh-num"
+                    <Text size="sm" c="dimmed" className="mh-num" visibleFrom="sm"
                           style={{ whiteSpace: "nowrap" }}>
                       {a.vagasOcupadas}/{a.vagasMax} inscritos
                     </Text>

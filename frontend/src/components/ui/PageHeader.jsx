@@ -7,7 +7,8 @@ import { useTitulo } from "../../hooks/useTitulo";
 /**
  * Cabeçalho de página: título, uma linha de contexto e as ações.
  *
- * Não tem rótulo miúdo acima do título: o menu lateral já diz em que área a
+ * O título é em Fraunces, a mesma letra dos títulos do portal: é o fio que
+ * liga a área logada à apresentação. Não tem rótulo miúdo acima do título: o menu lateral já diz em que área a
  * pessoa está, e uma etiqueta em cima de cada título faz todas as telas
  * parecerem a mesma. Quem desce um nível (uma atividade dentro da lista) ganha
  * o `voltar`, que diz para onde volta.
@@ -31,7 +32,7 @@ export default function PageHeader({ title, subtitle, action, voltar, badge, chi
       <Group justify="space-between" align="flex-start" gap="md" wrap="wrap">
         <Box style={{ flex: "1 1 320px", minWidth: 0 }}>
           <Group gap="sm" align="center" wrap="wrap">
-            <Title order={1}>{title}</Title>
+            <Title order={1} className="mh-serif" fz={{ base: 28, sm: 34 }}>{title}</Title>
             {badge}
           </Group>
           {subtitle && (

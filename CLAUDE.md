@@ -131,6 +131,8 @@ O resumo curto:
   âmbar.
 - **A largura e as margens da área logada vêm do `PainelLayout`** (classe `.mh-pagina`).
   Página não define `maw`/`mx` próprios no topo, senão as telas deixam de se alinhar.
+- **Na área logada o fundo é azul-claro e o conteúdo mora em bloco branco** (`.mh-bloco`,
+  `.mh-lista`, `.mh-formulario`). Azul-noite só no menu e na capa dos painéis.
 - **Erros da API com `mensagemDoErro(erro, padrão)`** de `services/api`, exibidos com
   `notifyError`. Nunca `alert()`.
 - **Sempre trate `carregando` com `<Loading />`** e lista vazia com `<EmptyState />`.

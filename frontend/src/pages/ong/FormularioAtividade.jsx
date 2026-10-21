@@ -229,7 +229,7 @@ export default function FormularioAtividade() {
         )}
       </Stack>
 
-      <form onSubmit={form.onSubmit((v) => salvar(v, false))}>
+      <form onSubmit={form.onSubmit((v) => salvar(v, false))} className="mh-bloco mh-formulario">
         <SecaoDeFormulario titulo="O que é"
                            texto="O título aparece na vitrine; a descrição, na página da vaga.">
           <TextInput label="Título" placeholder="Mutirão de limpeza da praia"

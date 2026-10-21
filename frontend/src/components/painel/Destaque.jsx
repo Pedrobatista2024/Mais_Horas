@@ -1,33 +1,34 @@
-import { Box, Button, Group, Stack, Text } from "@mantine/core";
+import { Box, Button, Group, Stack, Text, ThemeIcon } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 
 /**
- * A ação mais urgente do momento, no topo do painel.
+ * A ação mais urgente do momento, no pé da capa do painel.
  *
- * Uma barra só, com fio azul à esquerda: o que importa é o botão, e ele fica
- * sempre no mesmo lugar. Quando não há nada urgente o painel nem desenha a
- * barra — o destaque "nenhum" vira o vazio das listas abaixo.
+ * Uma faixa só, dentro do azul-noite: o que importa é o botão branco, e ele
+ * fica sempre no mesmo lugar. Quando não há nada urgente o painel nem desenha
+ * a faixa: o destaque "nenhum" vira o vazio das listas abaixo.
  */
 export default function Destaque({ destaque, catalogo }) {
   const navegar = useNavigate();
   const modelo = catalogo[destaque?.tipo] ?? catalogo.nenhum;
 
   return (
-    <Box className="mh-bloco" p="md" pl={20}
-         style={{ borderLeft: "3px solid var(--mh-royal)" }}
-         role="region" aria-label="O que fazer agora">
+    <Box className="mh-capa-destaque" role="region" aria-label="O que fazer agora">
       <Group justify="space-between" align="center" wrap="wrap" gap="md">
-        <Group gap="sm" wrap="nowrap" align="flex-start" style={{ flex: "1 1 320px" }}>
-          <modelo.icone size={22} stroke={1.75} color="var(--mh-royal)"
-                        style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
+        <Group gap="md" wrap="nowrap" align="flex-start" style={{ flex: "1 1 320px" }}>
+          <ThemeIcon size={40} radius="xl" color="rgba(255,255,255,0.12)" c="white"
+                     style={{ flexShrink: 0 }} aria-hidden="true">
+            <modelo.icone size={20} stroke={1.75} />
+          </ThemeIcon>
           <Stack gap={2}>
-            <Text fw={600}>{destaque?.titulo}</Text>
+            <Text fw={600} c="white">{destaque?.titulo}</Text>
             {destaque?.mensagem && (
-              <Text size="sm" c="dimmed">{destaque.mensagem}</Text>
+              <Text size="sm" c="rgba(255,255,255,0.75)">{destaque.mensagem}</Text>
             )}
           </Stack>
         </Group>
-        <Button onClick={() => navegar(modelo.destino(destaque))}>
+        <Button variant="white" radius="xl" px="lg"
+                onClick={() => navegar(modelo.destino(destaque))}>
           {modelo.rotulo}
         </Button>
       </Group>

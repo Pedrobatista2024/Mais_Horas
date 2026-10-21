@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Stack, Text } from "@mantine/core";
 import ClockGlyph from "./ClockGlyph";
 
@@ -10,8 +11,15 @@ export default function BrandMark({
   compact = false,
   showTagline = false,
   align = "flex-start",
+  claro = false,
 }) {
+  // Sobre fundo escuro (menu lateral): "Mais" branco e "Horas" azul-claro.
+  const corMais = claro ? "white" : "ink.8";
+  const corHoras = claro ? "#a9bbff" : "brand.7";
   const fz = compact ? 21 : 26;
+  // Cada relógio precisa do próprio id de gradiente: com dois logotipos na
+  // tela (topo do celular e menu), o primeiro escondido apagava o aro do outro.
+  const idDoRelogio = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   return (
     <Stack
@@ -32,15 +40,15 @@ export default function BrandMark({
         component="span"
         fw={700}
         fz={fz}
-        c="ink.8"
+        c={corMais}
         style={{ display: "inline-flex", alignItems: "center", letterSpacing: "-0.01em", lineHeight: 1 }}
       >
         Mais
-        <Text span inherit c="brand.7">
+        <Text span inherit c={corHoras}>
           H
         </Text>
-        <ClockGlyph size={fz * 0.96} style={{ margin: "0 0.5px" }} />
-        <Text span inherit c="brand.7">
+        <ClockGlyph size={fz * 0.96} idSuffix={idDoRelogio} style={{ margin: "0 0.5px" }} />
+        <Text span inherit c={corHoras}>
           ras
         </Text>
       </Text>

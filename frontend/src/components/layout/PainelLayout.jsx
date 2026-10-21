@@ -59,7 +59,14 @@ const ROTULO_PAPEL = {
   superadmin: "Administração",
 };
 
-/** Casca da área logada: topo, menu lateral e o trilho de conteúdo. */
+/**
+ * Casca da área logada: menu lateral azul-noite, topo branco e o trilho de
+ * conteúdo sobre fundo azul-claro.
+ *
+ * No computador o menu ocupa a altura toda e leva o logotipo (`layout="alt"`
+ * do AppShell); o topo fica só sobre o conteúdo, com avisos e conta. No
+ * celular o topo mostra o logotipo e o botão que abre o menu.
+ */
 export default function PainelLayout() {
   const { usuario, sair, espelho, sairDoModo } = useAuth();
   const navegar = useNavigate();
@@ -88,19 +95,23 @@ export default function PainelLayout() {
 
   return (
     <AppShell
-      header={{ height: espelho ? 104 : 60 }}
-      navbar={{ width: 248, breakpoint: "md", collapsed: { mobile: !aberto } }}
+      layout="alt"
+      header={{ height: espelho ? 104 : 64 }}
+      navbar={{ width: 256, breakpoint: "md", collapsed: { mobile: !aberto } }}
       padding={0}
+      className="mh-app"
     >
       <a href="#conteudo" className="mh-pular">Pular para o conteúdo</a>
 
       <AppShell.Header className="mh-topbar">
         {espelho && <TarjaEspelho />}
-        <Group h={60} px={{ base: "md", md: "lg" }} justify="space-between" wrap="nowrap">
+        <Group h={64} px={{ base: "md", md: "xl" }} justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
             <Burger opened={aberto} onClick={toggle} hiddenFrom="md" size="sm"
                     aria-label={aberto ? "Fechar menu" : "Abrir menu"} />
-            <BrandMark compact onClick={() => navegar(painelDe(papel))} />
+            <Box hiddenFrom="md">
+              <BrandMark compact onClick={() => navegar(painelDe(papel))} />
+            </Box>
           </Group>
 
           <Group gap={4} wrap="nowrap">
@@ -113,9 +124,6 @@ export default function PainelLayout() {
                     <Avatar color={eOng ? "navy" : "brand"} radius="xl" size={32}>
                       {eOng ? <IconBuildingCommunity size={17} /> : initials(usuario?.nome)}
                     </Avatar>
-                    <Box visibleFrom="sm" maw={200}>
-                      <Text size="sm" fw={600} lh={1.25} truncate>{usuario?.nome}</Text>
-                    </Box>
                     <IconChevronDown size={14} color="var(--mh-tinta-3)" />
                   </Group>
                 </UnstyledButton>
@@ -136,8 +144,15 @@ export default function PainelLayout() {
         </Group>
       </AppShell.Header>
 
+      {aberto && <Box className="mh-veu-menu" hiddenFrom="md" onClick={close} aria-hidden="true" />}
+
       <AppShell.Navbar className="mh-sidebar" data-aberto={aberto || undefined}>
-        <Stack h="100%" gap={0} p="sm" pt="md">
+        <Stack h="100%" gap={0} p="md" pt={0}>
+          <Group h={64} px={8} mb="sm" justify="space-between" wrap="nowrap">
+            <BrandMark compact claro onClick={() => navegar(painelDe(papel))} />
+            <Burger opened={aberto} onClick={toggle} hiddenFrom="md" size="sm" color="white"
+                    aria-label="Fechar menu" />
+          </Group>
           <ScrollArea flex={1} type="auto">
             <Stack gap={2} component="nav" aria-label="Menu principal">
               {menu.map((item) => {
@@ -155,9 +170,16 @@ export default function PainelLayout() {
             </Stack>
           </ScrollArea>
 
-          <Box pt="sm" mt="sm" style={{ borderTop: "1px solid var(--mh-linha)" }}>
-            <Text size="sm" fw={600} px={12} truncate>{usuario?.nome}</Text>
-            <Text size="xs" c="dimmed" px={12} mb={6}>{ROTULO_PAPEL[papel] || ""}</Text>
+          <Box pt="md" mt="sm" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.12)" }}>
+            <Group gap="sm" px={8} mb="sm" wrap="nowrap">
+              <Avatar color="brand.5" radius="xl" size={34} variant="filled">
+                {eOng ? <IconBuildingCommunity size={17} /> : initials(usuario?.nome)}
+              </Avatar>
+              <Box style={{ minWidth: 0 }}>
+                <Text size="sm" fw={600} c="white" truncate>{usuario?.nome}</Text>
+                <Text size="xs" c="rgba(255,255,255,0.6)">{ROTULO_PAPEL[papel] || ""}</Text>
+              </Box>
+            </Group>
             <UnstyledButton className="mh-nav-button" onClick={encerrar}>
               <IconLogout size={19} stroke={1.75} aria-hidden="true" />
               {espelho ? "Sair do modo" : "Sair"}

@@ -3,12 +3,12 @@ import { IconCertificate, IconSearch } from "@tabler/icons-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import Caderneta from "../../components/certificado/Caderneta";
+import CapaDoPainel from "../../components/painel/CapaDoPainel";
 import Destaque from "../../components/painel/Destaque";
 import { DESTAQUE_DO_ESTUDANTE } from "../../components/painel/destaques";
 import DataBloco from "../../components/ui/DataBloco";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
-import PageHeader from "../../components/ui/PageHeader";
 import { useAuth } from "../../context/AuthContext";
 import { useFetch } from "../../hooks/useFetch";
 import { formatHorario } from "../../utils/format";
@@ -28,9 +28,10 @@ function Cabecalho({ titulo, para, rotulo }) {
 /**
  * E1 — Painel do estudante.
  *
- * Três coisas, nesta ordem: o que precisa ser feito agora (o destaque, que o
- * servidor escolhe), o que vem pela frente e quantas horas já estão
- * garantidas. Os atalhos que repetiam o menu lateral saíram.
+ * A capa azul-noite responde de cara o que o aluno veio ver: quantas horas já
+ * estão garantidas (em âmbar, a cor da hora) e o que precisa ser feito agora
+ * (o destaque, que o servidor escolhe). Embaixo, o que vem pela frente e de
+ * onde vem cada hora. Os atalhos que repetiam o menu lateral saíram.
  */
 export default function Painel() {
   const navegar = useNavigate();
@@ -48,17 +49,31 @@ export default function Painel() {
 
   return (
     <>
-      <PageHeader title={primeiroNome ? `Olá, ${primeiroNome}` : "Painel"}>
-        <Text c="dimmed" mt={6} className="mh-num">
-          {dados.inscricoesAtivas} de {dados.limiteInscricoes} inscrições em uso
-        </Text>
-      </PageHeader>
-
-      <Stack gap={36}>
-        {dados.destaque?.tipo !== "nenhum" && (
+      <CapaDoPainel
+        titulo={primeiroNome ? `Olá, ${primeiroNome}` : "Seu painel"}
+        lateral={
+          <Box className="mh-capa-horas">
+            <Text component="p" className="mh-capa-numero mh-num">
+              {dados.horasValidadas}<span> h</span>
+            </Text>
+            <Text size="sm" c="rgba(255,255,255,0.75)">
+              {dados.certificados === 0
+                ? "validadas até agora"
+                : `validadas em ${dados.certificados} ${
+                  dados.certificados === 1 ? "certificado" : "certificados"}`}
+            </Text>
+          </Box>
+        }
+        rodape={dados.destaque?.tipo !== "nenhum" && (
           <Destaque destaque={dados.destaque} catalogo={DESTAQUE_DO_ESTUDANTE} />
         )}
+      >
+        <Text c="rgba(255,255,255,0.75)" mt={10} className="mh-num">
+          {dados.inscricoesAtivas} de {dados.limiteInscricoes} inscrições em uso
+        </Text>
+      </CapaDoPainel>
 
+      <Stack gap={36}>
         <SimpleGrid cols={{ base: 1, lg: 2 }} spacing={40} verticalSpacing={36}>
           <Box component="section" aria-labelledby="proximas">
             <Cabecalho titulo="Próximas atividades" para="/minhas-inscricoes"
@@ -101,7 +116,9 @@ export default function Painel() {
               <EmptyState compacto icon={IconCertificate} title="Nenhuma hora validada ainda"
                           description="Quando a ONG confirmar sua presença, o certificado sai e as horas entram aqui." />
             ) : (
-              <Caderneta certificados={certs} total={dados.horasValidadas} />
+              <Box className="mh-bloco" px={{ base: "md", sm: "lg" }} py="md">
+                <Caderneta certificados={certs} total={dados.horasValidadas} />
+              </Box>
             )}
           </Box>
         </SimpleGrid>

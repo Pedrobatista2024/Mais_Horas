@@ -495,10 +495,11 @@ tentativas mostra o aviso de espera.
 | Tem certificado novo | "Você tem 1 certificado novo" → E6 |
 | Nada disso | Convite para buscar atividades → E2 |
 
-O destaque só é desenhado quando há algo urgente; sem ele, o painel começa pelas listas.
-"Inscrições ativas" aparece como "N de 5 inscrições em uso", logo abaixo do título.
+O painel abre com uma **capa azul-noite**: "Olá, nome" e "N de 5 inscrições em uso" à
+esquerda; à direita, as horas validadas, grandes e em âmbar, com quantos certificados as
+somam. O destaque entra como faixa no pé da capa e só é desenhado quando há algo urgente.
 
-Abaixo do destaque, lado a lado no computador:
+Abaixo da capa, lado a lado no computador:
 
 - **Próximas atividades**: até quatro inscrições confirmadas, em linhas com a data em
   bloco. Link para E4.
@@ -661,8 +662,9 @@ Dados pessoais, acadêmicos (instituição, curso), contato e foto.
 | Inscrições pendentes | "N pessoas aguardando aprovação" → O5 |
 | Rascunho parado | "Você tem 1 rascunho não publicado" |
 
-"Nova atividade" fica sempre no cabeçalho. Abaixo do destaque: os três indicadores numa
-fileira, **Próximas atividades** (publicadas, com inscritos sobre vagas) e **Esperando por
+O painel abre com uma **capa azul-noite**: o nome da organização e o botão "Nova
+atividade" à esquerda, os três indicadores à direita e o destaque como faixa no pé. Abaixo
+da capa: **Próximas atividades** (publicadas, com inscritos sobre vagas) e **Esperando por
 você** (pedidos de inscrição, presenças a validar e rascunhos, em linhas que levam direto
 à lista certa). Sem cartões de atalho.
 
