@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  Badge, Button, Card, Center, Group, Modal, Pagination, PasswordInput, Select,
+  Anchor, Box, Badge, Button, Center, Group, Modal, Pagination, PasswordInput, Select,
   SimpleGrid, Stack, Table, Text, TextInput,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
@@ -89,7 +89,6 @@ export default function Usuarios() {
   return (
     <Stack gap="lg">
       <PageHeader
-        eyebrow="Administração"
         title="Usuários"
         subtitle="Todas as contas da plataforma."
         action={
@@ -100,7 +99,7 @@ export default function Usuarios() {
         }
       />
 
-      <Card withBorder radius="md" p="md">
+      <Box>
         <SimpleGrid cols={{ base: 1, sm: 3 }}>
           <TextInput label="Buscar" placeholder="Nome ou e-mail"
                      leftSection={<IconSearch size={16} />} value={busca}
@@ -115,24 +114,24 @@ export default function Usuarios() {
                   data={[{ value: "ativa", label: "Ativa" },
                          { value: "suspensa", label: "Suspensa" }]} />
         </SimpleGrid>
-      </Card>
+      </Box>
 
       {carregando ? (
-        <Loading label="Carregando contas..." />
+        <Loading label="Carregando contas…" />
       ) : dados.itens.length === 0 ? (
         <EmptyState icon={IconUsers} title="Nenhuma conta encontrada"
                     description="Ajuste a busca ou os filtros." />
       ) : (
-        <Card withBorder radius="md" p={0}>
-          <Table.ScrollContainer minWidth={680}>
+        <Box className="mh-bloco" style={{ overflow: "hidden" }}>
+          <Table.ScrollContainer minWidth={0}>
             <Table highlightOnHover verticalSpacing="sm">
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Nome</Table.Th>
-                  <Table.Th>Papel</Table.Th>
-                  <Table.Th>Situação</Table.Th>
-                  <Table.Th>Último acesso</Table.Th>
-                  <Table.Th>Criada</Table.Th>
+                  <Table.Th visibleFrom="sm">Papel</Table.Th>
+                  <Table.Th visibleFrom="sm">Situação</Table.Th>
+                  <Table.Th visibleFrom="sm">Último acesso</Table.Th>
+                  <Table.Th visibleFrom="md">Criada</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -140,23 +139,36 @@ export default function Usuarios() {
                   <Table.Tr key={u.id} style={{ cursor: "pointer" }}
                             onClick={() => navegar(`/admin/usuarios/${u.id}`)}>
                     <Table.Td>
-                      <Text size="sm" fw={600}>{u.nome}</Text>
-                      <Text size="xs" c="dimmed">{u.email}</Text>
+                      <Anchor component={Link} to={`/admin/usuarios/${u.id}`} size="sm"
+                              fw={600} c="inherit" onClick={(e) => e.stopPropagation()}>
+                        {u.nome}
+                      </Anchor>
+                      <Text size="xs" c="dimmed" style={{ wordBreak: "break-all" }}>
+                        {u.email}
+                      </Text>
+                      <Group gap={6} mt={6} hiddenFrom="sm">
+                        <Badge color={COR_DO_PAPEL[u.papel]}>{ROTULO_DO_PAPEL[u.papel]}</Badge>
+                        <Badge variant="dot" color={u.situacao === "ativa" ? "green" : "red"}>
+                          {u.situacao === "ativa" ? "Ativa" : "Suspensa"}
+                        </Badge>
+                      </Group>
                     </Table.Td>
-                    <Table.Td>
-                      <Badge variant="light" color={COR_DO_PAPEL[u.papel]}>
+                    <Table.Td visibleFrom="sm">
+                      <Badge color={COR_DO_PAPEL[u.papel]}>
                         {ROTULO_DO_PAPEL[u.papel]}
                       </Badge>
                     </Table.Td>
-                    <Table.Td>
-                      <Badge variant="dot" color={u.situacao === "ativa" ? "brand" : "red"}>
-                        {u.situacao}
+                    <Table.Td visibleFrom="sm">
+                      <Badge variant="dot" color={u.situacao === "ativa" ? "green" : "red"}>
+                        {u.situacao === "ativa" ? "Ativa" : "Suspensa"}
                       </Badge>
                     </Table.Td>
-                    <Table.Td>
-                      <Text size="sm">{u.ultimoAcesso ? formatRelativo(u.ultimoAcesso) : "nunca"}</Text>
+                    <Table.Td visibleFrom="sm">
+                      <Text size="sm">
+                        {u.ultimoAcesso ? formatRelativo(u.ultimoAcesso) : "Nunca entrou"}
+                      </Text>
                     </Table.Td>
-                    <Table.Td>
+                    <Table.Td visibleFrom="md">
                       <Text size="sm">{new Date(u.criadoEm).toLocaleDateString("pt-BR")}</Text>
                     </Table.Td>
                   </Table.Tr>
@@ -164,7 +176,7 @@ export default function Usuarios() {
               </Table.Tbody>
             </Table>
           </Table.ScrollContainer>
-        </Card>
+        </Box>
       )}
 
       {dados.paginas > 1 && (

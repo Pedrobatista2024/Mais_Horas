@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
-import { IconAlertTriangle, IconUserPlus, IconUserX } from "@tabler/icons-react";
+import {
+  IconAlertTriangle, IconCircleCheck, IconHourglassHigh,
+} from "@tabler/icons-react";
 
 import ConfirmarAcao from "../ui/ConfirmarAcao";
 import { useAuth } from "../../context/AuthContext";
@@ -26,7 +28,23 @@ const ROTULOS = {
  * atividade — não guarda estado próprio. Depois de agir, chama `aoMudar()` para
  * a tela recarregar: o contador de vagas também muda.
  */
-export default function BotaoInscricao({ atividade, aoMudar, tamanho, largo = false }) {
+/** Uma situação dita em texto, com ícone: não é botão, não finge ser. */
+function Estado({ icone: Icone, cor, children }) {
+  return (
+    <Group gap={6} wrap="nowrap">
+      {Icone && <Icone size={17} color={`var(--mantine-color-${cor.replace(".", "-")})`}
+                       aria-hidden="true" />}
+      <Text size="sm" fw={600} c={cor}>{children}</Text>
+    </Group>
+  );
+}
+
+/**
+ * `compacto` é para o rodapé do cartão da vitrine: só a ação principal.
+ */
+export default function BotaoInscricao({
+  atividade, aoMudar, tamanho, largo = false, compacto = false,
+}) {
   const navegar = useNavigate();
   const { usuario } = useAuth();
   const [enviando, setEnviando] = useState(false);
@@ -80,56 +98,59 @@ export default function BotaoInscricao({ atividade, aoMudar, tamanho, largo = fa
       if (atividade.situacao !== "publicada" || atividade.lotada) return null;
       const volta = `/atividades/${atividade.id}`;
       return (
-        <Stack gap={4}>
-          <Button {...comum} component={Link} to={cadastroComo("estudante", volta)}
-                  leftSection={<IconUserPlus size={16} />}>
+        <Group gap="xs" wrap="wrap">
+          <Button {...comum} component={Link} to={cadastroComo("estudante", volta)}>
             Quero participar
           </Button>
-          <Button {...comum} variant="subtle" size="compact-sm" component={Link}
-                  to={`/entrar?volta=${encodeURIComponent(volta)}`}>
-            Já tenho conta
-          </Button>
-        </Stack>
+          {!compacto && (
+            <Button {...comum} variant="default" component={Link}
+                    to={`/entrar?volta=${encodeURIComponent(volta)}`}>
+              Já tenho conta
+            </Button>
+          )}
+        </Group>
       );
     }
     // ONG e admin olham a vaga, mas não se inscrevem.
     if (usuario.papel !== "estudante") return null;
 
+    // Situação não é botão: botão desabilitado com "Aguardando aprovação"
+    // parece algo que deveria dar para clicar. Vira texto, e o botão que
+    // sobra é o que a pessoa pode de fato fazer.
     if (inscricao?.situacao === "pendente") {
       return (
-        <Stack gap={6}>
-          <Button {...comum} variant="light" color="yellow" disabled>
-            Aguardando aprovação
-          </Button>
-          <Button {...comum} variant="subtle" color="red" size="compact-sm"
+        <Group gap="xs" wrap="nowrap">
+          <Estado icone={IconHourglassHigh} cor="violet.8">Aguardando a ONG</Estado>
+          <Button size="compact-sm" variant="subtle" color="gray"
                   onClick={() => setConfirmando(true)}>
-            Cancelar inscrição
+            Cancelar
           </Button>
-        </Stack>
+        </Group>
       );
     }
 
     if (ativa) {
       const podeCancelar = atividade.situacao === "publicada";
       return (
-        <Button {...comum} variant="light" color={podeCancelar ? "red" : "gray"}
-                leftSection={<IconUserX size={16} />} disabled={!podeCancelar}
-                onClick={() => setConfirmando(true)}>
-          {podeCancelar ? "Cancelar inscrição" : "Inscrição confirmada"}
-        </Button>
+        <Group gap="xs" wrap="nowrap">
+          <Estado icone={IconCircleCheck} cor="green.8">Inscrito</Estado>
+          {podeCancelar && (
+            <Button size="compact-sm" variant="subtle" color="gray"
+                    onClick={() => setConfirmando(true)}>
+              Cancelar
+            </Button>
+          )}
+        </Group>
       );
     }
 
     if (atividade.situacao !== "publicada") {
-      return <Button {...comum} disabled>Inscrições encerradas</Button>;
+      return <Estado cor="dimmed">Inscrições encerradas</Estado>;
     }
-    if (atividade.lotada) {
-      return <Button {...comum} disabled>Vagas esgotadas</Button>;
-    }
+    if (atividade.lotada) return null;
 
     return (
-      <Button {...comum} loading={enviando} leftSection={<IconUserPlus size={16} />}
-              onClick={inscrever}>
+      <Button {...comum} loading={enviando} onClick={inscrever}>
         Inscrever-se
       </Button>
     );
@@ -143,8 +164,9 @@ export default function BotaoInscricao({ atividade, aoMudar, tamanho, largo = fa
         aberto={confirmando}
         aoFechar={() => setConfirmando(false)}
         titulo="Cancelar inscrição"
-        mensagem="Deseja mesmo cancelar? A vaga será liberada para outra pessoa."
+        mensagem="A vaga volta para a lista e outra pessoa pode ficar com ela."
         rotuloConfirmar="Cancelar inscrição"
+        rotuloVoltar="Manter inscrição"
         aoConfirmar={cancelar}
       />
 

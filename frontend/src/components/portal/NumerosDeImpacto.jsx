@@ -1,5 +1,4 @@
-import { Paper, SimpleGrid, Text, ThemeIcon } from "@mantine/core";
-
+import Numeros from "../ui/Numeros";
 import { numerosVisiveis } from "./impacto";
 
 /**
@@ -13,18 +12,10 @@ export default function NumerosDeImpacto({ resumo }) {
   if (visiveis.length === 0) return null;
 
   return (
-    <SimpleGrid cols={{ base: 2, sm: 3, lg: visiveis.length }} spacing="md">
-      {visiveis.map(({ chave, rotulo, icone: Icone, cor }) => (
-        <Paper key={chave} withBorder p="lg" ta="center">
-          <ThemeIcon size={34} radius="md" variant="light" color={cor} mx="auto" mb="sm">
-            <Icone size={19} />
-          </ThemeIcon>
-          <Text fw={600} fz={{ base: 26, sm: 32 }} lh={1}>
-            {resumo[chave].toLocaleString("pt-BR")}
-          </Text>
-          <Text size="sm" c="dimmed" mt={4}>{rotulo[resumo[chave] === 1 ? 0 : 1]}</Text>
-        </Paper>
-      ))}
-    </SimpleGrid>
+    <Numeros colunas={{ base: 1, xs: 3, md: visiveis.length }}
+             itens={visiveis.map(({ chave, rotulo }) => ({
+      rotulo: rotulo[1][0].toUpperCase() + rotulo[1].slice(1),
+      valor: resumo[chave].toLocaleString("pt-BR"),
+    }))} />
   );
 }

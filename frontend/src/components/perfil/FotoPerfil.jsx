@@ -48,7 +48,8 @@ export default function FotoPerfil({ nome, caminho, aoAtualizar, rotulo = "foto"
 
   return (
     <Group wrap="wrap" gap="lg">
-      <Avatar src={resolveImage(caminho)} size={88} radius="50%" color="brand">
+      <Avatar src={resolveImage(caminho)} size={72} radius="50%" color="brand"
+              alt={nome ? `${rotulo === "logo" ? "Logo" : "Foto"} de ${nome}` : undefined}>
         {initials(nome || "")}
       </Avatar>
 
@@ -56,7 +57,7 @@ export default function FotoPerfil({ nome, caminho, aoAtualizar, rotulo = "foto"
         <Group gap="xs" wrap="wrap">
           <Button
             size="xs"
-            variant="light"
+            variant="default"
             leftSection={<IconCamera size={15} />}
             loading={enviando}
             onClick={() => entrada.current?.click()}
@@ -67,7 +68,7 @@ export default function FotoPerfil({ nome, caminho, aoAtualizar, rotulo = "foto"
             <Button
               size="xs"
               variant="subtle"
-              color="ink"
+              color="gray"
               leftSection={<IconTrash size={15} />}
               onClick={remover}
               disabled={enviando}

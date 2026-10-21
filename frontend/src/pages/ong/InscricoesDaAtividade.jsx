@@ -1,39 +1,49 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Alert, Avatar, Badge, Button, Card, Divider, Group, Stack, Text, Title,
+  Alert, Avatar, Box, Button, Group, Stack, Text, Title,
 } from "@mantine/core";
-import {
-  IconAlertTriangle, IconArrowLeft, IconCheck, IconUsers, IconX,
-} from "@tabler/icons-react";
+import { IconAlertTriangle, IconCheck, IconUsers } from "@tabler/icons-react";
 
 import ConfirmarAcao from "../../components/ui/ConfirmarAcao";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
+import PageHeader from "../../components/ui/PageHeader";
 import { api, mensagemDoErro } from "../../services/api";
 import { initials, resolveImage } from "../../utils/format";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
 function Pessoa({ inscricao, acoes }) {
   const { aluno } = inscricao;
+  const curso = [aluno?.curso, aluno?.instituicao].filter(Boolean).join(", ");
   return (
-    <Group justify="space-between" wrap="wrap" gap="sm" py="xs">
-      <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
-        <Avatar src={resolveImage(aluno?.foto)} color="brand" radius="xl" size={40}>
+    <Group className="mh-linha" justify="space-between" wrap="wrap" gap="sm">
+      <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: "1 1 260px" }}>
+        <Avatar src={resolveImage(aluno?.foto)} color="brand" radius="xl" size={36}
+                alt={aluno?.nome}>
           {initials(aluno?.nome)}
         </Avatar>
-        <div style={{ minWidth: 0 }}>
-          <Text fw={650} truncate>
-            {aluno?.nome}
-          </Text>
-          <Text size="xs" c="dimmed" truncate>
-            {[aluno?.curso, aluno?.instituicao].filter(Boolean).join(" · ") ||
-              aluno?.email}
-          </Text>
-        </div>
+        <Box style={{ minWidth: 0 }}>
+          <Text fw={600} truncate>{aluno?.nome}</Text>
+          <Text size="sm" c="dimmed" truncate>{curso || aluno?.email}</Text>
+        </Box>
       </Group>
       {acoes}
     </Group>
+  );
+}
+
+function Secao({ titulo, quantidade, acao, children }) {
+  return (
+    <Box component="section">
+      <Group justify="space-between" align="center" mb="sm" gap="sm">
+        <Title order={2} fz="lg">
+          {titulo} <Text span c="dimmed" fw={400} className="mh-num">({quantidade})</Text>
+        </Title>
+        {acao}
+      </Group>
+      {children}
+    </Box>
   );
 }
 
@@ -98,13 +108,12 @@ export default function InscricoesDaAtividade() {
       });
       // O lote pode aprovar umas e pular outras — dizer só "pronto" esconderia
       // quem ficou de fora.
+      const aprovadas = `${data.aprovadas} ${data.aprovadas === 1 ? "inscrição aprovada" : "inscrições aprovadas"}`;
       if (data.ignoradas.length === 0) {
-        notifySuccess(`${data.aprovadas} inscrição(ões) aprovada(s).`);
+        notifySuccess(`${aprovadas}.`);
       } else {
-        notifySuccess(
-          `${data.aprovadas} aprovada(s). ${data.ignoradas.length} não pôde(ram) ser ` +
-          "aprovada(s) — provavelmente foram canceladas nesse meio-tempo.",
-        );
+        notifySuccess(`${aprovadas}. ${data.ignoradas.length} ficaram de fora: a pessoa ` +
+                      "cancelou enquanto você aprovava.");
       }
       await buscar();
     } catch (erro) {
@@ -112,7 +121,7 @@ export default function InscricoesDaAtividade() {
     }
   }
 
-  if (carregando) return <Loading label="Carregando inscrições..." />;
+  if (carregando) return <Loading label="Carregando inscrições…" />;
 
   if (!atividade) {
     return (
@@ -129,119 +138,81 @@ export default function InscricoesDaAtividade() {
   const encerrada = ["cancelada", "finalizada"].includes(atividade.situacao);
 
   return (
-    <Stack gap="lg" maw={1040} mx="auto" w="100%">
-      <Button variant="subtle" size="compact-sm" w="fit-content"
-              leftSection={<IconArrowLeft size={15} />}
-              onClick={() => navegar(`/ong/atividades/${id}`)}>
-        Voltar a gerenciar a atividade
-      </Button>
+    <>
+      <PageHeader
+        voltar={{ para: `/ong/atividades/${id}`, rotulo: atividade.titulo }}
+        title="Inscrições"
+        subtitle={`${atividade.vagasOcupadas} de ${atividade.vagasMax} vagas preenchidas.`}
+      />
 
-      <Stack gap={4}>
-        <Text size="xs" c="dimmed">
-          Inscrições
-        </Text>
-        <Title order={1} fz={{ base: 24, sm: 30 }} lh={1.15}>
-          {atividade.titulo}
-        </Title>
-        <Text c="dimmed" size="sm">
-          {atividade.vagasOcupadas} de {atividade.vagasMax} vagas preenchidas
-        </Text>
-      </Stack>
-
-      {encerrada && (
-        <Alert color="gray" variant="light">
-          Atividade {atividade.situacao} — as inscrições não mudam mais.
-        </Alert>
-      )}
-
-      {atividade.exigeAprovacao && (
-        <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-          <Group justify="space-between" wrap="wrap" gap="sm" mb="sm">
-            <Group gap="xs">
-              <Text fw={700}>Aguardando aprovação</Text>
-              <Badge color="yellow" variant="light" radius="sm">
-                {pendentes.length}
-              </Badge>
-            </Group>
-            {pendentes.length > 1 && !encerrada && (
-              <Button size="compact-sm" variant="light" onClick={aprovarTodas}>
-                Aprovar todas
-              </Button>
-            )}
-          </Group>
-
-          {pendentes.length === 0 ? (
-            <Text size="sm" c="dimmed">
-              Ninguém na fila.
-            </Text>
-          ) : (
-            <Stack gap={0}>
-              {pendentes.map((inscricao, indice) => (
-                <div key={inscricao.id}>
-                  {indice > 0 && <Divider />}
-                  <Pessoa
-                    inscricao={inscricao}
-                    acoes={
-                      !encerrada && (
-                        <Group gap={6} wrap="nowrap">
-                          <Button size="compact-sm" leftSection={<IconCheck size={14} />}
-                                  loading={agindo === inscricao.id}
-                                  onClick={() => responder(inscricao, true)}>
-                            Aprovar
-                          </Button>
-                          <Button size="compact-sm" variant="subtle" color="red"
-                                  leftSection={<IconX size={14} />}
-                                  onClick={() => setConfirmando(inscricao)}>
-                            Recusar
-                          </Button>
-                        </Group>
-                      )
-                    }
-                  />
-                </div>
-              ))}
-            </Stack>
-          )}
-        </Card>
-      )}
-
-      <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-        <Group gap="xs" mb="sm">
-          <Text fw={700}>Confirmadas</Text>
-          <Badge color="brand" variant="light" radius="sm">
-            {confirmadas.length}
-          </Badge>
-        </Group>
-
-        {confirmadas.length === 0 ? (
-          <Stack align="center" gap={6} py="md">
-            <IconUsers size={28} opacity={0.4} />
-            <Text size="sm" c="dimmed" ta="center">
-              {atividade.exigeAprovacao
-                ? "Ninguém confirmado ainda. Aprove alguém da fila acima."
-                : "Ninguém se inscreveu ainda."}
-            </Text>
-          </Stack>
-        ) : (
-          <Stack gap={0}>
-            {confirmadas.map((inscricao, indice) => (
-              <div key={inscricao.id}>
-                {indice > 0 && <Divider />}
-                <Pessoa inscricao={inscricao} />
-              </div>
-            ))}
-          </Stack>
+      <Stack gap={36}>
+        {encerrada && (
+          <Alert color="gray">
+            A atividade está {atividade.situacao}. As inscrições não mudam mais.
+          </Alert>
         )}
-      </Card>
+
+        {atividade.exigeAprovacao && (
+          <Secao titulo="Esperando sua aprovação" quantidade={pendentes.length}
+                 acao={pendentes.length > 1 && !encerrada && (
+                   <Button size="xs" variant="default" onClick={aprovarTodas}>
+                     Aprovar todas
+                   </Button>
+                 )}>
+            {pendentes.length === 0 ? (
+              <Text size="sm" c="dimmed">Ninguém esperando resposta.</Text>
+            ) : (
+              <Box className="mh-lista">
+                {pendentes.map((inscricao) => (
+                  <Pessoa
+                    key={inscricao.id}
+                    inscricao={inscricao}
+                    acoes={!encerrada && (
+                      <Group gap={6} wrap="nowrap">
+                        <Button size="xs" leftSection={<IconCheck size={14} />}
+                                loading={agindo === inscricao.id}
+                                onClick={() => responder(inscricao, true)}>
+                          Aprovar
+                        </Button>
+                        <Button size="xs" variant="default"
+                                onClick={() => setConfirmando(inscricao)}>
+                          Recusar
+                        </Button>
+                      </Group>
+                    )}
+                  />
+                ))}
+              </Box>
+            )}
+          </Secao>
+        )}
+
+        <Secao titulo="Confirmadas" quantidade={confirmadas.length}>
+          {confirmadas.length === 0 ? (
+            <EmptyState compacto icon={IconUsers}
+                        title={atividade.exigeAprovacao ? "Ninguém confirmado ainda"
+                                                        : "Ninguém se inscreveu ainda"}
+                        description={atividade.exigeAprovacao
+                          ? "Aprove alguém da lista acima."
+                          : "As inscrições aparecem aqui assim que chegam."} />
+          ) : (
+            <Box className="mh-lista">
+              {confirmadas.map((inscricao) => (
+                <Pessoa key={inscricao.id} inscricao={inscricao} />
+              ))}
+            </Box>
+          )}
+        </Secao>
+      </Stack>
 
       <ConfirmarAcao
         aberto={Boolean(confirmando)}
         aoFechar={() => setConfirmando(null)}
         titulo="Recusar inscrição"
-        mensagem={`${confirmando?.aluno?.nome} não participará desta atividade e a vaga voltará para a lista. A pessoa vê apenas "não aprovada", sem motivo.`}
-        rotuloConfirmar="Recusar"
+        mensagem={`${confirmando?.aluno?.nome} não vai participar desta atividade e a vaga volta para a lista. A pessoa vê só "não aprovada", sem motivo.`}
+        rotuloConfirmar="Recusar inscrição"
         aoConfirmar={() => responder(confirmando, false)}
       />
-    </Stack>
+    </>
   );
 }

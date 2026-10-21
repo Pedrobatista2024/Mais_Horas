@@ -271,7 +271,7 @@ Fluxo automático, invisível ao usuário.
 
 **Caminho feliz**
 
-1. O cartão exibe o selo "Aprovação necessária" — o aluno sabe antes de clicar
+1. O cartão exibe o selo "Com aprovação da ONG" — o aluno sabe antes de clicar
 2. Clica em "Inscrever-se"
 3. O sistema cria a inscrição como **`pendente`**
 4. Avisa: "Inscrição enviada. A ONG vai avaliar seu pedido"

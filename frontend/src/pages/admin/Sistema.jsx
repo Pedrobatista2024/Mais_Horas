@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Alert, Badge, Button, Card, Code, Group, SimpleGrid, Stack, Table, Text,
+  Box, Alert, Badge, Button, Code, Group, SimpleGrid, Stack, Table, Text,
 } from "@mantine/core";
 import {
   IconAlertOctagon, IconCircleCheck, IconDownload, IconKey, IconShieldSearch,
@@ -58,7 +58,7 @@ export default function Sistema() {
     setLimpando(true);
     try {
       const { data } = await api.post("/admin/sistema/limpar-tokens");
-      notifySuccess(`Removidos: ${data.sessoes} sessão(ões) e ${data.redefinicoes} link(s) vencidos.`);
+      notifySuccess(`Removidos: ${data.sessoes} ${data.sessoes === 1 ? "sessão vencida" : "sessões vencidas"} e ${data.redefinicoes} ${data.redefinicoes === 1 ? "link vencido" : "links vencidos"}.`);
     } catch (erro) {
       notifyError(mensagemDoErro(erro, "Não foi possível limpar"));
     } finally {
@@ -74,15 +74,15 @@ export default function Sistema() {
     }
   }
 
-  if (!info) return <Loading label="Carregando..." />;
+  if (!info) return <Loading label="Carregando…" />;
 
   return (
     <Stack gap="lg" maw={1100} mx="auto" w="100%">
-      <PageHeader eyebrow="Administração" title="Sistema"
+      <PageHeader title="Sistema"
                   subtitle="Chave de assinatura, parâmetros e manutenção." />
 
       <SimpleGrid cols={{ base: 1, md: 2 }}>
-        <Card withBorder radius="md" p="lg">
+        <Box className="mh-bloco" p="lg">
           <Group gap="xs" mb="sm">
             <IconKey size={18} />
             <Text fw={700}>Chave de assinatura</Text>
@@ -95,19 +95,19 @@ export default function Sistema() {
               <Text size="xs" c="dimmed">
                 A mesma que aparece no rodapé de cada certificado emitido.
               </Text>
-              <Button variant="light" size="compact-sm" w="fit-content" mt="xs"
+              <Button variant="default" size="compact-sm" w="fit-content" mt="xs"
                       leftSection={<IconDownload size={15} />} onClick={baixarChave}>
                 Baixar chave pública
               </Button>
             </Stack>
           ) : (
-            <Alert color="red" variant="light">
+            <Alert color="red">
               Sem chave configurada: nenhum certificado pode ser emitido.
             </Alert>
           )}
-        </Card>
+        </Box>
 
-        <Card withBorder radius="md" p="lg">
+        <Box className="mh-bloco" p="lg">
           <Text fw={700} mb="sm">Parâmetros</Text>
           <Table verticalSpacing={4}>
             <Table.Tbody>
@@ -121,10 +121,10 @@ export default function Sistema() {
               ))}
             </Table.Tbody>
           </Table>
-        </Card>
+        </Box>
       </SimpleGrid>
 
-      <Card withBorder radius="md" p="lg">
+      <Box className="mh-bloco" p="lg">
         <Group justify="space-between" wrap="wrap" gap="sm">
           <div>
             <Text fw={700}>Integridade dos certificados</Text>
@@ -140,27 +140,27 @@ export default function Sistema() {
         </Group>
 
         {relatorio && (relatorio.divergentes.length === 0 ? (
-          <Alert mt="md" color="brand" variant="light" icon={<IconCircleCheck size={18} />}>
+          <Alert mt="md" color="brand" icon={<IconCircleCheck size={18} />}>
             {relatorio.total} certificado(s) conferido(s) em{" "}
             {new Date(relatorio.verificadoEm).toLocaleString("pt-BR")}. Todas as
             assinaturas conferem.
           </Alert>
         ) : (
-          <Alert mt="md" color="red" variant="light" icon={<IconAlertOctagon size={18} />}
+          <Alert mt="md" color="red" icon={<IconAlertOctagon size={18} />}
                  title={`${relatorio.divergentes.length} de ${relatorio.total} não conferem`}>
             <Stack gap={4}>
               {relatorio.divergentes.map((d) => (
                 <Group key={d.id} gap="xs">
-                  <Badge color="red" variant="light" ff="monospace" tt="none">{d.codigo}</Badge>
+                  <Badge color="red" ff="monospace" tt="none">{d.codigo}</Badge>
                   <Text size="sm">{d.aluno} · {d.atividade}</Text>
                 </Group>
               ))}
             </Stack>
           </Alert>
         ))}
-      </Card>
+      </Box>
 
-      <Card withBorder radius="md" p="lg">
+      <Box className="mh-bloco" p="lg">
         <Group justify="space-between" wrap="wrap" gap="sm">
           <div>
             <Text fw={700}>Manutenção</Text>
@@ -169,12 +169,12 @@ export default function Sistema() {
               ainda no prazo ficam: são elas que denunciam o reuso de um token roubado.
             </Text>
           </div>
-          <Button variant="light" leftSection={<IconTrash size={16} />}
+          <Button variant="default" leftSection={<IconTrash size={16} />}
                   loading={limpando} onClick={limpar}>
             Limpar tokens vencidos
           </Button>
         </Group>
-      </Card>
+      </Box>
     </Stack>
   );
 }

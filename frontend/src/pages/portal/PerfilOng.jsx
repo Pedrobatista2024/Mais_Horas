@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  Anchor, Avatar, Button, Card, Container, Group, Paper, SimpleGrid, Stack, Text, Title,
-  Tooltip,
+  Anchor, Avatar, Box, Container, Group, SimpleGrid, Stack, Text, Title, Tooltip,
 } from "@mantine/core";
 import {
   IconAlertTriangle, IconArrowLeft, IconBrandInstagram, IconBuildingCommunity,
-  IconCircleCheckFilled, IconMapPin, IconWorld,
+  IconRosetteDiscountCheckFilled, IconWorld,
 } from "@tabler/icons-react";
 
 import CartaoAtividade from "../../components/atividade/CartaoAtividade";
+import { LARGURA_DO_PORTAL } from "../../components/portal/navegacao";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
+import Numeros from "../../components/ui/Numeros";
+import { useTitulo } from "../../hooks/useTitulo";
 import { api, mensagemDoErro } from "../../services/api";
 import { formatDate, resolveImage } from "../../utils/format";
 import { notifyError } from "../../utils/notify";
@@ -35,20 +37,12 @@ function instagram(valor) {
   return /^[\w.]+$/.test(usuario) ? `https://instagram.com/${usuario}` : null;
 }
 
-function Numero({ valor, rotulo }) {
-  return (
-    <Paper withBorder radius="md" p="md" ta="center">
-      <Text fw={700} fz={26} lh={1}>{valor.toLocaleString("pt-BR")}</Text>
-      <Text size="xs" c="dimmed" mt={4}>{rotulo}</Text>
-    </Paper>
-  );
-}
-
 /** Perfil público da organização, aberto a qualquer visitante (a partir de T5). */
 export default function PerfilOng() {
   const { id } = useParams();
   const navegar = useNavigate();
   const [estado, setEstado] = useState({ id: null, ong: null, falhou: false });
+  useTitulo(estado.ong?.nome);
 
   useEffect(() => {
     let ativo = true;
@@ -65,13 +59,14 @@ export default function PerfilOng() {
   }, [id]);
 
   const voltar = (
-    <Button variant="subtle" size="compact-sm" w="fit-content" component={Link} to="/ongs"
-            leftSection={<IconArrowLeft size={15} />}>
+    <Anchor component={Link} to="/ongs" size="sm" c="dimmed" display="inline-flex"
+            style={{ alignItems: "center", gap: 6 }}>
+      <IconArrowLeft size={15} aria-hidden="true" />
       ONGs parceiras
-    </Button>
+    </Anchor>
   );
 
-  if (estado.id !== id) return <Loading label="Carregando organização..." />;
+  if (estado.id !== id) return <Loading label="Carregando organização…" />;
 
   if (estado.falhou) {
     return (
@@ -84,54 +79,51 @@ export default function PerfilOng() {
   }
 
   const { ong } = estado;
-  const lugar = [ong.cidade, ong.estado].filter(Boolean).join(" · ");
+  const lugar = [ong.cidade, ong.estado].filter(Boolean).join(", ");
   const site = linkSeguro(ong.site);
   const insta = instagram(ong.instagram);
   const numeros = [
-    { valor: ong.atividadesRealizadas, rotulo: "atividades realizadas" },
-    { valor: ong.horasCertificadas, rotulo: "horas certificadas" },
-    { valor: ong.atividadesAbertas, rotulo: "vagas abertas" },
+    { valor: ong.atividadesRealizadas, rotulo: "Atividades realizadas" },
+    { valor: ong.horasCertificadas, rotulo: "Horas certificadas" },
+    { valor: ong.atividadesAbertas, rotulo: "Vagas abertas" },
   ].filter((n) => n.valor > 0);
 
   return (
-    <Container size="lg" py={{ base: "lg", md: 40 }}>
-      <Stack gap="lg">
-        {voltar}
-
-        <Card withBorder p={{ base: "lg", sm: "xl" }}>
-          <Group gap="lg" align="flex-start" wrap="wrap">
-            <Avatar src={resolveImage(ong.logo)} size={96} radius="md" color="navy">
-              <IconBuildingCommunity size={44} />
+    <Container size={LARGURA_DO_PORTAL} py={{ base: 28, md: 48 }}>
+      <Stack gap={36}>
+        <Box>
+          {voltar}
+          <Group gap="lg" align="flex-start" wrap="wrap" mt="md">
+            <Avatar src={resolveImage(ong.logo)} size={80} radius="sm" color="navy"
+                    alt={`Logo de ${ong.nome}`}>
+              <IconBuildingCommunity size={38} />
             </Avatar>
             <Stack gap={6} style={{ flex: 1, minWidth: 220 }}>
               <Group gap={8} wrap="nowrap">
-                <Title order={1} fz={{ base: 26, sm: 32 }} lh={1.1}>{ong.nome}</Title>
+                <Title order={1} fz={{ base: 26, sm: 32 }} lh={1.15}>{ong.nome}</Title>
                 {ong.verificada && (
-                  <Tooltip label="Organização verificada pela administração">
-                    <IconCircleCheckFilled size={24} color="var(--mantine-color-brand-6)"
-                                           style={{ flexShrink: 0 }} />
+                  <Tooltip label="Organização verificada pela Mais Horas">
+                    <IconRosetteDiscountCheckFilled size={22} color="var(--mh-royal)"
+                                                   aria-label="verificada"
+                                                   style={{ flexShrink: 0 }} />
                   </Tooltip>
                 )}
               </Group>
-              <Group gap="md" c="dimmed" wrap="wrap">
-                {lugar && (
-                  <Group gap={4} wrap="nowrap">
-                    <IconMapPin size={15} />
-                    <Text size="sm">{lugar}</Text>
-                  </Group>
-                )}
-                <Text size="sm">Na plataforma desde {formatDate(ong.desde)}</Text>
-              </Group>
+              <Text c="dimmed" size="sm">
+                {lugar ? `${lugar}. ` : ""}Na plataforma desde {formatDate(ong.desde)}.
+              </Text>
               {(site || insta) && (
-                <Group gap="md" mt={4}>
+                <Group gap="md" mt={2}>
                   {site && (
-                    <Anchor href={site} target="_blank" rel="noopener noreferrer nofollow" size="sm">
-                      <Group gap={4} wrap="nowrap"><IconWorld size={15} />Site</Group>
+                    <Anchor href={site} target="_blank" rel="noopener noreferrer nofollow"
+                            size="sm" display="inline-flex" style={{ alignItems: "center", gap: 4 }}>
+                      <IconWorld size={15} aria-hidden="true" />Site
                     </Anchor>
                   )}
                   {insta && (
-                    <Anchor href={insta} target="_blank" rel="noopener noreferrer nofollow" size="sm">
-                      <Group gap={4} wrap="nowrap"><IconBrandInstagram size={15} />Instagram</Group>
+                    <Anchor href={insta} target="_blank" rel="noopener noreferrer nofollow"
+                            size="sm" display="inline-flex" style={{ alignItems: "center", gap: 4 }}>
+                      <IconBrandInstagram size={15} aria-hidden="true" />Instagram
                     </Anchor>
                   )}
                 </Group>
@@ -140,31 +132,30 @@ export default function PerfilOng() {
           </Group>
 
           {ong.descricao && (
-            <Text mt="lg" style={{ whiteSpace: "pre-wrap" }}>{ong.descricao}</Text>
+            <Text fz="lg" mt="lg" maw={720} style={{ whiteSpace: "pre-wrap" }}>
+              {ong.descricao}
+            </Text>
           )}
+        </Box>
 
-          {numeros.length > 0 && (
-            <SimpleGrid cols={{ base: numeros.length === 1 ? 1 : 2, sm: numeros.length }}
-                        spacing="sm" mt="lg">
-              {numeros.map((n) => <Numero key={n.rotulo} {...n} />)}
-            </SimpleGrid>
-          )}
-        </Card>
+        {numeros.length > 0 && (
+          <Numeros itens={numeros.map((n) => ({ ...n, valor: n.valor.toLocaleString("pt-BR") }))} />
+        )}
 
-        <div>
-          <Title order={2} fz={22} mb="md">Próximas atividades</Title>
+        <Box component="section">
+          <Title order={2} fz="xl" mb="md">Próximas atividades</Title>
           {ong.proximasAtividades.length === 0 ? (
             <EmptyState title="Nenhuma vaga aberta agora"
                         description="Quando a organização publicar uma nova atividade, ela aparece aqui." />
           ) : (
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
               {ong.proximasAtividades.map((atividade) => (
                 <CartaoAtividade key={atividade.id} atividade={atividade}
-                                 aoClicar={() => navegar(`/vagas/${atividade.id}`)} />
+                                 para={`/vagas/${atividade.id}`} />
               ))}
             </SimpleGrid>
           )}
-        </div>
+        </Box>
       </Stack>
     </Container>
   );

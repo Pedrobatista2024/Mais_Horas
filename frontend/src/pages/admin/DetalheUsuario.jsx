@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Alert, Badge, Button, Card, Group, SimpleGrid, Stack, Table, Text, Title,
+  Box, Alert, Badge, Button, Group, SimpleGrid, Stack, Table, Text, Title,
 } from "@mantine/core";
 import {
   IconArrowLeft, IconEye, IconKey, IconListSearch, IconLogout, IconUserCheck, IconUserOff,
@@ -91,7 +91,7 @@ export default function DetalheUsuario() {
     return <EmptyState title="Conta não encontrada"
                        action={{ label: "Voltar", onClick: () => navegar("/admin/usuarios") }} />;
   }
-  if (!usuario) return <Loading label="Carregando conta..." />;
+  if (!usuario) return <Loading label="Carregando conta…" />;
 
   const suspensa = usuario.situacao === "suspensa";
   const eAdmin = usuario.papel === "superadmin";
@@ -99,7 +99,7 @@ export default function DetalheUsuario() {
   const CONFIRMACOES = {
     senha: {
       titulo: "Redefinir senha",
-      mensagem: `Um link de redefinição será enviado para ${usuario.email}. Você não vê nem escolhe a nova senha.${eAdmin ? " O alvo é um administrador — a ação fica registrada com destaque." : ""}`,
+      mensagem: `Um link de redefinição será enviado para ${usuario.email}. Você não vê nem escolhe a nova senha.${eAdmin ? " O alvo é um administrador, então a ação fica registrada com destaque." : ""}`,
       rotulo: "Enviar link", cor: "brand",
     },
     sessoes: {
@@ -137,7 +137,7 @@ export default function DetalheUsuario() {
       <Group justify="space-between" align="flex-start" wrap="wrap">
         <Stack gap={4}>
           <Group gap="xs">
-            <Badge variant="light" color={COR_DO_PAPEL[usuario.papel]}>
+            <Badge color={COR_DO_PAPEL[usuario.papel]}>
               {ROTULO_DO_PAPEL[usuario.papel]}
             </Badge>
             <Badge variant="dot" color={suspensa ? "red" : "brand"}>{usuario.situacao}</Badge>
@@ -153,11 +153,11 @@ export default function DetalheUsuario() {
               Entrar como
             </Button>
           )}
-          <Button variant="light" leftSection={<IconKey size={16} />}
+          <Button variant="default" leftSection={<IconKey size={16} />}
                   disabled={suspensa} onClick={() => setConfirmando("senha")}>
             Redefinir senha
           </Button>
-          <Button variant="light" leftSection={<IconLogout size={16} />}
+          <Button variant="default" leftSection={<IconLogout size={16} />}
                   disabled={usuario.sessoesAtivas.length === 0}
                   onClick={() => setConfirmando("sessoes")}>
             Encerrar sessões
@@ -168,7 +168,7 @@ export default function DetalheUsuario() {
               Reativar
             </Button>
           ) : (
-            <Button color="red" variant="light" leftSection={<IconUserOff size={16} />}
+            <Button color="red" variant="default" leftSection={<IconUserOff size={16} />}
                     onClick={() => setConfirmando("suspender")}>
               Suspender
             </Button>
@@ -177,14 +177,14 @@ export default function DetalheUsuario() {
       </Group>
 
       {suspensa && (
-        <Alert color="red" variant="light" title="Conta suspensa">
+        <Alert color="red" title="Conta suspensa">
           Desde {new Date(usuario.suspensoEm).toLocaleString("pt-BR")}. Motivo:{" "}
           {usuario.motivoSuspensao}
         </Alert>
       )}
 
       <SimpleGrid cols={{ base: 1, md: 2 }}>
-        <Card withBorder radius="md" p="lg">
+        <Box className="mh-bloco" p="lg">
           <Text fw={700} mb="sm">Perfil</Text>
           {usuario.perfil ? (
             <SimpleGrid cols={2} spacing="sm">
@@ -193,9 +193,9 @@ export default function DetalheUsuario() {
               ))}
             </SimpleGrid>
           ) : <Text size="sm" c="dimmed">Perfil não preenchido.</Text>}
-        </Card>
+        </Box>
 
-        <Card withBorder radius="md" p="lg">
+        <Box className="mh-bloco" p="lg">
           <Text fw={700} mb="sm">Números</Text>
           <SimpleGrid cols={2} spacing="sm">
             <Dado rotulo="Criada em" valor={new Date(usuario.criadoEm).toLocaleDateString("pt-BR")} />
@@ -212,10 +212,10 @@ export default function DetalheUsuario() {
                   onClick={() => navegar(`/admin/auditoria?alvoId=${usuario.id}`)}>
             Ver auditoria desta conta
           </Button>
-        </Card>
+        </Box>
       </SimpleGrid>
 
-      <Card withBorder radius="md" p={0}>
+      <Box className="mh-bloco" style={{ overflow: "hidden" }}>
         <Text fw={700} p="lg" pb="xs">Sessões ativas</Text>
         {usuario.sessoesAtivas.length === 0 ? (
           <Text size="sm" c="dimmed" px="lg" pb="lg">Nenhuma sessão aberta.</Text>
@@ -235,7 +235,7 @@ export default function DetalheUsuario() {
                     <Table.Td>
                       <Group gap={6} wrap="nowrap">
                         <Text size="sm">{formatRelativo(s.abertaEm)}</Text>
-                        {s.espelho && <Badge size="xs" color="orange" variant="light">entrar como</Badge>}
+                        {s.espelho && <Badge size="xs" color="orange">Entrar como</Badge>}
                       </Group>
                     </Table.Td>
                     <Table.Td><Text size="sm">{s.ip ?? "—"}</Text></Table.Td>
@@ -248,7 +248,7 @@ export default function DetalheUsuario() {
             </Table>
           </Table.ScrollContainer>
         )}
-      </Card>
+      </Box>
 
       {atual && (
         <ConfirmarAcao

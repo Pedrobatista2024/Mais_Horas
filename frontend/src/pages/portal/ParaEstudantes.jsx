@@ -23,7 +23,7 @@ const PASSOS = [
   { titulo: "Crie sua conta de estudante",
     texto: "Nome, e-mail e senha. Leva menos de um minuto." },
   { titulo: "Complete o perfil",
-    texto: "Nome completo, instituição e curso — é o que sai no certificado e o que a ONG vê." },
+    texto: "Nome completo, instituição e curso. É o que sai no certificado e o que a ONG vê." },
   { titulo: "Inscreva-se numa vaga",
     texto: "Algumas confirmam na hora; outras passam pela aprovação da organização." },
   { titulo: "Faça o check-in no dia",
@@ -42,7 +42,7 @@ const DUVIDAS = [
   { pergunta: "Posso tirar foto do QR e mandar para um colega?",
     resposta: "Não adianta: o código muda a cada 30 segundos e deixa de valer logo depois. Ele serve para quem está no local." },
   { pergunta: "Como a faculdade confere o certificado?",
-    resposta: "Pelo QR Code ou pelo código impresso. A página de verificação mostra os dados do certificado e confirma a assinatura digital — se alguém alterar qualquer informação, ela acusa." },
+    resposta: "Pelo QR Code ou pelo código impresso. A página de verificação mostra os dados do certificado e confirma a assinatura digital. Se alguém alterar qualquer informação, ela acusa." },
   { pergunta: "E se eu não puder ir?",
     resposta: "Cancele a inscrição antes do início da atividade. Assim a vaga fica livre para outra pessoa." },
 ];
@@ -52,8 +52,7 @@ export default function ParaEstudantes() {
   return (
     <PaginaDePublico
       papel="estudante"
-      cor="brand"
-      eyebrow="Para estudantes"
+      tituloDaAba="Para estudantes"
       titulo="Horas de extensão sem correr atrás de assinatura"
       subtitulo="Encontre voluntariado perto de você, participe e tenha um certificado que a sua instituição consegue conferir sozinha."
       rotuloCadastro="Criar conta de estudante"

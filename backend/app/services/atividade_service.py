@@ -345,7 +345,8 @@ async def aplicar_edicao(
         if bloqueados:
             raise ErroDeNegocio(
                 "edicao_bloqueada_com_inscritos",
-                f"Já há {ocupadas} inscrito(s): só o número de vagas pode ser alterado",
+                (f"Já há {ocupadas} {'inscrito' if ocupadas == 1 else 'inscritos'}: "
+                 "só o número de vagas pode ser alterado"),
                 detalhes=[{"campo": c, "mensagem": "Bloqueado com inscritos"}
                           for c in bloqueados],
             )

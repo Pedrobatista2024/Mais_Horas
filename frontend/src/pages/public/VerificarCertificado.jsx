@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Alert, Badge, Button, Card, Divider, Group, SimpleGrid, Stack, Text,
-  TextInput, ThemeIcon, Title,
+  Alert, Box, Button, Group, SimpleGrid, Stack, Text, TextInput, ThemeIcon, Title,
 } from "@mantine/core";
 import {
   IconAlertOctagon, IconAlertTriangle, IconCircleCheck, IconCircleX,
-  IconDownload, IconSearch, IconShieldCheck, IconWifiOff,
+  IconDownload, IconSearch, IconWifiOff,
 } from "@tabler/icons-react";
 
 import ProvaIndependente from "../../components/certificado/ProvaIndependente";
 import PublicPage from "../../components/layout/PublicPage";
+import Horas from "../../components/ui/Horas";
 import Loading from "../../components/ui/Loading";
+import { useTitulo } from "../../hooks/useTitulo";
 import { api, mensagemDoErro } from "../../services/api";
 import { baixarArquivo } from "../../utils/baixar";
 import { formatDateLong } from "../../utils/format";
@@ -22,8 +23,8 @@ import { notifyError } from "../../utils/notify";
  * (RN-56), para a mensagem nunca virar um "erro" genérico montado no cliente.
  */
 const APARENCIA = {
-  valido: { cor: "brand", icone: IconCircleCheck },
-  revogado: { cor: "yellow", icone: IconAlertTriangle },
+  valido: { cor: "green", icone: IconCircleCheck },
+  revogado: { cor: "orange", icone: IconAlertTriangle },
   adulterado: { cor: "red", icone: IconAlertOctagon },
   inexistente: { cor: "gray", icone: IconSearch },
 };
@@ -37,9 +38,9 @@ const SELOS = [
 function Selo({ ok, rotulo }) {
   return (
     <Group gap={8} wrap="nowrap">
-      {ok ? <IconCircleCheck size={20} color="var(--mantine-color-brand-6)" />
-          : <IconCircleX size={20} color="var(--mantine-color-red-6)" />}
-      <Text size="sm" fw={600} c={ok ? undefined : "red.7"}>
+      {ok ? <IconCircleCheck size={20} color="var(--mantine-color-green-7)" aria-label="sim" />
+          : <IconCircleX size={20} color="var(--mantine-color-red-7)" aria-label="não" />}
+      <Text size="sm" fw={500} c={ok ? undefined : "red.8"}>
         {rotulo}
       </Text>
     </Group>
@@ -48,12 +49,10 @@ function Selo({ ok, rotulo }) {
 
 function Dado({ rotulo, children }) {
   return (
-    <div>
-      <Text size="xs" c="dimmed">
-        {rotulo}
-      </Text>
-      <Text fw={650}>{children}</Text>
-    </div>
+    <Box>
+      <Text size="sm" c="dimmed">{rotulo}</Text>
+      <Text fw={500} component="div">{children}</Text>
+    </Box>
   );
 }
 
@@ -70,7 +69,10 @@ function CampoDeCodigo({ inicial = "", aoVerificar }) {
           placeholder="a1b2c3d4e5f60718"
           value={codigo}
           maxLength={32}
-          ff="monospace"
+          styles={{ input: { fontFamily: "var(--mantine-font-family-monospace)" } }}
+          autoComplete="off"
+          autoCapitalize="off"
+          spellCheck={false}
           onChange={(e) => setCodigo(e.currentTarget.value)}
         />
         <Group justify="flex-end">
@@ -94,6 +96,7 @@ function CampoDeCodigo({ inicial = "", aoVerificar }) {
 export default function VerificarCertificado() {
   const { codigo } = useParams();
   const navegar = useNavigate();
+  useTitulo("Verificação de certificado");
 
   const [carregando, setCarregando] = useState(Boolean(codigo));
   const [resposta, setResposta] = useState(null);
@@ -150,27 +153,25 @@ export default function VerificarCertificado() {
 
   if (!codigo) {
     conteudo = (
-      <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
+      <Box className="mh-bloco" p={{ base: "lg", sm: "xl" }}>
         <CampoDeCodigo aoVerificar={irPara} />
-      </Card>
+      </Box>
     );
   } else if (carregando) {
-    conteudo = <Loading label="Conferindo na base da Mais Horas..." />;
+    conteudo = <Loading label="Conferindo na base da Mais Horas…" />;
   } else if (semConexao) {
     conteudo = (
-      <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
+      <Box className="mh-bloco" p={{ base: "lg", sm: "xl" }}>
         <Stack align="center" gap="md" py="md">
-          <ThemeIcon size={64} radius="xl" variant="light" color="gray">
-            <IconWifiOff size={32} />
-          </ThemeIcon>
-          <Title order={3} ta="center">Não foi possível verificar agora</Title>
+          <IconWifiOff size={32} color="var(--mh-tinta-3)" aria-hidden="true" />
+          <Title order={2} fz="xl" ta="center">Não foi possível verificar agora</Title>
           <Text c="dimmed" ta="center" maw={440}>
-            A verificação precisa consultar a base da Mais Horas — é só lá que se
-            sabe se um certificado foi revogado. Confira sua conexão e tente de novo.
+            A verificação precisa consultar a base da Mais Horas, porque só lá se sabe se
+            um certificado foi revogado. Confira a conexão e tente de novo.
           </Text>
           <Button onClick={verificar}>Tentar de novo</Button>
         </Stack>
-      </Card>
+      </Box>
     );
   } else if (resposta) {
     const { cor, icone: Icone } = APARENCIA[resposta.desfecho] ?? APARENCIA.inexistente;
@@ -178,13 +179,13 @@ export default function VerificarCertificado() {
 
     conteudo = (
       <Stack gap="lg">
-        <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}
-              style={{ borderTop: `4px solid var(--mantine-color-${cor}-6)` }}>
+        <Box className="mh-bloco" p={{ base: "lg", sm: "xl" }} role="status"
+             style={{ borderTop: `4px solid var(--mantine-color-${cor}-7)` }}>
           <Stack gap="md">
             <Group gap="md" wrap="nowrap" align="flex-start">
-              <ThemeIcon size={56} radius="xl" variant="light" color={cor}
+              <ThemeIcon size={48} radius="xl" variant="light" color={cor}
                          style={{ flexShrink: 0 }}>
-                <Icone size={30} />
+                <Icone size={28} />
               </ThemeIcon>
               <Stack gap={6}>
                 <Title order={2} fz={{ base: 22, sm: 26 }} lh={1.2}>
@@ -201,33 +202,30 @@ export default function VerificarCertificado() {
             )}
 
             {resposta.desfecho !== "inexistente" && (
-              <>
-                <Divider />
-                <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm">
-                  {SELOS.map((selo) => (
-                    <Selo key={selo.chave} rotulo={selo.rotulo}
-                          ok={resposta.selos[selo.chave]} />
-                  ))}
-                </SimpleGrid>
-              </>
+              <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm" pt="md"
+                          style={{ borderTop: "1px solid var(--mh-linha)" }}>
+                {SELOS.map((selo) => (
+                  <Selo key={selo.chave} rotulo={selo.rotulo}
+                        ok={resposta.selos[selo.chave]} />
+                ))}
+              </SimpleGrid>
             )}
           </Stack>
-        </Card>
+        </Box>
 
         {cert && (
-          <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
+          <Box className="mh-bloco" p={{ base: "lg", sm: "xl" }}>
             <Group justify="space-between" mb="md" wrap="wrap" gap="xs">
-              <Text fw={700}>Dados registrados na Mais Horas</Text>
-              <Badge variant="light" color="gray" ff="monospace" tt="none">
-                {cert.codigo}
-              </Badge>
+              <Title order={2} fz="lg">Dados registrados na Mais Horas</Title>
+              <Text ff="monospace" size="sm" c="dimmed" translate="no">{cert.codigo}</Text>
             </Group>
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" verticalSpacing="lg">
               <Dado rotulo="Participante">{cert.aluno}</Dado>
               <Dado rotulo="Organização">{cert.organizacao}</Dado>
               <Dado rotulo="Atividade">{cert.atividade}</Dado>
               <Dado rotulo="Carga horária">
-                {cert.horas} {cert.horas === 1 ? "hora" : "horas"}
+                <Horas valor={cert.horas} sufixo={cert.horas === 1 ? "hora" : "horas"}
+                       style={{ fontSize: "0.9375rem" }} />
               </Dado>
               <Dado rotulo="Data da atividade">
                 {formatDateLong(cert.dataAtividade)}
@@ -240,50 +238,41 @@ export default function VerificarCertificado() {
             </SimpleGrid>
 
             {resposta.desfecho === "valido" && (
-              <>
-                <Divider my="lg" />
-                <Group justify="space-between" wrap="wrap" gap="sm">
-                  <Text size="sm" c="dimmed" maw={420}>
-                    Prefira o PDF baixado daqui ao arquivo que você recebeu: ele sai
-                    direto da fonte.
-                  </Text>
-                  <Button leftSection={<IconDownload size={16} />} loading={baixando}
-                          onClick={baixarOficial}>
-                    Baixar PDF oficial
-                  </Button>
-                </Group>
-              </>
+              <Group justify="space-between" wrap="wrap" gap="sm" mt="lg" pt="lg"
+                     style={{ borderTop: "1px solid var(--mh-linha)" }}>
+                <Text size="sm" c="dimmed" maw={420}>
+                  Prefira o PDF baixado daqui ao arquivo que você recebeu: ele sai direto
+                  da fonte.
+                </Text>
+                <Button leftSection={<IconDownload size={16} />} loading={baixando}
+                        onClick={baixarOficial}>
+                  Baixar PDF oficial
+                </Button>
+              </Group>
             )}
-          </Card>
+          </Box>
         )}
 
         {cert && <ProvaIndependente codigo={cert.codigo} />}
 
-        <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-          <Text fw={700} mb="sm">Verificar outro código</Text>
+        <Box className="mh-bloco" p={{ base: "lg", sm: "xl" }}>
+          <Title order={2} fz="lg" mb="sm">Verificar outro código</Title>
           <CampoDeCodigo key={codigo} aoVerificar={irPara} />
-        </Card>
+        </Box>
       </Stack>
     );
   }
 
   return (
-    <PublicPage maxWidth="md">
-      <Stack gap="lg">
-        <Stack gap={4}>
-          <Group gap={6}>
-            <IconShieldCheck size={16} color="var(--mantine-color-brand-7)" />
-            <Text size="xs" c="dimmed">
-              Verificação de certificado
-            </Text>
-          </Group>
-          <Text c="dimmed" size="sm">
-            Confere o certificado direto na base da Mais Horas e checa a assinatura
-            digital de cada um. Não é preciso ter conta.
-          </Text>
-        </Stack>
-        {conteudo}
-      </Stack>
+    <PublicPage>
+      <Box mb="xl">
+        <Title order={1} fz={{ base: 26, sm: 30 }}>Verificação de certificado</Title>
+        <Text c="dimmed" mt={6} maw={600}>
+          Confere o certificado direto na base da Mais Horas e checa a assinatura digital.
+          Não é preciso ter conta.
+        </Text>
+      </Box>
+      {conteudo}
     </PublicPage>
   );
 }

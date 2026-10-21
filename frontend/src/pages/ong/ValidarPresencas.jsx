@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Alert, Avatar, Badge, Button, Card, Divider, Group, SegmentedControl, Stack,
-  Text, Title,
+  Alert, Avatar, Box, Button, Group, SegmentedControl, Stack, Text,
 } from "@mantine/core";
-import {
-  IconAlertTriangle, IconArrowLeft, IconCircleCheck, IconQrcode, IconUserCheck,
-} from "@tabler/icons-react";
+import { IconAlertTriangle } from "@tabler/icons-react";
 
 import ConfirmarAcao from "../../components/ui/ConfirmarAcao";
 import EmptyState from "../../components/ui/EmptyState";
+import Horas from "../../components/ui/Horas";
 import Loading from "../../components/ui/Loading";
+import PageHeader from "../../components/ui/PageHeader";
 import { api, mensagemDoErro } from "../../services/api";
 import { initials, resolveImage } from "../../utils/format";
 import { notifyError, notifySuccess } from "../../utils/notify";
@@ -22,48 +21,38 @@ function horaDoCheckin(iso) {
   });
 }
 
+function plural(n, um, varios) {
+  return `${n} ${n === 1 ? um : varios}`;
+}
+
 function Pessoa({ item, decisao, aoDecidir, travado }) {
   const hora = horaDoCheckin(item.checkinEm);
+  const manual = item.checkinOrigem === "manual";
 
   return (
-    <Group justify="space-between" wrap="wrap" gap="sm" py="sm">
-      <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
-        <Avatar src={resolveImage(item.aluno?.foto)} color="brand" radius="xl"
-                size={40}>
+    <Group className="mh-linha" justify="space-between" wrap="wrap" gap="sm">
+      <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: "1 1 260px" }}>
+        <Avatar src={resolveImage(item.aluno?.foto)} color="brand" radius="xl" size={36}
+                alt={item.aluno?.nome}>
           {initials(item.aluno?.nome)}
         </Avatar>
-        <div style={{ minWidth: 0 }}>
-          <Text fw={650} truncate>
-            {item.aluno?.nome}
+        <Box style={{ minWidth: 0 }}>
+          <Text fw={600} truncate>{item.aluno?.nome}</Text>
+          <Text size="sm" c="dimmed">
+            {hora
+              ? `Check-in às ${hora}${manual ? ", registrado à mão" : " pelo QR"}`
+              : "Sem check-in"}
           </Text>
-          <Group gap={6} wrap="nowrap">
-            {hora ? (
-              <>
-                <Badge size="xs" variant="light"
-                       color={item.checkinOrigem === "manual" ? "clay" : "brand"}
-                       leftSection={item.checkinOrigem === "manual"
-                         ? <IconUserCheck size={10} />
-                         : <IconQrcode size={10} />}>
-                  {item.checkinOrigem === "manual" ? "manual" : "QR"}
-                </Badge>
-                <Text size="xs" c="dimmed">
-                  check-in às {hora}
-                </Text>
-              </>
-            ) : (
-              <Text size="xs" c="dimmed">
-                não registrou check-in
-              </Text>
-            )}
-          </Group>
-        </div>
+        </Box>
       </Group>
 
       <SegmentedControl
-        size="xs"
+        size="sm"
         disabled={travado}
         value={decisao ?? ""}
         onChange={(valor) => aoDecidir(item.inscricaoId, valor)}
+        aria-label={`Presença de ${item.aluno?.nome}`}
+        color={decisao === "ausente" ? "gray" : "brand"}
         data={[
           { label: "Presente", value: "presente" },
           { label: "Ausente", value: "ausente" },
@@ -155,8 +144,9 @@ export default function ValidarPresencas() {
     try {
       const { data } = await api.post(`/atividades/${id}/finalizar`);
       notifySuccess(
-        `Atividade finalizada: ${data.certificadosEmitidos} certificado(s) ` +
-        `emitido(s), ${data.ausentes} ausente(s).`,
+        `Atividade finalizada: ${plural(data.certificadosEmitidos, "certificado emitido",
+                                        "certificados emitidos")}, ` +
+        `${plural(data.ausentes, "ausente", "ausentes")}.`,
       );
       navegar(`/ong/atividades/${id}`);
     } catch (erro) {
@@ -165,7 +155,7 @@ export default function ValidarPresencas() {
     }
   }
 
-  if (carregando) return <Loading label="Carregando presenças..." />;
+  if (carregando) return <Loading label="Carregando presenças…" />;
 
   if (!dados) {
     return (
@@ -185,119 +175,99 @@ export default function ValidarPresencas() {
   const comCheckin = dados.comCheckin;
 
   return (
-    <Stack gap="lg" maw={1040} mx="auto" w="100%">
-      <Button variant="subtle" size="compact-sm" w="fit-content"
-              leftSection={<IconArrowLeft size={15} />}
-              onClick={() => navegar(`/ong/atividades/${id}`)}>
-        Voltar à atividade
-      </Button>
-
-      <Stack gap={4}>
-        <Text size="xs" c="dimmed">
-          Validar presenças
-        </Text>
-        <Title order={1} fz={{ base: 24, sm: 30 }} lh={1.15}>
-          {dados.atividade.titulo}
-        </Title>
-        <Text c="dimmed" size="sm">
-          {comCheckin} de {dados.itens.length} registraram check-in ·{" "}
-          {dados.atividade.cargaHoraria}h por participante
-        </Text>
-      </Stack>
+    <>
+      <PageHeader
+        voltar={{ para: `/ong/atividades/${id}`, rotulo: dados.atividade.titulo }}
+        title="Validar presenças"
+        subtitle="O check-in vem marcado como sugestão. Quem decide é você: quem saiu cedo, por exemplo, pode ser marcado ausente mesmo com check-in."
+      >
+        <Group gap="md" mt="sm">
+          <Text size="sm" className="mh-num">
+            {comCheckin} de {dados.itens.length} fizeram check-in
+          </Text>
+          <Group gap={6}>
+            <Text size="sm" c="dimmed">Cada presença vale</Text>
+            <Horas valor={dados.atividade.cargaHoraria} />
+          </Group>
+        </Group>
+      </PageHeader>
 
       {encerrada && (
-        <Alert color="gray" variant="light">
-          Esta atividade já foi finalizada — as presenças não mudam mais.
+        <Alert color="gray" mb="lg">
+          Esta atividade já foi finalizada. As presenças não mudam mais.
         </Alert>
       )}
 
       {dados.itens.length === 0 ? (
-        <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-          <Stack gap="md">
-            <Text>
-              Ninguém chegou a se inscrever nesta atividade. Você pode encerrá-la
-              assim mesmo.
-            </Text>
-            {!encerrada && (
-              <Group justify="flex-end">
-                <Button onClick={() => setConfirmando(true)}>
-                  Finalizar atividade
-                </Button>
-              </Group>
-            )}
-          </Stack>
-        </Card>
+        <EmptyState
+          title="Ninguém se inscreveu nesta atividade"
+          description="Dá para finalizar assim mesmo; nenhum certificado é emitido."
+          action={!encerrada ? { label: "Finalizar atividade",
+                                 onClick: () => setConfirmando(true) } : undefined}
+        />
       ) : (
-        <>
+        <Stack gap="md">
           {!encerrada && (
-            <Group gap="sm" wrap="wrap">
-              <Button size="compact-sm" variant="light" disabled={comCheckin === 0}
+            <Group gap="xs" wrap="wrap">
+              <Button size="xs" variant="default" disabled={comCheckin === 0}
                       onClick={() => marcarTodos("presente")}>
-                Marcar todos os check-ins como presentes
+                Quem fez check-in: presente
               </Button>
-              <Button size="compact-sm" variant="light"
+              <Button size="xs" variant="default"
                       onClick={() => marcarTodos("ausente", true)}>
-                Marcar os sem check-in como ausentes
+                Quem não fez: ausente
               </Button>
             </Group>
           )}
 
-          <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-            <Stack gap={0}>
-              {dados.itens.map((item, indice) => (
-                <div key={item.inscricaoId}>
-                  {indice > 0 && <Divider />}
-                  <Pessoa item={item} decisao={decisoes[item.inscricaoId]}
-                          aoDecidir={decidir} travado={encerrada} />
-                </div>
-              ))}
-            </Stack>
-          </Card>
+          <Box className="mh-lista">
+            {dados.itens.map((item) => (
+              <Pessoa key={item.inscricaoId} item={item}
+                      decisao={decisoes[item.inscricaoId]}
+                      aoDecidir={decidir} travado={encerrada} />
+            ))}
+          </Box>
 
           {!encerrada && (
-            <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-              <Stack gap="md">
-                <Group gap="xs">
-                  <IconCircleCheck size={19} opacity={0.6} />
-                  <Text fw={650}>
-                    {presentes} presente(s) de {dados.itens.length}
-                  </Text>
-                </Group>
+            <Box className="mh-bloco" p="md">
+              <Stack gap="sm">
+                <Text fw={600} className="mh-num">
+                  {plural(presentes, "presente", "presentes")} de {dados.itens.length}
+                </Text>
 
                 {semDecisao > 0 && (
-                  <Alert color="clay" variant="light"
-                         icon={<IconAlertTriangle size={18} />}>
-                    {semDecisao} participante(s) ainda sem definição. Decida por
-                    todos antes de finalizar — quem fica sem decisão não recebe
-                    certificado nem fica sabendo que faltou.
+                  <Alert color="orange" icon={<IconAlertTriangle size={18} />} p="sm">
+                    Falta decidir {plural(semDecisao, "pessoa", "pessoas")}. Quem fica sem
+                    decisão não recebe certificado nem fica sabendo que faltou.
                   </Alert>
                 )}
 
-                <Group justify="space-between" wrap="wrap" gap="sm">
-                  <Button variant="subtle" loading={salvando}
-                          onClick={() => salvar()}>
-                    Voltar depois
+                <Group justify="flex-end" wrap="wrap" gap="sm">
+                  <Button variant="default" loading={salvando} onClick={() => salvar()}>
+                    Salvar e terminar depois
                   </Button>
                   <Button disabled={semDecisao > 0} loading={salvando}
                           onClick={() => setConfirmando(true)}>
-                    Confirmar e emitir certificados
+                    Finalizar e emitir certificados
                   </Button>
                 </Group>
               </Stack>
-            </Card>
+            </Box>
           )}
-        </>
+        </Stack>
       )}
 
       <ConfirmarAcao
         aberto={confirmando}
         aoFechar={() => setConfirmando(false)}
         titulo="Finalizar atividade"
-        mensagem={`Serão emitidos ${presentes} certificado(s) de ${dados.atividade.cargaHoraria} hora(s), assinados digitalmente. Esta ação não pode ser desfeita.`}
+        mensagem={presentes > 0
+          ? `Saem ${plural(presentes, "certificado", "certificados")} de ${dados.atividade.cargaHoraria} h, assinados digitalmente. Depois disso as presenças não mudam mais.`
+          : "Nenhum certificado sai, porque ninguém está marcado como presente. Depois disso as presenças não mudam mais."}
         rotuloConfirmar="Finalizar"
         cor="brand"
         aoConfirmar={finalizar}
       />
-    </Stack>
+    </>
   );
 }

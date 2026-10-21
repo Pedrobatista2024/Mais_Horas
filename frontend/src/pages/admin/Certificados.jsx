@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  Anchor, Badge, Button, Card, Center, Group, Menu, Pagination, Select, Stack,
+  Box, Anchor, Badge, Button, Center, Group, Menu, Pagination, Select, Stack,
   Table, Text, TextInput, Tooltip,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
@@ -73,10 +73,10 @@ export default function Certificados() {
 
   return (
     <Stack gap="lg">
-      <PageHeader eyebrow="Administração" title="Certificados"
+      <PageHeader title="Certificados"
                   subtitle="Busca, revogação e situação da assinatura de cada certificado." />
 
-      <Card withBorder radius="md" p="md">
+      <Box>
         <Group align="flex-end" wrap="wrap" gap="sm">
           <TextInput label="Buscar" placeholder="Código, aluno, ONG ou atividade"
                      w={{ base: "100%", sm: 320 }}
@@ -91,14 +91,14 @@ export default function Certificados() {
                   data={[{ value: "confere", label: "Confere" },
                          { value: "nao_confere", label: "Não confere" }]} />
         </Group>
-      </Card>
+      </Box>
 
       {carregando ? (
-        <Loading label="Carregando certificados..." />
+        <Loading label="Carregando certificados…" />
       ) : dados.itens.length === 0 ? (
         <EmptyState icon={IconCertificate} title="Nenhum certificado neste recorte" />
       ) : (
-        <Card withBorder radius="md" p={0}>
+        <Box className="mh-bloco" style={{ overflow: "hidden" }}>
           <Table.ScrollContainer minWidth={780}>
             <Table verticalSpacing="sm" highlightOnHover>
               <Table.Thead>
@@ -125,9 +125,9 @@ export default function Certificados() {
                     <Table.Td>
                       {c.revogado ? (
                         <Tooltip label={c.motivoRevogacao ?? ""} multiline w={260}>
-                          <Badge color="yellow" variant="light">revogado</Badge>
+                          <Badge color="yellow">Revogado</Badge>
                         </Tooltip>
-                      ) : <Badge color="brand" variant="light">válido</Badge>}
+                      ) : <Badge color="brand">Válido</Badge>}
                     </Table.Td>
                     <Table.Td>
                       {c.assinaturaConfere ? (
@@ -180,7 +180,7 @@ export default function Certificados() {
               </Table.Tbody>
             </Table>
           </Table.ScrollContainer>
-        </Card>
+        </Box>
       )}
 
       {dados.paginas > 1 && (

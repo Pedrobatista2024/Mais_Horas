@@ -495,12 +495,18 @@ tentativas mostra o aviso de espera.
 | Tem certificado novo | "Você tem 1 certificado novo" → E6 |
 | Nada disso | Convite para buscar atividades → E2 |
 
-| Botão | Quando aparece | Ação |
-|---|---|---|
-| Fazer check-in | há atividade `em_andamento` com inscrição confirmada | Abre E5 |
-| Buscar atividades | sempre | Vai para E2 |
-| Minhas inscrições | sempre | Vai para E4 |
-| Meus certificados | sempre | Vai para E6 |
+O destaque só é desenhado quando há algo urgente; sem ele, o painel começa pelas listas.
+"Inscrições ativas" aparece como "N de 5 inscrições em uso", logo abaixo do título.
+
+Abaixo do destaque, lado a lado no computador:
+
+- **Próximas atividades**: até quatro inscrições confirmadas, em linhas com a data em
+  bloco. Link para E4.
+- **Caderneta de horas**: cada certificado numa linha, as horas na coluna da direita e o
+  total validado embaixo, fechado com traço duplo como num livro-caixa. O total vem do
+  servidor (RN-16), não é somado na tela. Link para E6.
+
+Não há cartões de atalho: eles repetiam o menu lateral.
 
 ---
 
@@ -511,19 +517,22 @@ tentativas mostra o aviso de espera.
 Aplica as regras da seção 5. Ordenação: data mais próxima primeiro.
 
 **Filtros:** busca por texto (título, local, ONG) · cidade · faixa de carga horária ·
-"apenas com vaga" (desligado por padrão — as lotadas aparecem, D7)
+"só com vaga livre" (desligado por padrão — as lotadas aparecem, D7). Os filtros ficam na
+URL, então a busca pode ser guardada ou compartilhada. No celular só a busca fica à
+mostra; cidade e carga horária abrem em "Filtros".
 
-**Cada cartão mostra:** título, ONG, data e hora, local, carga horária, vagas restantes, e
-selo de "Aprovação necessária" quando for o caso.
+**Cada cartão mostra:** a data em bloco (dia da semana, dia e mês), título, ONG, horário,
+local, carga horária, vagas livres e o selo "Com aprovação da ONG" quando for o caso. A
+situação só aparece quando não é "publicada" (por exemplo, "Acontecendo agora"). O
+cartão inteiro leva a E3.
 
 | Botão no cartão | Quando aparece | Ação |
 |---|---|---|
 | Inscrever-se | há vaga e o aluno não está inscrito | Inscreve. Se exigir aprovação, avisa que ficará pendente |
-| Vagas esgotadas | lotada | *Desabilitado* |
-| Inscrições encerradas | `em_andamento` | *Desabilitado* |
-| Aguardando aprovação | inscrição `pendente` | *Desabilitado*, informativo |
-| Cancelar inscrição | inscrição ativa e o evento não começou | Pede confirmação e cancela |
-| Ver detalhes | sempre | Abre E3 |
+| Cancelar | inscrição ativa e o evento não começou | Pede confirmação e cancela |
+
+Situação não vira botão desabilitado: "Lotada" aparece no texto de vagas, "Inscrito" e
+"Aguardando a ONG" aparecem como texto com ícone, e "Inscrições encerradas" como texto.
 
 **Vazio:** "Nenhuma atividade disponível no momento" · **Busca sem resultado:** sugere
 limpar os filtros.
@@ -652,12 +661,10 @@ Dados pessoais, acadêmicos (instituição, curso), contato e foto.
 | Inscrições pendentes | "N pessoas aguardando aprovação" → O5 |
 | Rascunho parado | "Você tem 1 rascunho não publicado" |
 
-| Botão | Quando aparece | Ação |
-|---|---|---|
-| Criar atividade | sempre | Abre O3 |
-| Abrir check-in | há atividade `em_andamento` | Abre O6 |
-| Validar presenças | há atividade `aguardando_validacao` | Abre O7 |
-| Minhas atividades | sempre | Abre O2 |
+"Nova atividade" fica sempre no cabeçalho. Abaixo do destaque: os três indicadores numa
+fileira, **Próximas atividades** (publicadas, com inscritos sobre vagas) e **Esperando por
+você** (pedidos de inscrição, presenças a validar e rascunhos, em linhas que levam direto
+à lista certa). Sem cartões de atalho.
 
 ---
 

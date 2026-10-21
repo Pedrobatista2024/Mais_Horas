@@ -87,7 +87,7 @@ function Area({ papel }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<Loading label="Carregando..." />}>
+      <Suspense fallback={<Loading label="Carregando…" />}>
         <Routes>
           {/* Portal — público */}
           <Route element={<PortalLayout />}>
@@ -98,7 +98,7 @@ export default function App() {
             <Route path="/ongs" element={<OngsParceiras />} />
             <Route path="/ongs/:id" element={<PerfilOng />} />
             <Route path="/vagas" element={
-              <ConteudoDoPortal><Vitrine base="/vagas" /></ConteudoDoPortal>} />
+              <ConteudoDoPortal><Vitrine base="/vagas" titulo="Vagas abertas" /></ConteudoDoPortal>} />
             <Route path="/vagas/:id" element={
               <ConteudoDoPortal tamanho="lg"><DetalheAtividade base="/vagas" /></ConteudoDoPortal>} />
           </Route>

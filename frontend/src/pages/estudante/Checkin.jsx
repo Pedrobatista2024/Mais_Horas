@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Alert, Button, Card, Center, Group, Stack, Text, TextInput, ThemeIcon, Title,
+  Alert, Box, Button, Center, Group, Stack, Text, TextInput, ThemeIcon, Title,
 } from "@mantine/core";
 import {
-  IconAlertTriangle, IconArrowLeft, IconCamera, IconCameraOff, IconCheck,
+  IconAlertTriangle, IconCamera, IconCameraOff, IconCheck,
   IconClockExclamation, IconKeyboard, IconRefresh,
 } from "@tabler/icons-react";
 import jsQR from "jsqr";
 
+import PageHeader from "../../components/ui/PageHeader";
 import { api, codigoDoErro, mensagemDoErro } from "../../services/api";
 import { notifyError } from "../../utils/notify";
 
@@ -27,8 +28,8 @@ const LIMITE_DA_LOCALIZACAO = 4000;
  */
 const DESFECHOS = {
   token_expirado: {
-    icone: IconClockExclamation, cor: "clay", titulo: "Este código já venceu",
-    texto: "É normal — o código da tela muda a cada 30 segundos. Aponte de novo.",
+    icone: IconClockExclamation, cor: "orange", titulo: "Este código já venceu",
+    texto: "É normal: o código da tela muda a cada 30 segundos. Aponte a câmera de novo.",
     repetir: true,
   },
   token_invalido: {
@@ -37,7 +38,7 @@ const DESFECHOS = {
     repetir: true,
   },
   checkin_ja_registrado: {
-    icone: IconCheck, cor: "brand", titulo: "Você já registrou presença",
+    icone: IconCheck, cor: "green", titulo: "Você já registrou presença",
     texto: "Está tudo certo: sua presença nesta atividade já foi registrada.",
     repetir: false,
   },
@@ -47,7 +48,7 @@ const DESFECHOS = {
     repetir: false,
   },
   checkin_fora_da_janela: {
-    icone: IconClockExclamation, cor: "clay", titulo: "O check-in não está aberto",
+    icone: IconClockExclamation, cor: "orange", titulo: "O check-in não está aberto",
     texto: "Ele só funciona durante o horário da atividade.",
     repetir: false,
   },
@@ -107,7 +108,7 @@ export default function Checkin() {
       });
       setResultado({
         sucesso: true,
-        titulo: "Check-in registrado!",
+        titulo: "Presença registrada",
         texto: data.atividade?.titulo,
         horario: new Date(data.checkinEm).toLocaleTimeString("pt-BR", {
           hour: "2-digit", minute: "2-digit",
@@ -195,25 +196,25 @@ export default function Checkin() {
 
   if (resultado) {
     const Icone = resultado.sucesso ? IconCheck : resultado.icone;
-    const cor = resultado.sucesso ? "brand" : resultado.cor;
+    const cor = resultado.sucesso ? "green" : resultado.cor;
 
     return (
       <Center mih={420}>
-        <Stack align="center" gap="lg" maw={420} px="md">
-          <ThemeIcon variant="light" color={cor} size={92} radius="xl">
-            <Icone size={48} />
+        <Stack align="center" gap="lg" maw={420} w="100%" role="status" aria-live="polite">
+          <ThemeIcon variant="light" color={cor} size={72} radius="xl">
+            <Icone size={38} stroke={1.75} />
           </ThemeIcon>
 
           <Stack align="center" gap={6}>
-            <Title order={2} ta="center" fz={{ base: 24, sm: 28 }}>
+            <Title order={1} ta="center" fz={24}>
               {resultado.titulo}
             </Title>
             <Text c="dimmed" ta="center">
               {resultado.texto}
             </Text>
             {resultado.horario && (
-              <Text fw={700} size="lg" c="brand.7">
-                {resultado.horario}
+              <Text fw={600} size="lg" className="mh-num">
+                às {resultado.horario}
               </Text>
             )}
           </Stack>
@@ -225,7 +226,7 @@ export default function Checkin() {
                 Tentar de novo
               </Button>
             )}
-            <Button fullWidth variant={resultado.sucesso ? "filled" : "light"}
+            <Button fullWidth variant={resultado.sucesso ? "filled" : "default"}
                     onClick={() => navegar("/minhas-inscricoes")}>
               Ver minhas inscrições
             </Button>
@@ -236,106 +237,97 @@ export default function Checkin() {
   }
 
   return (
-    <Stack gap="lg" maw={560} mx="auto">
-      <Button variant="subtle" size="compact-sm" w="fit-content"
-              leftSection={<IconArrowLeft size={15} />}
-              onClick={() => navegar("/minhas-inscricoes")}>
-        Voltar às minhas inscrições
-      </Button>
+    <Box maw={520}>
+      <PageHeader
+        voltar={{ para: "/minhas-inscricoes", rotulo: "Minhas inscrições" }}
+        title="Fazer check-in"
+        subtitle="Aponte a câmera para o QR Code que a organização está mostrando no local."
+      />
 
-      <Stack gap={4}>
-        <Text size="xs" c="dimmed">
-          Presença
-        </Text>
-        <Title order={1} fz={{ base: 26, sm: 32 }}>
-          Fazer check-in
-        </Title>
-        <Text c="dimmed" size="sm">
-          Aponte a câmera para o código que a organização está exibindo no local.
-        </Text>
-      </Stack>
+      <Stack gap="md">
+        {estadoCamera === "indisponivel" && (
+          <Alert color="gray" icon={<IconCameraOff size={18} />} title="Sem acesso à câmera">
+            O navegador não abriu a câmera. Digite abaixo o código que aparece embaixo do
+            QR, na tela da organização.
+          </Alert>
+        )}
 
-      {estadoCamera === "indisponivel" && (
-        <Alert color="clay" variant="light" icon={<IconCameraOff size={18} />}
-               title="Sem acesso à câmera">
-          Não conseguimos abrir a câmera. Digite abaixo o código que aparece na tela
-          da organização.
-        </Alert>
-      )}
+        <Box className="mh-bloco" style={{ overflow: "hidden" }}>
+          <div style={{ position: "relative", background: "#111a2e", aspectRatio: "1 / 1" }}>
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              aria-label="Imagem da câmera"
+              style={{ width: "100%", height: "100%", objectFit: "cover",
+                       display: estadoCamera === "lendo" ? "block" : "none" }}
+            />
+            <canvas ref={canvasRef} style={{ display: "none" }} />
 
-      <Card withBorder radius="md" p={0} style={{ overflow: "hidden" }}>
-        <div style={{ position: "relative", background: "#101614",
-                      aspectRatio: "1 / 1" }}>
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            style={{ width: "100%", height: "100%", objectFit: "cover",
-                     display: estadoCamera === "lendo" ? "block" : "none" }}
-          />
-          <canvas ref={canvasRef} style={{ display: "none" }} />
+            {estadoCamera !== "lendo" && (
+              <Center h="100%">
+                <Stack align="center" gap="xs">
+                  {estadoCamera === "iniciando"
+                    ? <IconCamera size={30} color="#9aa7c4" aria-hidden="true" />
+                    : <IconCameraOff size={30} color="#9aa7c4" aria-hidden="true" />}
+                  <Text size="sm" c="#c7d0e2">
+                    {estadoCamera === "iniciando" ? "Abrindo a câmera…" : "Câmera indisponível"}
+                  </Text>
+                </Stack>
+              </Center>
+            )}
 
-          {estadoCamera !== "lendo" && (
-            <Center h="100%">
-              <Stack align="center" gap="xs">
-                <ThemeIcon variant="light" color="gray" size={56} radius="xl">
-                  {estadoCamera === "iniciando" ? <IconCamera size={28} />
-                                                : <IconCameraOff size={28} />}
-                </ThemeIcon>
-                <Text size="sm" c="dimmed">
-                  {estadoCamera === "iniciando" ? "Abrindo a câmera..."
-                                                : "Câmera indisponível"}
-                </Text>
-              </Stack>
-            </Center>
-          )}
+            {estadoCamera === "lendo" && (
+              <div style={{
+                position: "absolute", inset: "18%",
+                border: "3px solid rgba(255,255,255,.85)", borderRadius: 16,
+                pointerEvents: "none",
+              }} />
+            )}
+          </div>
+        </Box>
 
-          {estadoCamera === "lendo" && (
-            <div style={{
-              position: "absolute", inset: "18%",
-              border: "3px solid rgba(255,255,255,.85)", borderRadius: 16,
-              pointerEvents: "none",
-            }} />
-          )}
-        </div>
-      </Card>
+        {enviando && (
+          <Text size="sm" c="dimmed" ta="center" role="status">
+            Registrando presença…
+          </Text>
+        )}
 
-      {enviando && (
-        <Text size="sm" c="dimmed" ta="center">
-          Registrando presença...
-        </Text>
-      )}
-
-      {digitando ? (
-        <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-          <form onSubmit={enviarDigitado}>
-            <Stack gap="sm">
-              <TextInput
-                label="Código da atividade"
-                description="Aparece abaixo do QR na tela da organização"
-                placeholder="MH1...."
-                value={codigo}
-                onChange={(e) => setCodigo(e.currentTarget.value)}
-              />
-              <Group justify="flex-end" gap="sm">
-                {estadoCamera !== "indisponivel" && (
-                  <Button variant="subtle" onClick={() => setDigitando(false)}>
-                    Usar a câmera
+        {digitando ? (
+          <Box className="mh-bloco" p="lg">
+            <form onSubmit={enviarDigitado}>
+              <Stack gap="sm">
+                <TextInput
+                  label="Código da atividade"
+                  description="Fica embaixo do QR, na tela da organização"
+                  placeholder="MH1.…"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.currentTarget.value)}
+                  styles={{ input: { fontFamily: "var(--mantine-font-family-monospace)" } }}
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                />
+                <Group justify="flex-end" gap="sm">
+                  {estadoCamera !== "indisponivel" && (
+                    <Button variant="default" onClick={() => setDigitando(false)}>
+                      Usar a câmera
+                    </Button>
+                  )}
+                  <Button type="submit" loading={enviando}>
+                    Registrar presença
                   </Button>
-                )}
-                <Button type="submit" loading={enviando}>
-                  Registrar presença
-                </Button>
-              </Group>
-            </Stack>
-          </form>
-        </Card>
-      ) : (
-        <Button variant="subtle" leftSection={<IconKeyboard size={16} />}
-                onClick={() => setDigitando(true)}>
-          Sem câmera? Digitar o código
-        </Button>
-      )}
-    </Stack>
+                </Group>
+              </Stack>
+            </form>
+          </Box>
+        ) : (
+          <Button variant="subtle" color="gray" leftSection={<IconKeyboard size={16} />}
+                  onClick={() => setDigitando(true)}>
+            Sem câmera? Digitar o código
+          </Button>
+        )}
+      </Stack>
+    </Box>
   );
 }

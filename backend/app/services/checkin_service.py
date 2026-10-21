@@ -431,7 +431,9 @@ async def concluir(sessao: AsyncSession, atividade: Atividade, ator: Usuario,
         # nem recebe certificado nem sabe que faltou.
         raise ErroDeNegocio(
             "presencas_pendentes",
-            f"{len(pendentes)} participante(s) ainda sem definição",
+            (f"{len(pendentes)} "
+             f"{'participante ainda' if len(pendentes) == 1 else 'participantes ainda'} "
+             "sem definição"),
             detalhes=[{"campo": str(i.id), "mensagem": "Sem decisão de presença"}
                       for i in pendentes],
         )

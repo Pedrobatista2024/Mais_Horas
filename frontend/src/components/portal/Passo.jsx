@@ -1,17 +1,16 @@
-import { Group, Paper, Text, ThemeIcon } from "@mantine/core";
+import { Box, Text } from "@mantine/core";
 
-/** Um passo numerado da jornada (T1 e T2). */
-export default function Passo({ icone: Icone, numero, titulo, children, cor = "brand" }) {
+/**
+ * Um passo da jornada. O número vem grande e fino, porque aqui a ordem é a
+ * informação: primeiro a ONG publica, depois o aluno se inscreve. Sem cartão
+ * e sem ícone colorido — o fio em cima liga um passo ao seguinte.
+ */
+export default function Passo({ numero, titulo, children }) {
   return (
-    <Paper withBorder p="lg" h="100%">
-      <Group justify="space-between" mb="sm">
-        <ThemeIcon size={38} radius="md" variant="light" color={cor}>
-          <Icone size={20} />
-        </ThemeIcon>
-        <Text fw={600} fz={20} c="dimmed" aria-hidden>{numero}</Text>
-      </Group>
-      <Text fw={600} mb={4}>{titulo}</Text>
-      <Text c="dimmed" size="sm">{children}</Text>
-    </Paper>
+    <Box pt="md" style={{ borderTop: "2px solid var(--mh-linha-forte)" }}>
+      <Text className="mh-passo-numero" aria-hidden="true">{numero}</Text>
+      <Text fw={600} fz="lg" mt="sm" mb={4}>{titulo}</Text>
+      <Text c="dimmed">{children}</Text>
+    </Box>
   );
 }

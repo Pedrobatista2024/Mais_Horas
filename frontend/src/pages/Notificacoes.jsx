@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Button, Card, Center, Group, Pagination, SegmentedControl, Stack,
+  Box, Button, Center, Pagination, SegmentedControl,
 } from "@mantine/core";
 import { IconBellOff, IconChecks } from "@tabler/icons-react";
 
@@ -64,8 +64,8 @@ export default function Notificacoes() {
     try {
       const { data } = await api.post("/notificacoes/lidas");
       notifySuccess(data.marcadas
-        ? `${data.marcadas} aviso(s) marcado(s) como lido(s).`
-        : "Nada a marcar — tudo já estava lido.");
+        ? `${data.marcadas} ${data.marcadas === 1 ? "aviso marcado" : "avisos marcados"} como lido.`
+        : "Tudo já estava lido.");
       avisarQueAvisosMudaram();
       buscar();
     } catch (erro) {
@@ -76,55 +76,51 @@ export default function Notificacoes() {
   const naoLidas = resultado.itens.some((a) => !a.lida);
 
   return (
-    <Stack gap="lg" maw={860} mx="auto" w="100%">
+    <Box maw={760}>
       <PageHeader
-        eyebrow="Avisos"
-        title="Notificações"
-        subtitle="Aprovações, cancelamentos e certificados, em ordem do mais recente."
+        title="Avisos"
+        subtitle="Respostas de inscrição, cancelamentos e certificados, do mais recente para o mais antigo."
         action={
-          <Button variant="light" leftSection={<IconChecks size={16} />}
+          <Button variant="default" leftSection={<IconChecks size={16} />}
                   onClick={marcarTodas} disabled={!naoLidas && filtro === "todas"}>
-            Marcar todas como lidas
+            Marcar todos como lidos
           </Button>
         }
       />
 
-      <Group>
-        <SegmentedControl
-          value={filtro}
-          onChange={(valor) => { setFiltro(valor); setPagina(1); }}
-          data={[
-            { label: "Todas", value: "todas" },
-            { label: "Não lidas", value: "nao-lidas" },
-          ]}
-        />
-      </Group>
+      <SegmentedControl
+        mb="md"
+        value={filtro}
+        onChange={(valor) => { setFiltro(valor); setPagina(1); }}
+        data={[
+          { label: "Todos", value: "todas" },
+          { label: "Não lidos", value: "nao-lidas" },
+        ]}
+      />
 
       {carregando ? (
-        <Loading label="Carregando avisos..." />
+        <Loading label="Carregando avisos…" />
       ) : resultado.itens.length === 0 ? (
         <EmptyState
           icon={IconBellOff}
-          title="Você não tem avisos no momento"
+          title={filtro === "nao-lidas" ? "Nenhum aviso por ler" : "Nenhum aviso ainda"}
           description={filtro === "nao-lidas"
-            ? "Tudo lido por aqui."
+            ? "Você já leu tudo."
             : "Quando uma inscrição for respondida ou um certificado sair, o aviso aparece aqui."}
         />
       ) : (
-        <Card withBorder radius="md" p="xs">
-          <Stack gap={4}>
-            {resultado.itens.map((aviso) => (
-              <ItemDeAviso key={aviso.id} aviso={aviso} aoAbrir={abrir} />
-            ))}
-          </Stack>
-        </Card>
+        <Box className="mh-lista">
+          {resultado.itens.map((aviso) => (
+            <ItemDeAviso key={aviso.id} aviso={aviso} aoAbrir={abrir} emLista />
+          ))}
+        </Box>
       )}
 
       {resultado.paginas > 1 && (
-        <Center>
+        <Center mt="lg">
           <Pagination total={resultado.paginas} value={pagina} onChange={setPagina} />
         </Center>
       )}
-    </Stack>
+    </Box>
   );
 }

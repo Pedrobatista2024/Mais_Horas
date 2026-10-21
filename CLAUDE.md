@@ -41,6 +41,7 @@ docker compose up -d                          # Postgres local na porta 5433
 cd backend && alembic upgrade head            # aplica migrations
 cd backend && uvicorn app.main:app --reload --port 3000
 cd backend && pytest -q                       # suíte completa
+cd backend && .venv/Scripts/python ../scripts/semear_local.py  # base local com dados de verdade
 cd frontend && npm run dev                    # SPA em :5173
 cd frontend && npm run build                  # precisa passar limpo antes de finalizar
 cd frontend && npx eslint src                 # precisa passar sem erros
@@ -124,7 +125,12 @@ O resumo curto:
 
 - **Sempre Mantine.** Sem Tailwind, sem HTML cru estilizado com `style` inline solto.
 - **Reaproveite `src/components/`** antes de criar componente novo — `PageHeader`,
-  `EmptyState`, `Loading`, `ConfirmarAcao`, `CartaoAtividade`, `SituacaoBadge`.
+  `EmptyState`, `Loading`, `ConfirmarAcao`, `CartaoAtividade`, `LinhaAtividade`,
+  `SituacaoBadge`, `Horas`, `DataBloco`, `Numeros`, `SecaoDeFormulario`.
+- **Âmbar é hora, e só hora.** Carga horária usa `<Horas />`; nenhum outro elemento é
+  âmbar.
+- **A largura e as margens da área logada vêm do `PainelLayout`** (classe `.mh-pagina`).
+  Página não define `maw`/`mx` próprios no topo, senão as telas deixam de se alinhar.
 - **Erros da API com `mensagemDoErro(erro, padrão)`** de `services/api`, exibidos com
   `notifyError`. Nunca `alert()`.
 - **Sempre trate `carregando` com `<Loading />`** e lista vazia com `<EmptyState />`.
@@ -132,9 +138,8 @@ O resumo curto:
   `new Date()` direto lê como UTC e mostra o dia anterior no Brasil.
 - **Constante exportada não mora em arquivo de componente** — quebra o recarregamento
   rápido do Vite. Veja `routes/destinos.js` e `components/atividade/situacoes.js`.
-- **Responsivo é obrigatório** — a maioria dos alunos acessa por celular. Teste em 375px.
-  E em 1920px: página de conteúdo estreito leva `mx="auto"`, senão encosta à esquerda e
-  deixa meia tela vazia.
+- **Responsivo é obrigatório** — a maioria dos alunos acessa por celular. Teste em 375px
+  e em 1920px.
 
 ## Sessão — não quebre estas regras
 

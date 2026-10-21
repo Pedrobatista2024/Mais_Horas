@@ -53,7 +53,6 @@ export default function EntrarExterno() {
     try {
       const dados = await renovarSessao();
       entrar(dados);
-      notifySuccess(`Bem-vindo(a), ${dados.usuario.nome}!`);
       navegar(volta ?? painelDe(dados.usuario.papel), { replace: true });
     } catch {
       notifyError(`A entrada ${pelo(p)} não foi concluída. Tente de novo.`);
@@ -70,7 +69,7 @@ export default function EntrarExterno() {
     try {
       const { data } = await api.post(`/auth/${p.chave}/concluir`, { papel });
       entrar(data);
-      notifySuccess("Conta criada. Bem-vindo(a) ao Mais Horas!");
+      notifySuccess("Conta criada.");
       navegar(painelDe(data.usuario.papel), { replace: true });
     } catch (erro) {
       notifyError(mensagemDoErro(erro, "Não foi possível concluir o cadastro"));
@@ -79,7 +78,7 @@ export default function EntrarExterno() {
   }
 
   if (!p) return <Navigate to="/entrar" replace />;
-  if (!novo) return <Loading label={`Entrando ${comArtigo(p)}...`} />;
+  if (!novo) return <Loading label={`Entrando ${comArtigo(p)}…`} />;
 
   return (
     <AuthLayout title="Falta só uma escolha"

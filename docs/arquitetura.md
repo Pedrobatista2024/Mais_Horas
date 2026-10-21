@@ -84,20 +84,23 @@ frontend/src/
   hooks/useFetch       GET com { data, loading, error, refetch, setData }
   hooks/useListagem    GET paginado com filtros do servidor
   hooks/useConsultaPublica  GET do portal que falha em silêncio (a seção some)
+  hooks/useTitulo      título da aba do navegador (o PageHeader já chama)
   components/
     layout/            PainelLayout (área logada), PortalLayout (portal),
                        AuthLayout, PublicPage (verificação)
     portal/            Secao, Passo, CartaoOng, NumerosDeImpacto, ChamadaFinal,
-                       PaginaDePublico, ConteudoDoPortal, navegacao.js, impacto.js
+                       PaginaDePublico, ConteudoDoPortal, ExemplarCertificado,
+                       navegacao.js (links e LARGURA_DO_PORTAL), impacto.js
     atividade/         CartaoAtividade (vitrine), LinhaAtividade (lista da ONG),
-                       SituacaoBadge, situacoes.js, BotaoInscricao
+                       SituacaoBadge, situacoes.js, vagas.js, BotaoInscricao
+    certificado/       Caderneta (horas de E1), ProvaIndependente (T6)
     auth/              BotoesExternos, IconesProvedores, provedores.js
     perfil/            FotoPerfil
     notificacao/       Sino (cabeçalho), ItemDeAviso, eventos.js
     painel/            Destaque (faixa do topo de E1/O1), destaques.js
     admin/             TarjaEspelho (topo do PainelLayout no "entrar como")
-    ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, StatCard,
-                       ActionCard, BrandMark, BrandIcon, ClockGlyph
+    ui/                PageHeader, EmptyState, Loading, ConfirmarAcao, Numeros,
+                       Horas, DataBloco, SecaoDeFormulario, BrandMark, ClockGlyph
   pages/
     auth/              Entrar, CriarConta, EntrarExterno, EsqueciSenha, RedefinirSenha
     perfil/            MeuPerfil (serve aos dois papéis)
@@ -113,7 +116,8 @@ frontend/src/
                        OngsParceiras, PerfilOng
     public/            VerificarCertificado (destino do QR)
   utils/
-    format.js          formatDate, formatDateLong, formatRelativo, resolveImage,
+    format.js          formatDate, formatDateLong, formatDataCurta, partesDaData,
+                       formatHorario ("8h às 11h"), formatRelativo, resolveImage,
                        initials
     baixar.js          baixa arquivo autenticado (o token não vai em link)
     notify.js          notifySuccess / notifyError (toasts Mantine)

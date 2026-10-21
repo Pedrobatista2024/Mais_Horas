@@ -1,87 +1,111 @@
-import { useNavigate } from "react-router-dom";
-import { Card, Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
-import {
-  IconCalendarEvent, IconCertificate, IconClock, IconMapPin, IconQrcode,
-  IconSearch, IconTicket, IconUser,
-} from "@tabler/icons-react";
+import { Anchor, Box, Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { IconCertificate, IconSearch } from "@tabler/icons-react";
+import { Link, useNavigate } from "react-router-dom";
 
+import Caderneta from "../../components/certificado/Caderneta";
 import Destaque from "../../components/painel/Destaque";
 import { DESTAQUE_DO_ESTUDANTE } from "../../components/painel/destaques";
-import ActionCard from "../../components/ui/ActionCard";
+import DataBloco from "../../components/ui/DataBloco";
+import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
-import StatCard from "../../components/ui/StatCard";
+import PageHeader from "../../components/ui/PageHeader";
 import { useAuth } from "../../context/AuthContext";
 import { useFetch } from "../../hooks/useFetch";
-import { formatDateLong } from "../../utils/format";
+import { formatHorario } from "../../utils/format";
+
+const QUANTAS = 4;
+
+/** Título de bloco com o atalho para a tela inteira à direita. */
+function Cabecalho({ titulo, para, rotulo }) {
+  return (
+    <Group justify="space-between" align="baseline" mb="sm">
+      <Title order={2} fz="lg">{titulo}</Title>
+      <Anchor component={Link} to={para} size="sm">{rotulo}</Anchor>
+    </Group>
+  );
+}
 
 /**
  * E1 — Painel do estudante.
  *
- * Os números e o destaque vêm prontos do servidor: a ordem de urgência é
- * regra de negócio, não decisão de tela.
+ * Três coisas, nesta ordem: o que precisa ser feito agora (o destaque, que o
+ * servidor escolhe), o que vem pela frente e quantas horas já estão
+ * garantidas. Os atalhos que repetiam o menu lateral saíram.
  */
 export default function Painel() {
   const navegar = useNavigate();
   const { usuario } = useAuth();
-  const { data, loading } = useFetch("/painel/estudante");
+  const painel = useFetch("/painel/estudante");
+  const proximas = useFetch(`/inscricoes/minhas?grupo=proximas&tamanho=${QUANTAS}`);
+  const certificados = useFetch("/certificados/meus?tamanho=5");
 
-  if (loading || !data) return <Loading label="Carregando seu painel..." />;
+  if (painel.loading || !painel.data) return <Loading label="Carregando seu painel…" />;
 
-  const { proximaAtividade: proxima } = data;
+  const dados = painel.data;
+  const primeiroNome = usuario?.nome?.split(" ")[0] ?? "";
+  const lista = proximas.data?.itens ?? [];
+  const certs = certificados.data?.itens ?? [];
 
   return (
-    <Stack gap="lg">
-      <Destaque destaque={data.destaque} catalogo={DESTAQUE_DO_ESTUDANTE}
-                eyebrow={`Olá, ${usuario?.nome?.split(" ")[0] ?? "estudante"}`} />
+    <>
+      <PageHeader title={primeiroNome ? `Olá, ${primeiroNome}` : "Painel"}>
+        <Text c="dimmed" mt={6} className="mh-num">
+          {dados.inscricoesAtivas} de {dados.limiteInscricoes} inscrições em uso
+        </Text>
+      </PageHeader>
 
-      <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-        <StatCard icon={IconClock} label="Horas validadas" value={data.horasValidadas}
-                  helper="Somadas dos certificados válidos" />
-        <StatCard icon={IconCertificate} label="Certificados" value={data.certificados}
-                  helper="Prontos para baixar ou compartilhar" />
-        <StatCard icon={IconTicket} label="Inscrições ativas" value={data.inscricoesAtivas}
-                  helper={`Limite de ${data.limiteInscricoes} ao mesmo tempo`} />
-      </SimpleGrid>
+      <Stack gap={36}>
+        {dados.destaque?.tipo !== "nenhum" && (
+          <Destaque destaque={dados.destaque} catalogo={DESTAQUE_DO_ESTUDANTE} />
+        )}
 
-      {proxima && (
-        <Card withBorder p="lg" className="mh-card-hover"
-              style={{ cursor: "pointer" }}
-              onClick={() => navegar(`/atividades/${proxima.id}`)}>
-          <Text size="xs" c="dimmed" mb={4}>
-            Sua próxima atividade
-          </Text>
-          <Title order={3}>{proxima.titulo}</Title>
-          <Group gap="lg" mt="sm" wrap="wrap" c="dimmed">
-            <Group gap={6} wrap="nowrap">
-              <IconCalendarEvent size={16} />
-              <Text size="sm">{formatDateLong(proxima.data)}</Text>
-            </Group>
-            <Group gap={6} wrap="nowrap">
-              <IconClock size={16} />
-              <Text size="sm">{proxima.horaInicio} às {proxima.horaFim}</Text>
-            </Group>
-            <Group gap={6} wrap="nowrap">
-              <IconMapPin size={16} />
-              <Text size="sm">{proxima.local}</Text>
-            </Group>
-          </Group>
-        </Card>
-      )}
+        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing={40} verticalSpacing={36}>
+          <Box component="section" aria-labelledby="proximas">
+            <Cabecalho titulo="Próximas atividades" para="/minhas-inscricoes"
+                       rotulo="Todas as inscrições" />
+            {proximas.loading ? (
+              <Loading />
+            ) : lista.length === 0 ? (
+              <EmptyState compacto icon={IconSearch} title="Nada marcado por enquanto"
+                          description="Escolha uma vaga e ela aparece aqui."
+                          action={{ label: "Buscar atividades",
+                                    onClick: () => navegar("/atividades") }} />
+            ) : (
+              <Box className="mh-lista">
+                {lista.map(({ id, atividade }) => (
+                  <Group key={id} className="mh-linha" gap="md" wrap="nowrap"
+                         pos="relative" data-clicavel="true">
+                    <DataBloco data={atividade.data} />
+                    <Box style={{ minWidth: 0 }}>
+                      <Text fw={600} component={Link} to={`/atividades/${atividade.id}`}
+                            className="mh-link-titulo" lineClamp={1}>
+                        {atividade.titulo}
+                      </Text>
+                      <Text size="sm" c="dimmed" lineClamp={1}>
+                        {formatHorario(atividade.horaInicio, atividade.horaFim)},{" "}
+                        {atividade.local}
+                      </Text>
+                    </Box>
+                  </Group>
+                ))}
+              </Box>
+            )}
+          </Box>
 
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
-        <ActionCard icon={IconSearch} title="Buscar atividades"
-                    description="Vagas abertas das organizações, da data mais próxima em diante."
-                    actionLabel="Ver vagas" onClick={() => navegar("/atividades")} />
-        <ActionCard icon={IconTicket} title="Minhas inscrições"
-                    description="Acompanhe o que está por vir, o que aguarda aprovação e o histórico."
-                    actionLabel="Abrir" onClick={() => navegar("/minhas-inscricoes")} />
-        <ActionCard icon={IconQrcode} title="Fazer check-in"
-                    description="Escaneie o QR da organização durante a atividade."
-                    actionLabel="Abrir câmera" onClick={() => navegar("/check-in")} />
-        <ActionCard icon={IconUser} title="Meu perfil"
-                    description="Nome completo, instituição e curso são o que sai no certificado."
-                    actionLabel="Editar" onClick={() => navegar("/perfil")} />
-      </SimpleGrid>
-    </Stack>
+          <Box component="section">
+            <Cabecalho titulo="Caderneta de horas" para="/meus-certificados"
+                       rotulo="Certificados" />
+            {certificados.loading ? (
+              <Loading />
+            ) : certs.length === 0 ? (
+              <EmptyState compacto icon={IconCertificate} title="Nenhuma hora validada ainda"
+                          description="Quando a ONG confirmar sua presença, o certificado sai e as horas entram aqui." />
+            ) : (
+              <Caderneta certificados={certs} total={dados.horasValidadas} />
+            )}
+          </Box>
+        </SimpleGrid>
+      </Stack>
+    </>
   );
 }

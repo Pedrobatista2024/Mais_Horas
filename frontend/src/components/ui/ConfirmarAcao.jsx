@@ -19,7 +19,7 @@ const MINIMO_DO_MOTIVO = 5;
  */
 export default function ConfirmarAcao({
   aberto, aoFechar, aoConfirmar, titulo, mensagem, children,
-  rotuloConfirmar = "Confirmar", cor = "red", pedirMotivo = false,
+  rotuloConfirmar = "Confirmar", rotuloVoltar = "Voltar", cor = "red", pedirMotivo = false,
   motivoObrigatorio = false, rotuloMotivo,
   descricaoMotivo = "Fica registrado no histórico. O aluno não vê este texto.",
   podeConfirmar = true,
@@ -48,9 +48,10 @@ export default function ConfirmarAcao({
   }
 
   return (
-    <Modal opened={aberto} onClose={fechar} title={titulo} centered radius="md">
+    <Modal opened={aberto} onClose={fechar} title={titulo}
+           styles={{ title: { fontWeight: 600 } }}>
       <Stack gap="md">
-        <Text size="sm" c="dimmed">
+        <Text size="sm">
           {mensagem}
         </Text>
 
@@ -74,7 +75,7 @@ export default function ConfirmarAcao({
 
         <Group justify="flex-end" gap="sm">
           <Button variant="default" onClick={fechar} disabled={processando}>
-            Voltar
+            {rotuloVoltar}
           </Button>
           <Button color={cor} onClick={confirmar} loading={processando}
                   disabled={faltaMotivo || !podeConfirmar}>

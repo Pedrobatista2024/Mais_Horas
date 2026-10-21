@@ -6,115 +6,110 @@ description: Convenções de frontend do projeto Mais Horas (React + Vite + Mant
 # Frontend — Mais Horas
 
 Plataforma que conecta **estudantes** e **ONGs**: ONGs publicam vagas de voluntariado,
-estudantes se inscrevem para cumprir horas complementares, a presença gera certificado
+estudantes se inscrevem para cumprir horas de extensão, a presença gera certificado
 validável por QR Code.
 
 Stack: **React 19 + Vite + Mantine v8** (`@mantine/core`, `/hooks`, `/form`, `/dates`,
-`/notifications`) + `@tabler/icons-react`. Sem Tailwind. Sem CSS-in-JS além do tema.
+`/notifications`) + `@tabler/icons-react` + IBM Plex (`@fontsource`). Sem Tailwind.
 
-## Regras essenciais
+## Identidade em três regras
 
-1. **Sempre Mantine.** Não escrever HTML cru estilizado com `style` inline solto.
-   Use componentes Mantine (`Paper`, `Card`, `Group`, `Stack`, `SimpleGrid`, `Button`,
-   `Text`, `Title`, `Badge`, `ThemeIcon`, etc.) e props do sistema (`p`, `mt`, `gap`, `c`).
-2. **Reaproveite os componentes existentes** antes de criar novos:
-   - `ui/PageHeader` — cabeçalho de página (`eyebrow`, `title`, `subtitle`, `action`)
-   - `ui/StatCard` — cartão de métrica (`icon`, `label`, `value`, `color`, `helper`)
-   - `ui/ActionCard` — cartão de ação com botão (`icon`, `title`, `description`, `actionLabel`)
-   - `ui/EmptyState` — estado vazio (`icon`, `title`, `description`, `action`)
-   - `ui/Loading` — spinner centralizado (`label`)
-   - `ui/ConfirmarAcao` — modal de confirmação, com motivo obrigatório quando preciso
-   - `ui/BrandMark` / `ui/BrandIcon` — logo "MaisHoras"
-   - `atividade/CartaoAtividade` — cartão de atividade, para a **vitrine** (`atividade`, `rodape`, `aoClicar`)
-   - `atividade/LinhaAtividade` — atividade como **linha**, para quem administra: uma ação
-     visível (`acao`) e o resto no menu (`menu`). Vai dentro de um `Box className="mh-lista"`
-   - `atividade/SituacaoBadge` — selo da situação da atividade
-   - `atividade/BotaoInscricao` — decide sozinho o botão a partir do estado do servidor
-   - `painel/Destaque` — faixa da ação mais urgente em E1 e O1
-   - `portal/` — peças das páginas públicas (`Secao`, `CartaoOng`, `ChamadaFinal`…)
-   - `auth/BotoesExternos` — entrada por Google, Microsoft e GitHub; só mostra o provedor
-     que o servidor tem configurado (`acao="Criar conta"` muda o texto)
-3. **Layouts:** `PainelLayout` (área logada, AppShell + navbar), `PortalLayout` (portal
-   público), `AuthLayout` (login/registro), `PublicPage` (verificação de certificado).
-4. **Dados:** `useFetch(url)` para GET simples, `useListagem(url, params)` para listas
-   paginadas com filtro do servidor, `useConsultaPublica(url)` nas páginas do portal.
-   Mutations via `api` de `src/services/api`. Sempre trate `loading` com `<Loading />` e
-   listas vazias com `<EmptyState />`.
-5. **Feedback:** use `notifySuccess` / `notifyError` de `src/utils/notify` (toasts Mantine).
-   Nunca `alert()`. Erros de API: `notifyError(err, "mensagem fallback")`.
-6. **Datas:** `formatDate(iso)` de `src/utils/format`. Imagens: `resolveImage(photo, photoUrl)`.
-   Iniciais de avatar: `initials(nome)`.
+1. **Azul royal é ação e marca. Âmbar é hora, e só hora.** Carga horária de vaga, horas
+   de certificado e o total da caderneta usam `<Horas />`. Nenhum outro elemento é âmbar:
+   situação, alerta e botão usam outras cores. Se aparecer âmbar fora de hora, a cor deixa
+   de dizer alguma coisa.
+2. **IBM Plex Sans é a voz.** Plex Mono só para código de verdade (código do certificado,
+   código de check-in), aplicado no `input` (`styles={{ input: { fontFamily: … } }}`) e
+   nunca com `ff` no campo inteiro, que vaza para o rótulo.
+3. **Estrutura é informação.** Fio, coluna, número e rótulo só entram quando dizem algo.
+   Passo numerado só onde a ordem importa; cartão só para objeto que se escolhe (vaga,
+   ONG); lista de trabalho é linha.
 
-## Paleta (tema em src/theme.js)
+## O que não fazer (cara de modelo pronto)
 
-- `brand` (azul royal, primária, `primaryShade` 7 `#1839b0`) — ações principais, identidade
-- `navy` (azul escuro, shade 7 `#21397e`) — área/itens da ONG
-- `clay` (âmbar, shade 6 `#ef9504`) — destaque secundário (badge de carga horária, CTA do portal)
-- `ink` (cinza-azulado) — textos/neutros
-- Texto secundário: `c="dimmed"`.
+- Palavra do título destacada em outra cor.
+- Rótulo pequeno colorido acima de cada título ("eyebrow"). O menu já diz onde se está.
+- `→` grudado no texto de link ou botão.
+- Fileira de cartões iguais com ícone em quadrado colorido e número grande.
+- Metadados unidos por " · ". Separe em colunas, linhas ou frases.
+- Caixa alta em rótulo (`tt="uppercase"`).
+- Botão desabilitado para mostrar situação ("Aguardando aprovação"). Situação é texto.
+- Travessão (— ou –) em texto de tela. Use vírgula, dois-pontos ou ponto.
+- `(s)`, `(ões)`, `(a)`: escreva o plural certo com uma condição.
+- "..." em vez de "…" nos textos de carregamento.
 
-## Tom visual: ferramenta sóbria
+## Componentes (reaproveite antes de criar)
 
-A interface foi refeita para **não** ter cara de modelo pronto. Mantenha:
+- `ui/PageHeader` — título, `subtitle`, `action`, `badge` (um nó) e `voltar={{ para, rotulo }}`
+  para quem desce um nível. Também define o título da aba (`useTitulo`).
+- `ui/Horas` — a carga horária em âmbar (`valor`, `sufixo`).
+- `ui/DataBloco` — data em bloco na frente das linhas de atividade ("sáb / 24 / out").
+- `ui/Numeros` — fileira de números com fio entre eles; no celular vira linhas.
+- `ui/SecaoDeFormulario` — bloco de formulário: título e explicação à esquerda, campos à
+  direita (perfil, formulário de atividade).
+- `ui/EmptyState` (`compacto` para dentro de seção), `ui/Loading`, `ui/ConfirmarAcao`
+  (`rotuloVoltar` para dizer o que "voltar" mantém).
+- `ui/BrandMark` / `ui/ClockGlyph` — logotipo.
+- `atividade/CartaoAtividade` — vaga na vitrine; `para` torna o cartão inteiro um link.
+- `atividade/LinhaAtividade` — atividade em colunas para a ONG; uma ação visível e o resto
+  no menu; `comSituacao={false}` quando a lista já é de uma situação só.
+- `atividade/BotaoInscricao` — decide o botão pelo estado do servidor; `compacto` no cartão.
+- `certificado/Caderneta` — horas por certificado, total com traço duplo.
+- `painel/Destaque` — a ação mais urgente; não é desenhado quando não há nada urgente.
+- `portal/*` — `Secao` (título à esquerda, `nevoa`), `Passo`, `CartaoOng`,
+  `ExemplarCertificado`, `ChamadaFinal`, `PaginaDePublico`.
+- `auth/BotoesExternos` — Google, Microsoft e GitHub, só os configurados no servidor.
 
-- **Cor marca estado e ação, não enfeite.** Número de `StatCard` não leva cor; botão
-  secundário é `variant="default"`; uma ação principal por tela.
-- **Pesos 600 e 700.** Nada de `fw={800}`/`900`. Títulos de página vêm do tema (`Title order={1}`).
-- **Rótulo acima do título é discreto:** `<Text size="xs" c="dimmed">`. Sem caixa alta
-  colorida em cima de cada título — é o que faz todas as telas parecerem a mesma.
-- **Raio médio** (o padrão do tema). `radius="lg"`/`"xl"` só em avatar redondo.
-- **Lista de gestão é linha, não cartão.** Cartão com pilha de botões vira parede; use
-  `LinhaAtividade` / `.mh-lista` + `.mh-linha`.
-- **Sem gradiente, sombra grande ou cartão flutuando** sobre foto.
+## Layouts
 
-## Classes CSS utilitárias (src/index.css)
+- `PainelLayout` (área logada): o conteúdo vive em `.mh-pagina` (1120px, margens
+  responsivas). **Página não define `maw`/`mx` no topo**: é o layout que alinha todas.
+  Formulário e páginas de foco estreitam por dentro (`<Box maw={…}>`), alinhadas à esquerda.
+- `PortalLayout` (público): `Container size={LARGURA_DO_PORTAL}` de `portal/navegacao.js`.
+- `AuthLayout` (acesso): formulário à esquerda, certificado de exemplo à direita no
+  computador.
+- `PublicPage` (verificação): topo mínimo, 760px.
 
-- `.mh-page-band` — superfície de conteúdo (cartão grande de página)
-- `.mh-card-hover` — hover discreto (borda e fundo) em cartões clicáveis
-- `.mh-lista` / `.mh-linha` / `.mh-linha-seta` — lista em linhas com borda única
-- `.mh-topbar`, `.mh-sidebar`, `.mh-main`, `.mh-app-shell` — chrome do AppShell
-- `.mh-auth-page`, `.mh-public-page` — fundo das páginas públicas
-- `.mh-nav-button[data-active]` — item de navegação
+## Classes de `src/index.css`
+
+- Tokens em `:root`: `--mh-tinta`, `--mh-tinta-2`, `--mh-tinta-3`, `--mh-royal`,
+  `--mh-hora*`, `--mh-nevoa`, `--mh-linha`, `--mh-linha-forte`, `--mh-foco`.
+- `.mh-bloco` (superfície com fio), `.mh-lista` + `.mh-linha` (lista em linhas;
+  `data-clicavel` dá hover e cursor), `.mh-link-titulo` (link que cobre o bloco; o que
+  precisa continuar clicável por cima leva `.mh-acima-do-link`).
+- `.mh-num` (dígitos tabulares), `.mh-horas`, `.mh-data`, `.mh-caderneta`, `.mh-numeros`.
+- `.mh-abas-rolam` (abas que rolam de lado no celular), `.mh-secao`, `.mh-hero`,
+  `.mh-exemplar`, `.mh-footer`, `.mh-qr`.
+
+## Cor e contraste
+
+- Tema em `src/theme.js`. `brand` 7 = `#1839b0`; `gray`/`ink` são cinzas azulados e
+  `gray.6` (o `dimmed`) dá 5,5:1 sobre branco.
+- Selo "light" do Mantine tinha texto claro demais (2,5:1 no verde); `variaveisDoTema()`
+  escurece o texto de cada cor. Cor nova de selo: meça o contraste no navegador antes.
+- Situações: rascunho cinza, publicada azul, acontecendo verde, a validar violeta,
+  finalizada verde-azulado, cancelada vermelha.
+
+## Dados e feedback
+
+- `useFetch(url)` para GET simples, `useListagem(url, params)` para listas paginadas,
+  `useConsultaPublica(url)` no portal. Filtro é do servidor.
+- Filtros e abas que valem guardar ficam na URL (`useSearchParams`).
+- Sempre `<Loading />` e `<EmptyState />`. Erro de API: `notifyError(mensagemDoErro(…))`.
+  Sem toast de boas-vindas: a tela seguinte já recebe a pessoa.
+- Datas: `formatDate`, `formatDateLong`, `formatDataCurta`, `formatHorario` ("8h às 11h")
+  de `utils/format`. Nunca `new Date("2026-09-20")` direto.
 
 ## Responsividade (obrigatório)
 
-A maioria dos estudantes acessa por celular. Sempre:
-- `SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}` em vez de colunas fixas
-- Padding responsivo: `p={{ base: "lg", sm: "xl" }}`
-- `Group` com `wrap="wrap"` quando houver risco de estouro
-- Testar em 375px de largura
-- **Página de conteúdo estreito centraliza**: `maw={1040} mx="auto" w="100%"` no `Stack`
-  raiz. Sem o `mx`, o conteúdo encosta à esquerda e sobra meia tela vazia em 1920px
-- Campo curto não ocupa a linha sozinho: agrupe em `SimpleGrid`, com mais colunas em
-  telas largas (`cols={{ base: 1, sm: 3, lg: 4 }}`)
-
-## Padrão de uma página típica
-
-```jsx
-import PageHeader from "../../components/ui/PageHeader";
-import Loading from "../../components/ui/Loading";
-import EmptyState from "../../components/ui/EmptyState";
-import { useFetch } from "../../hooks/useFetch";
-
-export default function MinhaPagina() {
-  const { data, loading } = useFetch("/rota");
-  if (loading) return <Loading />;
-  const itens = data || [];
-  return (
-    <>
-      <PageHeader eyebrow="Seção" title="Título" subtitle="Descrição curta." />
-      {itens.length === 0 ? (
-        <EmptyState title="Nada aqui" description="..." />
-      ) : (
-        /* conteúdo */
-      )}
-    </>
-  );
-}
-```
+- Teste em 375px e em 1440px. Para olhar tudo de uma vez, rode `scripts/semear_local.py`
+  numa base local e fotografe as telas.
+- Campos têm 16px no celular (o CSS global cuida disso); não reduza.
+- `SimpleGrid` com colunas por breakpoint; `Group wrap="wrap"` onde pode estourar.
+- Tabela larga do console: `Table.ScrollContainer` e colunas secundárias com
+  `visibleFrom`.
 
 ## Antes de finalizar
 
-- `npm run build` (frontend) deve passar limpo.
-- `npx eslint src` deve passar sem erros.
-- Para validar visualmente, abrir no navegador (Vite em :5173, API em :3000).
+- `npx eslint src` e `npm run build` limpos.
+- Abrir no navegador (Vite em :5173, API em :3000) as telas mexidas, nas duas larguras.

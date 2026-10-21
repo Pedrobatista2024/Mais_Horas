@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Alert, Anchor, Button, Stack, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconMail, IconMailCheck } from "@tabler/icons-react";
+import { IconMailCheck } from "@tabler/icons-react";
 
 import AuthLayout from "../../components/layout/AuthLayout";
 import { api, mensagemDoErro } from "../../services/api";
@@ -60,7 +60,6 @@ export default function EsqueciSenha() {
           <TextInput
             label="E-mail"
             placeholder="voce@email.com"
-            leftSection={<IconMail size={16} />}
             autoComplete="email"
             {...form.getInputProps("email")}
           />

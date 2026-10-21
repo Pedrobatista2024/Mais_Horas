@@ -13,3 +13,6 @@ export function cadastroComo(papel, volta) {
   if (volta) params.set("volta", volta);
   return `/criar-conta?${params}`;
 }
+
+/** Largura do conteúdo do portal, a mesma em todas as páginas públicas. */
+export const LARGURA_DO_PORTAL = 1180;

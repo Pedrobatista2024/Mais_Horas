@@ -1,14 +1,10 @@
-import {
-  IconBuildingCommunity, IconCalendarCheck, IconCertificate, IconClockHour4,
-  IconSchool,
-} from "@tabler/icons-react";
-
+/** Os números do portal, na ordem em que aparecem. Rótulo: [singular, plural]. */
 export const NUMEROS_DE_IMPACTO = [
-  { chave: "horasCertificadas", rotulo: ["hora certificada", "horas certificadas"], icone: IconClockHour4, cor: "brand" },
-  { chave: "certificadosEmitidos", rotulo: ["certificado emitido", "certificados emitidos"], icone: IconCertificate, cor: "clay" },
-  { chave: "atividadesRealizadas", rotulo: ["atividade realizada", "atividades realizadas"], icone: IconCalendarCheck, cor: "navy" },
-  { chave: "ongs", rotulo: ["organização", "organizações"], icone: IconBuildingCommunity, cor: "navy" },
-  { chave: "estudantes", rotulo: ["estudante", "estudantes"], icone: IconSchool, cor: "brand" },
+  { chave: "horasCertificadas", rotulo: ["hora certificada", "horas certificadas"] },
+  { chave: "certificadosEmitidos", rotulo: ["certificado emitido", "certificados emitidos"] },
+  { chave: "atividadesRealizadas", rotulo: ["atividade realizada", "atividades realizadas"] },
+  { chave: "ongs", rotulo: ["organização", "organizações"] },
+  { chave: "estudantes", rotulo: ["estudante", "estudantes"] },
 ];
 
 /** Só os números maiores que zero: "0 horas" na vitrine depõe contra. */

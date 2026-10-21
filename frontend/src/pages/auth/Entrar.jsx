@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Anchor, Button, Group, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconLock, IconMail } from "@tabler/icons-react";
 
 import BotoesExternos from "../../components/auth/BotoesExternos";
 import { comArtigo, pelo, provedorOuGenerico, sujeito } from "../../components/auth/provedores";
@@ -10,7 +9,7 @@ import AuthLayout from "../../components/layout/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
 import { destinoSeguro, painelDe } from "../../routes/destinos";
 import { api, mensagemDoErro } from "../../services/api";
-import { notifyError, notifySuccess } from "../../utils/notify";
+import { notifyError } from "../../utils/notify";
 
 const MOTIVOS = {
   conta_suspensa: () => "Esta conta está suspensa. Procure a administração.",
@@ -56,7 +55,6 @@ export default function Entrar() {
     try {
       const { data } = await api.post("/auth/entrar", valores);
       entrar(data);
-      notifySuccess(`Bem-vindo(a), ${data.usuario.nome}!`);
       navigate(volta ?? painelDe(data.usuario.papel), { replace: true });
     } catch (erro) {
       notifyError(mensagemDoErro(erro, "Não foi possível entrar"));
@@ -66,20 +64,18 @@ export default function Entrar() {
   }
 
   return (
-    <AuthLayout title="Entrar" subtitle="Acesse sua conta para continuar">
+    <AuthLayout title="Entrar">
       <form onSubmit={form.onSubmit(enviar)}>
         <Stack>
           <TextInput
             label="E-mail"
             placeholder="voce@email.com"
-            leftSection={<IconMail size={16} />}
             autoComplete="email"
             {...form.getInputProps("email")}
           />
           <PasswordInput
             label="Senha"
             placeholder="Sua senha"
-            leftSection={<IconLock size={16} />}
             autoComplete="current-password"
             {...form.getInputProps("senha")}
           />

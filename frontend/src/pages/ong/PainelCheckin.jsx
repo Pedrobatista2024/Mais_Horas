@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Alert, Avatar, Badge, Button, Card, Group, Modal, Progress, Stack, Text,
+  Alert, Avatar, Badge, Box, Button, Grid, Group, Modal, Progress, Stack, Text,
   TextInput, Title,
 } from "@mantine/core";
 import {
-  IconAlertTriangle, IconArrowLeft, IconMaximize, IconPlayerPause,
-  IconPlayerPlay, IconUserPlus, IconWifiOff,
+  IconAlertTriangle, IconMaximize, IconPlayerPause, IconPlayerPlay, IconUserPlus,
+  IconWifiOff,
 } from "@tabler/icons-react";
 import QRCode from "qrcode";
 
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
+import PageHeader from "../../components/ui/PageHeader";
 import { api, mensagemDoErro } from "../../services/api";
 import { formatRelativo, initials, resolveImage } from "../../utils/format";
 import { notifyError, notifySuccess } from "../../utils/notify";
@@ -56,9 +57,6 @@ export default function PainelCheckin() {
   const buscarToken = useCallback(async () => {
     try {
       const { data } = await api.get(`/atividades/${id}/checkin/token`);
-      await QRCode.toCanvas(canvasRef.current, data.token, {
-        width: 320, margin: 1, errorCorrectionLevel: "M",
-      });
       setCodigo(data.token);
       setRestante(data.validoPor);
       setDuracao((atual) => Math.max(atual, data.validoPor));
@@ -93,6 +91,18 @@ export default function PainelCheckin() {
     buscarLista();
     buscarToken();
   }, [buscarLista, buscarToken]);
+
+  // O desenho do QR vai num efeito, e não dentro de buscarToken: o token e a
+  // lista são pedidos juntos, e quando o token chegava primeiro a tela ainda
+  // estava em "carregando", sem canvas. A biblioteca então desenhava num canvas
+  // solto, sem erro nenhum, e o QR só aparecia na rotação seguinte, até 30 s
+  // depois.
+  useEffect(() => {
+    if (!codigo || !canvasRef.current) return;
+    QRCode.toCanvas(canvasRef.current, codigo, {
+      width: 480, margin: 1, errorCorrectionLevel: "M",
+    }).catch(() => setSemRede(true));
+  }, [codigo, carregando]);
 
   // Lista ao vivo.
   useEffect(() => {
@@ -134,7 +144,7 @@ export default function PainelCheckin() {
     else alvo.requestFullscreen?.();
   }
 
-  if (carregando) return <Loading label="Abrindo o painel..." />;
+  if (carregando) return <Loading label="Abrindo o painel…" />;
 
   if (erroFatal) {
     return (
@@ -154,143 +164,133 @@ export default function PainelCheckin() {
     i.aluno?.nome?.toLowerCase().includes(busca.trim().toLowerCase()));
 
   return (
-    <Stack gap="lg" maw={1040} mx="auto" w="100%">
-      <Button variant="subtle" size="compact-sm" w="fit-content"
-              leftSection={<IconArrowLeft size={15} />}
-              onClick={() => navegar(`/ong/atividades/${id}`)}>
-        Voltar à atividade
-      </Button>
-
-      <Stack gap={4}>
-        <Text size="xs" c="dimmed">
-          Check-in ao vivo
-        </Text>
-        <Title order={1} fz={{ base: 24, sm: 30 }} lh={1.15}>
-          {dados?.atividade?.titulo}
-        </Title>
-      </Stack>
+    <>
+      <PageHeader
+        voltar={{ para: `/ong/atividades/${id}`, rotulo: dados?.atividade?.titulo ?? "Atividade" }}
+        title="Check-in ao vivo"
+        subtitle="Mostre esta tela no local. O código muda sozinho a cada 30 segundos, então a foto do QR não serve para quem não veio."
+        action={
+          <Button variant="default"
+                  onClick={() => navegar(`/ong/atividades/${id}/presencas`)}>
+            Encerrar check-in
+          </Button>
+        }
+      />
 
       {semRede && (
-        <Alert color="clay" variant="light" icon={<IconWifiOff size={18} />}
+        <Alert color="red" icon={<IconWifiOff size={18} />} mb="lg"
                title="Sem conexão com o servidor">
-          O código parou de rodar. Enquanto a conexão não voltar, ele não pode ser
-          renovado — e um código vencido não registra presença.
+          O código parou de mudar. Enquanto a conexão não voltar ele não é renovado, e um
+          código vencido não registra presença.
         </Alert>
       )}
 
-      <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }} ref={telaRef}
-            bg="white">
-        <Stack align="center" gap="md">
-          <canvas ref={canvasRef} style={{ maxWidth: "100%", height: "auto" }} />
+      <Grid gutter={{ base: "lg", md: 40 }}>
+        <Grid.Col span={{ base: 12, md: 7 }}>
+          <Box className="mh-bloco mh-tela-qr" p={{ base: "lg", sm: "xl" }} ref={telaRef}>
+            <Stack align="center" gap="md">
+              <canvas ref={canvasRef} aria-label="QR Code de presença" className="mh-qr" />
 
-          {/* Quem está sem câmera digita este código em `E5`. Expor o texto não
-              enfraquece nada: ele vence junto com o QR, nos mesmos 40 s. */}
-          <Text ff="monospace" size="sm" c="dimmed" ta="center"
-                style={{ wordBreak: "break-all" }} maw={320}>
-            {codigo}
-          </Text>
-
-          <Stack gap={6} w="100%" maw={320}>
-            <Group justify="space-between">
-              <Text size="sm" c="dimmed">
-                {pausado
-                  ? `Pausado por ${Math.ceil((pausadoAte - Date.now()) / 1000)}s`
-                  : `Renova em ${restante}s`}
+              {/* Quem está sem câmera digita este código em `E5`. Expor o texto
+                  não enfraquece nada: ele vence junto com o QR, nos mesmos 40 s. */}
+              <Text ff="monospace" size="sm" c="dimmed" ta="center" translate="no"
+                    style={{ wordBreak: "break-all" }} maw={440}>
+                {codigo}
               </Text>
-              <Badge color={pausado ? "clay" : "brand"} variant="light" radius="sm">
-                {pausado ? "Congelado" : "Rodando"}
-              </Badge>
-            </Group>
-            <Progress value={(restante / duracao) * 100}
-                      color={pausado ? "clay" : "brand"} size="sm" />
-          </Stack>
 
-          <Group gap="sm" wrap="wrap" justify="center">
-            <Button variant="light" leftSection={<IconMaximize size={16} />}
-                    onClick={telaCheia}>
-              Tela cheia
-            </Button>
-            <Button
-              variant="light"
-              leftSection={pausado ? <IconPlayerPlay size={16} />
-                                   : <IconPlayerPause size={16} />}
-              onClick={() => setPausadoAte(pausado
-                ? 0
-                : Date.now() + PAUSA_SEGUNDOS * 1000)}
-            >
-              {pausado ? "Retomar rotação" : "Pausar rotação"}
-            </Button>
-            <Button variant="light" leftSection={<IconUserPlus size={16} />}
-                    onClick={() => setManual(true)}>
-              Adicionar manualmente
-            </Button>
+              <Stack gap={6} w="100%" maw={440}>
+                <Group justify="space-between">
+                  <Text size="sm" c="dimmed" className="mh-num" aria-live="off">
+                    {pausado
+                      ? `Pausado por ${Math.ceil((pausadoAte - Date.now()) / 1000)} s`
+                      : `Muda em ${restante} s`}
+                  </Text>
+                  {pausado && <Badge color="orange">Pausado</Badge>}
+                </Group>
+                <Progress value={(restante / duracao) * 100}
+                          color={pausado ? "orange" : "brand"} size="sm"
+                          aria-label="Tempo até o próximo código" />
+              </Stack>
+
+              <Group gap="xs" wrap="wrap" justify="center">
+                <Button variant="default" leftSection={<IconMaximize size={16} />}
+                        onClick={telaCheia}>
+                  Tela cheia
+                </Button>
+                <Button
+                  variant="default"
+                  leftSection={pausado ? <IconPlayerPlay size={16} />
+                                       : <IconPlayerPause size={16} />}
+                  onClick={() => setPausadoAte(pausado
+                    ? 0
+                    : Date.now() + PAUSA_SEGUNDOS * 1000)}
+                >
+                  {pausado ? "Voltar a mudar" : "Pausar por 1 minuto"}
+                </Button>
+              </Group>
+
+              {pausado && (
+                <Text size="sm" c="dimmed" ta="center" maw={420}>
+                  Pausado, o mesmo código continua na tela. Use só pelo tempo que alguém
+                  precisar para conseguir ler.
+                </Text>
+              )}
+            </Stack>
+          </Box>
+        </Grid.Col>
+
+        <Grid.Col span={{ base: 12, md: 5 }}>
+          <Group justify="space-between" align="center" mb="sm">
+            <Title order={2} fz="lg">Quem já chegou</Title>
+            <Text fw={600} className="mh-num">
+              {dados?.presentes} de {dados?.inscritos}
+            </Text>
           </Group>
 
-          {pausado && (
-            <Text size="xs" c="dimmed" ta="center" maw={420}>
-              Enquanto pausado, o mesmo código continua na tela. Use só o tempo
-              necessário para quem está com dificuldade de leitura.
+          {chegaram.length === 0 ? (
+            <Text size="sm" c="dimmed" mb="md">
+              Ninguém registrou presença ainda. Vire a tela para o público.
             </Text>
-          )}
-        </Stack>
-      </Card>
-
-      <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-        <Group justify="space-between" wrap="wrap" gap="sm" mb="sm">
-          <Text fw={700}>Quem já chegou</Text>
-          <Badge color="brand" variant="light" radius="sm" size="lg">
-            {dados?.presentes} de {dados?.inscritos}
-          </Badge>
-        </Group>
-
-        {chegaram.length === 0 ? (
-          <Text size="sm" c="dimmed">
-            Ninguém registrou presença ainda. Aponte a tela para o público.
-          </Text>
-        ) : (
-          <Stack gap="xs">
-            {chegaram.map((item) => (
-              <Group key={item.inscricaoId} justify="space-between" wrap="nowrap"
-                     gap="sm">
-                <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-                  <Avatar src={resolveImage(item.aluno?.foto)} color="brand"
-                          radius="xl" size={34}>
-                    {initials(item.aluno?.nome)}
-                  </Avatar>
-                  <Text fw={600} truncate>
-                    {item.aluno?.nome}
+          ) : (
+            <Box className="mh-lista" mb="md" aria-live="polite">
+              {chegaram.map((item) => (
+                <Group key={item.inscricaoId} className="mh-linha" justify="space-between"
+                       wrap="nowrap" gap="sm">
+                  <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+                    <Avatar src={resolveImage(item.aluno?.foto)} color="brand"
+                            radius="xl" size={32} alt={item.aluno?.nome}>
+                      {initials(item.aluno?.nome)}
+                    </Avatar>
+                    <Text fw={500} truncate>{item.aluno?.nome}</Text>
+                    {item.checkinOrigem === "manual" && (
+                      <Badge color="gray">Manual</Badge>
+                    )}
+                  </Group>
+                  <Text size="sm" c="dimmed" style={{ flexShrink: 0 }}>
+                    {formatRelativo(item.checkinEm)}
                   </Text>
-                  {item.checkinOrigem === "manual" && (
-                    <Badge size="xs" color="clay" variant="light">
-                      manual
-                    </Badge>
-                  )}
                 </Group>
-                <Text size="sm" c="dimmed" style={{ flexShrink: 0 }}>
-                  {formatRelativo(item.checkinEm)}
-                </Text>
-              </Group>
-            ))}
-          </Stack>
-        )}
-      </Card>
+              ))}
+            </Box>
+          )}
 
-      <Group justify="flex-end">
-        <Button variant="light"
-                onClick={() => navegar(`/ong/atividades/${id}/presencas`)}>
-          Encerrar check-in
-        </Button>
-      </Group>
+          <Button variant="default" leftSection={<IconUserPlus size={16} />}
+                  onClick={() => setManual(true)}>
+            Registrar alguém sem celular
+          </Button>
+        </Grid.Col>
+      </Grid>
 
-      <Modal opened={manual} onClose={() => setManual(false)} centered radius="md"
-             title="Registrar presença manualmente">
+      <Modal opened={manual} onClose={() => setManual(false)}
+             title="Registrar presença sem o QR">
         <Stack gap="md">
           <Text size="sm" c="dimmed">
-            Para quem veio sem celular, sem bateria ou sem internet. A entrada fica
-            marcada como manual, separada do que o QR registrou.
+            Para quem veio sem celular, sem bateria ou sem internet. O registro fica
+            marcado como manual, separado do que o QR registrou.
           </Text>
 
-          <TextInput placeholder="Buscar pelo nome" value={busca}
+          <TextInput label="Buscar pelo nome" placeholder="Nome…" value={busca}
+                     autoComplete="off" data-autofocus
                      onChange={(e) => setBusca(e.currentTarget.value)} />
 
           {filtrados.length === 0 ? (
@@ -305,7 +305,7 @@ export default function PainelCheckin() {
                 <Group key={item.inscricaoId} justify="space-between" wrap="nowrap"
                        gap="sm">
                   <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-                    <Avatar src={resolveImage(item.aluno?.foto)} color="gray"
+                    <Avatar src={resolveImage(item.aluno?.foto)} color="gray" alt=""
                             radius="xl" size={32}>
                       {initials(item.aluno?.nome)}
                     </Avatar>
@@ -313,7 +313,7 @@ export default function PainelCheckin() {
                       {item.aluno?.nome}
                     </Text>
                   </Group>
-                  <Button size="compact-xs" variant="light"
+                  <Button size="xs" variant="default"
                           onClick={() => registrarManual(item.inscricaoId,
                                                          item.aluno?.nome)}>
                     Registrar
@@ -324,6 +324,6 @@ export default function PainelCheckin() {
           )}
         </Stack>
       </Modal>
-    </Stack>
+    </>
   );
 }

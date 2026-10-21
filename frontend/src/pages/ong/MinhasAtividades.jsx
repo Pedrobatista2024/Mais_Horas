@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Anchor, Box, Button, Center, Group, Pagination, Stack, Tabs, Text,
+  Badge, Box, Button, Center, Pagination, Stack, Tabs,
 } from "@mantine/core";
 import {
   IconCalendarPlus, IconClipboardCheck, IconEdit, IconPlus, IconQrcode,
@@ -32,12 +32,16 @@ const ABAS = [
 ];
 
 const VAZIO = {
-  rascunho: "Nenhum rascunho. Crie uma atividade e salve sem publicar.",
-  publicada: "Nenhuma atividade publicada aguardando a data.",
-  em_andamento: "Nada acontecendo agora.",
-  aguardando_validacao: "Nenhuma atividade esperando validação de presença.",
-  finalizada: "Nenhuma atividade finalizada ainda.",
-  cancelada: "Nenhuma atividade cancelada.",
+  rascunho: ["Nenhum rascunho", "Ao criar uma atividade, dá para salvar sem publicar."],
+  publicada: ["Nenhuma atividade publicada pela frente",
+              "Publique uma atividade para ela aparecer na vitrine."],
+  em_andamento: ["Nada acontecendo agora",
+                 "No horário de uma atividade, ela aparece aqui com o check-in."],
+  aguardando_validacao: ["Nenhuma presença para validar",
+                         "Quando uma atividade termina, ela espera aqui pela sua validação."],
+  finalizada: ["Nenhuma atividade finalizada ainda",
+               "Depois de validar as presenças, a atividade fecha e os certificados saem."],
+  cancelada: ["Nenhuma atividade cancelada", ""],
 };
 
 /** O2 — Minhas atividades. */
@@ -110,7 +114,7 @@ export default function MinhasAtividades() {
   async function cancelar(atividade, motivo) {
     try {
       await api.post(`/atividades/${atividade.id}/cancelar`, { motivo });
-      notifySuccess("Atividade cancelada e inscrições encerradas.");
+      notifySuccess("Atividade cancelada. Os inscritos foram avisados.");
       contar();
       trocarAba("cancelada");
     } catch (erro) {
@@ -180,21 +184,18 @@ export default function MinhasAtividades() {
 
   const eExcluir = confirmando?.tipo === "excluir";
 
-  const numeros = (resumo ? [
-    { chave: "publicada", valor: resumo.atividadesPublicadas,
-      singular: "publicada", plural: "publicadas" },
-    { chave: "aguardando_validacao", valor: resumo.aguardandoValidacao,
-      singular: "a validar", plural: "a validar" },
-    { chave: "rascunho", valor: resumo.rascunhos,
-      singular: "rascunho", plural: "rascunhos" },
-  ] : []).filter((item) => item.valor > 0);
+  // Contagem ao lado do nome da aba, só onde o painel sabe contar.
+  const contagem = resumo ? {
+    publicada: resumo.atividadesPublicadas,
+    aguardando_validacao: resumo.aguardandoValidacao,
+    rascunho: resumo.rascunhos,
+  } : {};
+  const [tituloVazio, textoVazio] = VAZIO[aba];
 
   return (
     <>
       <PageHeader
-        eyebrow="Organização"
         title="Minhas atividades"
-        subtitle="Rascunhos, publicações e histórico das atividades que você criou."
         action={
           <Button leftSection={<IconPlus size={17} />}
                   onClick={() => navegar("/ong/atividades/nova")}>
@@ -203,23 +204,15 @@ export default function MinhasAtividades() {
         }
       />
 
-      {numeros.length > 0 && (
-        <Group gap={8} mt={-10} mb="md">
-          {numeros.map((item, indice) => (
-            <Group key={item.chave} gap={8}>
-              {indice > 0 && <Text size="sm" c="dimmed">·</Text>}
-              <Anchor size="sm" c="dimmed" onClick={() => trocarAba(item.chave)}>
-                {item.valor} {item.valor === 1 ? item.singular : item.plural}
-              </Anchor>
-            </Group>
-          ))}
-        </Group>
-      )}
-
-      <Tabs value={aba} onChange={trocarAba} mb="md" variant="outline">
-        <Tabs.List>
+      <Tabs value={aba} onChange={trocarAba} mb="md">
+        <Tabs.List className="mh-abas-rolam">
           {ABAS.map((item) => (
-            <Tabs.Tab key={item.valor} value={item.valor}>
+            <Tabs.Tab key={item.valor} value={item.valor}
+                      rightSection={contagem[item.valor] > 0
+                        ? <Badge size="sm" color="gray" className="mh-num">
+                            {contagem[item.valor]}
+                          </Badge>
+                        : null}>
               {item.rotulo}
             </Tabs.Tab>
           ))}
@@ -227,29 +220,36 @@ export default function MinhasAtividades() {
       </Tabs>
 
       {carregando ? (
-        <Loading label="Carregando atividades..." />
+        <Loading label="Carregando atividades…" />
       ) : resultado.itens.length === 0 ? (
         <EmptyState
           icon={IconCalendarPlus}
-          title="Nada nesta aba"
-          description={VAZIO[aba]}
-          action={{
-            label: "Criar atividade",
+          title={tituloVazio}
+          description={textoVazio}
+          action={["rascunho", "publicada"].includes(aba) ? {
+            label: "Nova atividade",
             onClick: () => navegar("/ong/atividades/nova"),
-          }}
+          } : undefined}
         />
       ) : (
         <Stack gap="md">
-          <Box className="mh-lista">
+          <Box>
+            <div className="mh-cabecalho-colunas" aria-hidden="true">
+              <span>Data</span><span>Atividade</span><span>Horário</span>
+              <span>Horas</span><span>Inscritos</span><span />
+            </div>
+            <Box className="mh-lista">
             {resultado.itens.map((atividade) => (
               <LinhaAtividade
                 key={atividade.id}
                 atividade={atividade}
-                aoAbrir={() => navegar(`/ong/atividades/${atividade.id}`)}
+                para={`/ong/atividades/${atividade.id}`}
+                comSituacao={false}
                 acao={acaoPrincipal(atividade)}
                 menu={menu(atividade)}
               />
             ))}
+            </Box>
           </Box>
 
           {resultado.paginas > 1 && (

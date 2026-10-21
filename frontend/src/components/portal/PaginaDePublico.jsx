@@ -1,43 +1,46 @@
 import { Link } from "react-router-dom";
 import {
-  Accordion, Box, Button, Container, Group, Paper, SimpleGrid, Stack, Text,
-  ThemeIcon, Title,
+  Accordion, Box, Button, Container, Group, SimpleGrid, Stack, Text, Title,
 } from "@mantine/core";
-import { IconArrowRight } from "@tabler/icons-react";
 
 import { useAuth } from "../../context/AuthContext";
+import { useTitulo } from "../../hooks/useTitulo";
 import ChamadaFinal from "./ChamadaFinal";
 import Secao from "./Secao";
-import { cadastroComo } from "./navegacao";
+import { cadastroComo, LARGURA_DO_PORTAL } from "./navegacao";
 
 /**
- * Esqueleto de T3 (estudantes) e T4 (ONGs): "o que eu ganho com isso",
- * como começar, dúvidas e o cadastro com o perfil já escolhido.
+ * Esqueleto de T3 (estudantes) e T4 (ONGs): o que muda para quem usa, como
+ * começar, dúvidas e o cadastro com o perfil já escolhido.
+ *
+ * O topo é branco, e não outra faixa azul: o azul fica para a página inicial,
+ * e cada página de público abre direto no que interessa a ela.
  */
 export default function PaginaDePublico({
-  papel, cor, eyebrow, titulo, subtitulo, rotuloCadastro, acaoExtra,
-  vantagens, passos, duvidas, chamada,
+  papel, titulo, subtitulo, rotuloCadastro, acaoExtra, vantagens, passos, duvidas,
+  chamada, tituloDaAba,
 }) {
   const { autenticado } = useAuth();
+  useTitulo(tituloDaAba);
 
   return (
     <>
-      <Box className="mh-hero">
-        <Container size="xl" py={{ base: 48, md: 72 }}>
-          <Stack gap="lg" maw={720}>
-            <Text c="clay.3" fw={600} size="sm">{eyebrow}</Text>
-            <Title className="mh-display" c="white" fz={{ base: 34, sm: 46 }}>{titulo}</Title>
-            <Text c="rgba(255,255,255,0.9)" fz={{ base: "md", md: "lg" }}>{subtitulo}</Text>
-            <Group gap="md">
+      <Box component="section" className="mh-secao"
+           style={{ borderBottom: "1px solid var(--mh-linha)" }}>
+        <Container size={LARGURA_DO_PORTAL}>
+          <Stack gap="lg" maw={760}>
+            <Title order={1} className="mh-display" fz={{ base: 34, sm: 46 }}>
+              {titulo}
+            </Title>
+            <Text c="dimmed" fz={{ base: "md", md: "xl" }} maw={640}>{subtitulo}</Text>
+            <Group gap="sm">
               {!autenticado && (
-                <Button size="lg" color="clay" component={Link} to={cadastroComo(papel)}
-                        rightSection={<IconArrowRight size={18} />}>
+                <Button size="md" component={Link} to={cadastroComo(papel)}>
                   {rotuloCadastro}
                 </Button>
               )}
               {acaoExtra && (
-                <Button size="lg" variant="white" color="dark" component={Link}
-                        to={acaoExtra.para}>
+                <Button size="md" variant="default" component={Link} to={acaoExtra.para}>
                   {acaoExtra.rotulo}
                 </Button>
               )}
@@ -46,45 +49,42 @@ export default function PaginaDePublico({
         </Container>
       </Box>
 
-      <Secao eyebrow="O que você ganha" titulo="Feito para o seu dia a dia">
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+      <Secao titulo="O que muda para você">
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing={32} verticalSpacing={36}>
           {vantagens.map(({ icone: Icone, titulo: t, texto }) => (
-            <Paper key={t} withBorder p="lg" h="100%">
-              <ThemeIcon size={34} radius="md" variant="light" color={cor} mb="md">
-                <Icone size={19} />
-              </ThemeIcon>
-              <Text fw={600} mb={4}>{t}</Text>
-              <Text size="sm" c="dimmed">{texto}</Text>
-            </Paper>
+            <Box key={t}>
+              <Icone size={22} stroke={1.6} color="var(--mh-royal)" aria-hidden="true" />
+              <Text fw={600} fz="lg" mt="xs" mb={4}>{t}</Text>
+              <Text c="dimmed">{texto}</Text>
+            </Box>
           ))}
         </SimpleGrid>
       </Secao>
 
-      <Secao alternada eyebrow="Como começar" titulo="Em poucos minutos">
-        <Stack gap="md" maw={720} mx="auto">
+      <Secao nevoa titulo="Como começar">
+        <Box component="ol" p={0} m={0} maw={760} style={{ listStyle: "none" }}>
           {passos.map((passo, i) => (
-            <Paper key={passo.titulo} withBorder p="lg">
-              <Group gap="md" wrap="nowrap" align="flex-start">
-                <ThemeIcon size={30} radius="xl" color={cor} style={{ flexShrink: 0 }}>
-                  <Text fw={600} size="sm">{i + 1}</Text>
-                </ThemeIcon>
-                <div>
-                  <Text fw={600}>{passo.titulo}</Text>
-                  <Text size="sm" c="dimmed">{passo.texto}</Text>
-                </div>
-              </Group>
-            </Paper>
+            <Group key={passo.titulo} component="li" gap="lg" wrap="nowrap" align="flex-start"
+                   py="md" style={{ borderTop: i ? "1px solid var(--mh-linha-forte)" : 0 }}>
+              <Text className="mh-passo-numero" w={36} fz={28} aria-hidden="true">
+                {i + 1}
+              </Text>
+              <Box>
+                <Text fw={600} fz="lg">{passo.titulo}</Text>
+                <Text c="dimmed">{passo.texto}</Text>
+              </Box>
+            </Group>
           ))}
-        </Stack>
+        </Box>
       </Secao>
 
-      <Secao eyebrow="Dúvidas" titulo="Perguntas frequentes">
-        <Accordion variant="separated" radius="md" maw={760} mx="auto">
+      <Secao titulo="Perguntas frequentes">
+        <Accordion maw={760} chevronPosition="right">
           {duvidas.map(({ pergunta, resposta }) => (
             <Accordion.Item key={pergunta} value={pergunta}>
-              <Accordion.Control fw={600}>{pergunta}</Accordion.Control>
+              <Accordion.Control><Text fw={500}>{pergunta}</Text></Accordion.Control>
               <Accordion.Panel>
-                <Text size="sm" c="dimmed">{resposta}</Text>
+                <Text c="dimmed">{resposta}</Text>
               </Accordion.Panel>
             </Accordion.Item>
           ))}

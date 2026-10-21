@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Anchor, Button, Card, Code, CopyButton, Group, Spoiler, Stack, Text,
+  Anchor, Box, Button, Code, CopyButton, Group, Spoiler, Stack, Text,
 } from "@mantine/core";
 import { IconCheck, IconCopy, IconKey, IconTerminal2 } from "@tabler/icons-react";
 
@@ -46,17 +46,17 @@ export default function ProvaIndependente({ codigo }) {
   const comando = `python verificar_certificado.py ${codigo}`;
 
   return (
-    <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
+    <Box className="mh-bloco" p={{ base: "lg", sm: "xl" }}>
       <Group justify="space-between" wrap="wrap" gap="sm" mb="sm">
         <div>
-          <Text fw={700}>Conferir por conta própria</Text>
+          <Text fw={600} fz="lg">Conferir por conta própria</Text>
           <Text size="sm" c="dimmed" maw={520}>
             A validade não depende desta página. Com o texto assinado, a assinatura e
             a chave pública, qualquer pessoa refaz a conferência no próprio computador.
           </Text>
         </div>
         {!prova && (
-          <Button variant="light" loading={carregando} onClick={buscar}
+          <Button variant="default" loading={carregando} onClick={buscar}
                   leftSection={<IconKey size={16} />}>
             Ver a prova
           </Button>
@@ -66,7 +66,7 @@ export default function ProvaIndependente({ codigo }) {
       {prova && (
         <Stack gap="md" mt="md">
           <div>
-            <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb={4}>
+            <Text size="sm" fw={600} c="dimmed" mb={4}>
               Texto assinado ({prova.formatoDoTexto})
             </Text>
             <Spoiler maxHeight={68} showLabel="Ver tudo" hideLabel="Recolher">
@@ -78,7 +78,7 @@ export default function ProvaIndependente({ codigo }) {
           </div>
 
           <div>
-            <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb={4}>
+            <Text size="sm" fw={600} c="dimmed" mb={4}>
               Assinatura ({prova.algoritmo})
             </Text>
             <Code block style={{ wordBreak: "break-all" }}>{prova.assinatura}</Code>
@@ -94,7 +94,7 @@ export default function ProvaIndependente({ codigo }) {
           <div>
             <Group gap={6} mb={4}>
               <IconTerminal2 size={15} />
-              <Text size="xs" fw={700} tt="uppercase" c="dimmed">
+              <Text size="sm" fw={600} c="dimmed">
                 Conferir pelo terminal
               </Text>
             </Group>
@@ -108,11 +108,11 @@ export default function ProvaIndependente({ codigo }) {
           </div>
 
           <Text size="xs" c="dimmed">
-            Impressão digital da chave: <Code>{prova.impressaoDigitalDaChave}</Code> —
+            Impressão digital da chave: <Code>{prova.impressaoDigitalDaChave}</Code>,
             a mesma impressa no rodapé do certificado.
           </Text>
         </Stack>
       )}
-    </Card>
+    </Box>
   );
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Badge, Button, Card, Center, Group, Pagination, SegmentedControl, Stack, Table,
+  Box, Badge, Button, Center, Group, Pagination, SegmentedControl, Stack, Table,
   Text, TextInput,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
@@ -50,7 +50,7 @@ export default function Ongs() {
 
   return (
     <Stack gap="lg">
-      <PageHeader eyebrow="Administração" title="Organizações"
+      <PageHeader title="Organizações"
                   subtitle="O selo de verificada aparece para os alunos na vitrine." />
 
       <Group justify="space-between" wrap="wrap" gap="sm">
@@ -65,11 +65,11 @@ export default function Ongs() {
       </Group>
 
       {carregando ? (
-        <Loading label="Carregando organizações..." />
+        <Loading label="Carregando organizações…" />
       ) : dados.itens.length === 0 ? (
         <EmptyState icon={IconBuildingCommunity} title="Nenhuma organização encontrada" />
       ) : (
-        <Card withBorder radius="md" p={0}>
+        <Box className="mh-bloco" style={{ overflow: "hidden" }}>
           <Table.ScrollContainer minWidth={760}>
             <Table verticalSpacing="sm" highlightOnHover>
               <Table.Thead>
@@ -103,7 +103,7 @@ export default function Ongs() {
                     </Table.Td>
                     <Table.Td>
                       {ong.cnpj ? <Text size="sm">{ong.cnpj}</Text>
-                                : <Badge size="xs" color="yellow" variant="light">sem CNPJ</Badge>}
+                                : <Badge size="xs" color="yellow">Sem CNPJ</Badge>}
                     </Table.Td>
                     <Table.Td ta="right">
                       <Text size="sm" style={{ cursor: ong.atividades ? "pointer" : "default" }}
@@ -128,7 +128,7 @@ export default function Ongs() {
               </Table.Tbody>
             </Table>
           </Table.ScrollContainer>
-        </Card>
+        </Box>
       )}
 
       {dados.paginas > 1 && (

@@ -29,6 +29,55 @@ export function formatDateLong(value) {
   });
 }
 
+/** Data pura ("2026-10-24") como data local, sem o deslize do UTC. */
+function dataLocal(value) {
+  const soData = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+  if (!soData) return null;
+  return new Date(Number(soData[1]), Number(soData[2]) - 1, Number(soData[3]));
+}
+
+const SEMANA = new Intl.DateTimeFormat("pt-BR", { weekday: "short" });
+const MES = new Intl.DateTimeFormat("pt-BR", { month: "short" });
+const CURTA = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "short", day: "numeric", month: "short",
+});
+
+function semPonto(texto) {
+  return texto.replace(/\.$/, "");
+}
+
+/** As peças do bloco de data de uma lista: "sáb", "24", "out". */
+export function partesDaData(value) {
+  const d = dataLocal(value);
+  if (!d) return null;
+  const hoje = new Date();
+  return {
+    semana: semPonto(SEMANA.format(d)),
+    dia: String(d.getDate()),
+    mes: semPonto(MES.format(d)),
+    hoje: d.toDateString() === hoje.toDateString(),
+  };
+}
+
+/** "sáb., 24 de out." — data de linha, quando não cabe o bloco. */
+export function formatDataCurta(value) {
+  const d = dataLocal(value);
+  return d ? CURTA.format(d) : formatDate(value);
+}
+
+/** "08:00" vira "8h"; "08:30" vira "8h30". */
+function horaFalada(hhmm) {
+  const [h, m] = String(hhmm || "").split(":");
+  if (h === undefined || h === "") return "";
+  return `${Number(h)}h${m && m !== "00" ? m : ""}`;
+}
+
+/** "8h às 11h" — como se fala o horário de um evento. */
+export function formatHorario(inicio, fim) {
+  if (!inicio) return "";
+  return fim ? `${horaFalada(inicio)} às ${horaFalada(fim)}` : horaFalada(inicio);
+}
+
 /**
  * Resolve a URL de uma imagem de perfil.
  * - photoUrl (http) → usa direto

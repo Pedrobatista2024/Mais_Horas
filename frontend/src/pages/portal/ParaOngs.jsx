@@ -24,7 +24,7 @@ const PASSOS = [
   { titulo: "Crie a conta da organização",
     texto: "Use o nome da ONG e um e-mail que a equipe acompanhe." },
   { titulo: "Complete o perfil",
-    texto: "Descrição, cidade, site e logo — é o que os estudantes veem na sua página pública." },
+    texto: "Descrição, cidade, site e logo. É o que os estudantes veem na sua página pública." },
   { titulo: "Publique uma atividade",
     texto: "Defina se as inscrições precisam da sua aprovação." },
   { titulo: "No dia, abra o QR de presença",
@@ -37,13 +37,13 @@ const DUVIDAS = [
   { pergunta: "Quanto custa?",
     resposta: "Nada. A plataforma é gratuita para organizações e estudantes." },
   { pergunta: "Posso editar a atividade depois de publicar?",
-    resposta: "Sim, enquanto ninguém se inscreveu. Com inscritos, só o número de vagas muda — data, local e carga são as condições que as pessoas aceitaram." },
+    resposta: "Sim, enquanto ninguém se inscreveu. Com inscritos, só o número de vagas muda: data, local e carga são as condições que as pessoas aceitaram." },
   { pergunta: "O check-in já garante o certificado?",
     resposta: "Não. O check-in é uma evidência; quem confirma a presença é a organização, antes de finalizar." },
   { pergunta: "E se eu precisar cancelar?",
     resposta: "Cancele pelo painel da atividade. As inscrições caem junto e cada inscrito recebe o aviso na plataforma." },
   { pergunta: "Vejo os dados dos voluntários?",
-    resposta: "Você vê nome, e-mail, instituição e curso de quem se inscreveu nas suas atividades — o necessário para organizar a ação. Telefone e endereço ficam de fora." },
+    resposta: "Você vê nome, e-mail, instituição e curso de quem se inscreveu nas suas atividades, o necessário para organizar a ação. Telefone e endereço ficam de fora." },
   { pergunta: "Como ganho o selo de verificada?",
     resposta: "A administração da plataforma confere os dados da organização e concede o selo." },
 ];
@@ -53,8 +53,7 @@ export default function ParaOngs() {
   return (
     <PaginaDePublico
       papel="ong"
-      cor="navy"
-      eyebrow="Para ONGs"
+      tituloDaAba="Para ONGs"
       titulo="Voluntários certos, sem planilha e sem lista de papel"
       subtitulo="Divulgue suas ações para estudantes que precisam de horas de extensão, valide a presença pelo celular e emita certificados em segundos."
       rotuloCadastro="Cadastrar minha ONG"

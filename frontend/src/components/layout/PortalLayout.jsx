@@ -1,25 +1,29 @@
 import { useEffect } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import {
-  Anchor, Box, Burger, Button, Container, Divider, Drawer, Group, NavLink, Stack,
-  Text,
+  Anchor, Box, Burger, Button, Container, Divider, Drawer, Group, NavLink, SimpleGrid,
+  Stack, Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconLayoutDashboard, IconShieldCheck } from "@tabler/icons-react";
 
 import { useAuth } from "../../context/AuthContext";
 import { painelDe } from "../../routes/destinos";
-import { cadastroComo, LINKS_DO_PORTAL } from "../portal/navegacao";
-import BrandIcon from "../ui/BrandIcon";
+import { cadastroComo, LARGURA_DO_PORTAL, LINKS_DO_PORTAL } from "../portal/navegacao";
 import BrandMark from "../ui/BrandMark";
+
 
 function ativo(local, para) {
   return local.pathname === para || local.pathname.startsWith(`${para}/`);
 }
 
-/** Casca do portal público (T1 a T5 e vagas abertas): topo, conteúdo e rodapé. */
+/**
+ * Casca do portal público: topo, conteúdo e rodapé.
+ *
+ * O topo tem os links em texto, "Verificar certificado" à vista (é o que a
+ * coordenação vem fazer aqui) e uma ação só: criar conta. A faixa azul que
+ * ficava acima do topo repetia o link de verificação e saiu.
+ */
 export default function PortalLayout() {
-  const navegar = useNavigate();
   const local = useLocation();
   const { autenticado, usuario } = useAuth();
   const [aberto, { toggle, close }] = useDisclosure(false);
@@ -31,58 +35,43 @@ export default function PortalLayout() {
   }, [local.pathname, close]);
 
   const acoes = autenticado ? (
-    <Button leftSection={<IconLayoutDashboard size={17} />}
-            onClick={() => navegar(painelDe(usuario?.papel))}>
-      Ir para o painel
-    </Button>
+    <Button component={Link} to={painelDe(usuario?.papel)}>Ir para o painel</Button>
   ) : (
     <>
-      <Button variant="subtle" color="ink" component={Link} to="/entrar">
-        Entrar
-      </Button>
-      <Button component={Link} to={cadastroComo("estudante")}>
-        Criar conta
-      </Button>
+      <Button variant="subtle" color="gray" component={Link} to="/entrar">Entrar</Button>
+      <Button component={Link} to={cadastroComo("estudante")}>Criar conta</Button>
     </>
   );
 
   return (
-    <Box className="mh-landing">
-      <Box className="mh-strip">
-        <Container size="xl">
-          <Group h={34} justify="space-between" wrap="nowrap">
-            <Text size="xs" fw={600} truncate>
-              Plataforma de horas de extensão · UniC
-            </Text>
-            <Anchor component={Link} to="/verificar" c="inherit" underline="never"
-                    size="xs" fw={600}>
-              <Group gap={4} wrap="nowrap">
-                <IconShieldCheck size={14} />
-                Verificar certificado
-              </Group>
-            </Anchor>
-          </Group>
-        </Container>
-      </Box>
+    <Box bg="white">
+      <a href="#conteudo" className="mh-pular">Pular para o conteúdo</a>
 
       <Box component="header" className="mh-portal-header">
-        <Container size="xl">
-          <Group h={72} justify="space-between" wrap="nowrap">
-            <BrandMark onClick={() => navegar("/")} />
-
-            <Group gap={4} visibleFrom="lg" component="nav" aria-label="Portal">
-              {LINKS_DO_PORTAL.map((link) => (
-                <Button key={link.para} component={Link} to={link.para}
-                        variant={ativo(local, link.para) ? "light" : "subtle"}
-                        color={ativo(local, link.para) ? "brand" : "ink"}
-                        size="compact-md" fw={600}>
-                  {link.rotulo}
-                </Button>
-              ))}
+        <Container size={LARGURA_DO_PORTAL}>
+          <Group h={64} justify="space-between" wrap="nowrap" gap="md">
+            <Group gap={32} wrap="nowrap">
+              <Link to="/" aria-label="Mais Horas, página inicial"
+                    style={{ textDecoration: "none" }}>
+                <BrandMark compact />
+              </Link>
+              <Group gap={2} visibleFrom="lg" component="nav" aria-label="Portal">
+                {LINKS_DO_PORTAL.map((link) => (
+                  <Link key={link.para} to={link.para} className="mh-portal-link"
+                        data-active={ativo(local, link.para) || undefined}
+                        aria-current={ativo(local, link.para) ? "page" : undefined}>
+                    {link.rotulo}
+                  </Link>
+                ))}
+              </Group>
             </Group>
 
-            <Group gap="sm" wrap="nowrap">
-              <Group gap="sm" visibleFrom="sm" wrap="nowrap">{acoes}</Group>
+            <Group gap="xs" wrap="nowrap">
+              <Link to="/verificar" className="mh-portal-link mh-so-largo"
+                    data-active={ativo(local, "/verificar") || undefined}>
+                Verificar certificado
+              </Link>
+              <Group gap="xs" visibleFrom="sm" wrap="nowrap">{acoes}</Group>
               <Burger opened={aberto} onClick={toggle} hiddenFrom="lg" size="sm"
                       aria-label={aberto ? "Fechar menu" : "Abrir menu"} />
             </Group>
@@ -92,73 +81,62 @@ export default function PortalLayout() {
 
       <Drawer opened={aberto} onClose={close} position="right" size="xs"
               title={<BrandMark compact />} hiddenFrom="lg">
-        <Stack gap="xs">
-          {LINKS_DO_PORTAL.map((link) => (
-            <NavLink key={link.para} component={Link} to={link.para}
-                     label={link.rotulo} active={ativo(local, link.para)}
-                     fw={600} />
-          ))}
-          <NavLink component={Link} to="/verificar" label="Verificar certificado"
-                   leftSection={<IconShieldCheck size={16} />} fw={600} />
+        <Stack gap={2} component="nav" aria-label="Portal">
+          {[...LINKS_DO_PORTAL, { para: "/verificar", rotulo: "Verificar certificado" }]
+            .map((link) => (
+              <NavLink key={link.para} component={Link} to={link.para}
+                       label={link.rotulo} active={ativo(local, link.para)}
+                       style={{ borderRadius: 6 }} />
+            ))}
           <Divider my="sm" />
           <Stack gap="sm">{acoes}</Stack>
         </Stack>
       </Drawer>
 
-      <Box component="main">
+      <Box component="main" id="conteudo" tabIndex={-1} style={{ outline: "none" }}>
         <Outlet />
       </Box>
 
       <Box component="footer" className="mh-footer">
-        <Container size="xl" py="xl">
-          <Group justify="space-between" align="flex-start" wrap="wrap" gap="xl">
-            <Stack gap="xs" maw={320}>
-              <Group gap={10}>
-                <BrandIcon size={36} style={{ borderRadius: 10 }} />
-                <Text fw={700} fz="lg" c="white">
-                  Mais<Text span inherit c="brand.3">Horas</Text>
-                </Text>
-              </Group>
-              <Text size="sm" c="rgba(255,255,255,0.7)">
-                Conectando estudantes e ONGs por horas que transformam. Projeto
-                Integrador — UniC.
+        <Container size={LARGURA_DO_PORTAL} py={48}>
+          <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="xl">
+            <Stack gap="xs">
+              <Text fw={700} fz="lg" c="white">Mais Horas</Text>
+              <Text size="sm">
+                Vagas de voluntariado para horas de extensão, com certificado que se
+                confere pelo QR Code.
               </Text>
             </Stack>
-
-            <Group gap={56} align="flex-start" wrap="wrap">
-              <Stack gap={6}>
-                <Text fw={700} c="white" size="sm">Conheça</Text>
-                {LINKS_DO_PORTAL.map((link) => (
-                  <Anchor key={link.para} component={Link} to={link.para}
-                          c="rgba(255,255,255,0.75)" size="sm">
-                    {link.rotulo}
-                  </Anchor>
-                ))}
-              </Stack>
-              <Stack gap={6}>
-                <Text fw={700} c="white" size="sm">Plataforma</Text>
-                <Anchor component={Link} to="/entrar" c="rgba(255,255,255,0.75)" size="sm">
-                  Entrar
+            <Stack gap={8}>
+              <Text fw={600} c="white" size="sm">O portal</Text>
+              {LINKS_DO_PORTAL.map((link) => (
+                <Anchor key={link.para} component={Link} to={link.para} size="sm">
+                  {link.rotulo}
                 </Anchor>
-                <Anchor component={Link} to={cadastroComo("estudante")}
-                        c="rgba(255,255,255,0.75)" size="sm">
-                  Criar conta
-                </Anchor>
-                <Anchor component={Link} to="/verificar" c="rgba(255,255,255,0.75)" size="sm">
-                  Verificar certificado
-                </Anchor>
-              </Stack>
-              <Stack gap={6}>
-                <Text fw={700} c="white" size="sm">Equipe</Text>
-                {["Pedro Batista", "Ismael Brandão", "Antônio Yarlen"].map((nome) => (
-                  <Text key={nome} c="rgba(255,255,255,0.75)" size="sm">{nome}</Text>
-                ))}
-              </Stack>
-            </Group>
-          </Group>
-          <Divider my="lg" color="rgba(255,255,255,0.12)" />
-          <Text size="xs" c="rgba(255,255,255,0.6)">
-            © {new Date().getFullYear()} Mais Horas · Centro Universitário Cearense (UniC)
+              ))}
+            </Stack>
+            <Stack gap={8}>
+              <Text fw={600} c="white" size="sm">Sua conta</Text>
+              <Anchor component={Link} to="/entrar" size="sm">Entrar</Anchor>
+              <Anchor component={Link} to={cadastroComo("estudante")} size="sm">
+                Criar conta de estudante
+              </Anchor>
+              <Anchor component={Link} to={cadastroComo("ong")} size="sm">
+                Cadastrar uma ONG
+              </Anchor>
+              <Anchor component={Link} to="/verificar" size="sm">Verificar certificado</Anchor>
+            </Stack>
+            <Stack gap={8}>
+              <Text fw={600} c="white" size="sm">Quem fez</Text>
+              {["Pedro Batista", "Ismael Brandão", "Antônio Yarlen"].map((nome) => (
+                <Text key={nome} size="sm">{nome}</Text>
+              ))}
+            </Stack>
+          </SimpleGrid>
+          <Divider my="xl" color="rgba(255,255,255,0.14)" />
+          <Text size="sm">
+            Projeto Integrador do curso de Sistemas de Informação, Centro Universitário
+            Cearense (UniC), {new Date().getFullYear()}.
           </Text>
         </Container>
       </Box>

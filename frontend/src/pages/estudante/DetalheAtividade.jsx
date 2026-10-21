@@ -1,41 +1,46 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  Alert, Anchor, Badge, Button, Card, Divider, Grid, Group, Stack, Text, Title, Tooltip,
+  Alert, Anchor, Badge, Box, Button, Grid, Group, Stack, Text, Title, Tooltip,
 } from "@mantine/core";
 import {
-  IconAlertTriangle, IconArrowLeft, IconCalendar, IconCheck, IconClock,
-  IconMapPin, IconShare, IconUsers,
+  IconAlertTriangle, IconMapPin, IconQrcode, IconRosetteDiscountCheckFilled, IconShare,
 } from "@tabler/icons-react";
 
 import BotaoInscricao from "../../components/atividade/BotaoInscricao";
 import SituacaoBadge from "../../components/atividade/SituacaoBadge";
 import EmptyState from "../../components/ui/EmptyState";
+import Horas from "../../components/ui/Horas";
 import Loading from "../../components/ui/Loading";
+import PageHeader from "../../components/ui/PageHeader";
 import { api, mensagemDoErro } from "../../services/api";
-import { formatDateLong } from "../../utils/format";
+import { formatDateLong, formatHorario } from "../../utils/format";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
-function Dado({ icon: Icon, rotulo, children }) {
+/** Uma linha da ficha: rótulo pequeno em cima, valor embaixo. */
+function Dado({ rotulo, children }) {
   return (
-    <Group gap="sm" wrap="nowrap" align="flex-start">
-      <Icon size={19} style={{ marginTop: 2, opacity: 0.55, flexShrink: 0 }} />
-      <div style={{ minWidth: 0 }}>
-        <Text size="xs" c="dimmed">
-          {rotulo}
-        </Text>
-        <Text fw={650}>{children}</Text>
-      </div>
-    </Group>
+    <Box>
+      <Text size="sm" c="dimmed">{rotulo}</Text>
+      <Text fw={500}>{children}</Text>
+    </Box>
   );
+}
+
+function textoDeInscritos({ vagasOcupadas, vagasRestantes, lotada }) {
+  const inscritos = `${vagasOcupadas} ${vagasOcupadas === 1 ? "pessoa inscrita" : "pessoas inscritas"}`;
+  if (lotada) return `${inscritos}, lotada`;
+  return `${inscritos}, ${vagasRestantes} ${vagasRestantes === 1 ? "vaga livre" : "vagas livres"}`;
 }
 
 /**
  * E3 — Detalhe da atividade.
  *
- * Mostra a **contagem** de inscritos, nunca os nomes (D21): expor curso e
- * instituição de terceiros a qualquer colega vazaria dado de quem não
- * consentiu. A ONG vê a lista completa na tela dela.
+ * Página de evento: à esquerda o que é, à direita a ficha com quando, onde,
+ * quantas horas e o botão. No celular a ficha vem logo depois do título,
+ * antes da descrição — é ela que decide se a pessoa vai.
+ *
+ * Mostra a **contagem** de inscritos, nunca os nomes (D21).
  */
 export default function DetalheAtividade({ base = "/atividades" }) {
   const { id } = useParams();
@@ -65,57 +70,86 @@ export default function DetalheAtividade({ base = "/atividades" }) {
   }, [buscar]);
 
   async function compartilhar() {
+    const url = window.location.href;
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      if (navigator.share) {
+        await navigator.share({ title: atividade.titulo, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
       notifySuccess("Link copiado");
-    } catch {
-      notifyError("Seu navegador não deixou copiar o link");
+    } catch (erro) {
+      if (erro?.name !== "AbortError") notifyError("Seu navegador não deixou copiar o link");
     }
   }
 
-  if (carregando) return <Loading label="Carregando atividade..." />;
+  if (carregando) return <Loading label="Carregando atividade…" />;
 
   if (!atividade) {
     return (
       <EmptyState
         icon={IconAlertTriangle}
         title="Atividade não encontrada"
-        description="Ela pode ter sido cancelada ou o endereço está errado."
+        description="Ela pode ter sido cancelada, ou o endereço está errado."
         action={{ label: "Ver outras atividades", onClick: () => navegar(base) }}
       />
     );
   }
 
-  const encerrada = ["cancelada", "finalizada"].includes(atividade.situacao);
-  const mapa = `https://www.google.com/maps/search/?api=1&query=${
-    encodeURIComponent([atividade.local, atividade.cidade, atividade.estado]
-      .filter(Boolean).join(", "))
-  }`;
+  const endereco = [atividade.local, atividade.cidade, atividade.estado]
+    .filter(Boolean).join(", ");
+  const mapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+  const podeCheckin = atividade.situacao === "em_andamento"
+    && atividade.minhaInscricao?.situacao === "confirmada";
+
+  const ficha = (
+    <Box className="mh-bloco" p="lg">
+      <Stack gap="md">
+        <Group justify="space-between" align="center">
+          <Text fw={600}>Carga horária</Text>
+          <Horas valor={atividade.cargaHoraria} style={{ fontSize: "0.9375rem" }} />
+        </Group>
+        <Dado rotulo="Quando">
+          {formatDateLong(atividade.data)}
+          <br />
+          {formatHorario(atividade.horaInicio, atividade.horaFim)}
+        </Dado>
+        <Dado rotulo="Onde">{endereco}</Dado>
+        <Dado rotulo="Vagas">{textoDeInscritos(atividade)}</Dado>
+
+        <Stack gap="xs" pt={4}>
+          {podeCheckin && (
+            <Button component={Link} to="/check-in" leftSection={<IconQrcode size={17} />}>
+              Fazer check-in
+            </Button>
+          )}
+          <BotaoInscricao atividade={atividade} aoMudar={buscar} />
+          <Group gap="xs" grow>
+            {atividade.local && (
+              <Button component="a" href={mapa} target="_blank" rel="noreferrer"
+                      variant="default" leftSection={<IconMapPin size={16} />}>
+                Como chegar
+              </Button>
+            )}
+            <Button variant="default" leftSection={<IconShare size={16} />}
+                    onClick={compartilhar}>
+              Compartilhar
+            </Button>
+          </Group>
+        </Stack>
+      </Stack>
+    </Box>
+  );
 
   return (
-    <Stack gap="lg" maw={1040} mx="auto" w="100%">
-      <Button variant="subtle" size="compact-sm" w="fit-content"
-              leftSection={<IconArrowLeft size={15} />}
-              onClick={() => navegar(base)}>
-        Voltar à vitrine
-      </Button>
-
-      <Stack gap="xs">
-        <Group gap="xs" wrap="wrap">
-          <SituacaoBadge situacao={atividade.situacao} size="md" />
-          <Badge color="clay" variant="light" radius="sm" size="md">
-            {atividade.cargaHoraria}h de atividade
-          </Badge>
-          {atividade.exigeAprovacao && (
-            <Badge color="yellow" variant="light" radius="sm" size="md">
-              Aprovação necessária
-            </Badge>
-          )}
-        </Group>
-        <Title order={1} fz={{ base: 26, sm: 34 }} lh={1.1}>
-          {atividade.titulo}
-        </Title>
-        <Group gap={5}>
+    <>
+      <PageHeader
+        voltar={{ para: base, rotulo: base === "/vagas" ? "Vagas abertas" : "Buscar atividades" }}
+        title={atividade.titulo}
+        badge={atividade.situacao !== "publicada"
+          ? <SituacaoBadge situacao={atividade.situacao} size="lg" /> : null}
+      >
+        <Group gap={6} mt={6}>
           <Text c="dimmed">
             por{" "}
             <Anchor component={Link} to={`/ongs/${atividade.ong?.id}`} inherit>
@@ -123,87 +157,39 @@ export default function DetalheAtividade({ base = "/atividades" }) {
             </Anchor>
           </Text>
           {atividade.ong?.verificada && (
-            <Tooltip label="Organização verificada pela administração">
-              <IconCheck size={15} color="var(--mantine-color-brand-6)" />
+            <Tooltip label="Organização verificada pela Mais Horas">
+              <IconRosetteDiscountCheckFilled size={16} color="var(--mh-royal)"
+                                             aria-label="verificada" />
             </Tooltip>
           )}
+          {atividade.exigeAprovacao && <Badge color="gray">Com aprovação da ONG</Badge>}
         </Group>
+      </PageHeader>
+
+      <Stack gap="md" mb="lg">
+        {atividade.editadaPorAdminEm && (
+          <Alert color="orange" icon={<IconAlertTriangle size={18} />}>
+            A administração da plataforma editou esta atividade em{" "}
+            {new Date(atividade.editadaPorAdminEm).toLocaleDateString("pt-BR")}. Confira
+            data, horário e local antes de ir.
+          </Alert>
+        )}
+        {atividade.situacao === "cancelada" && (
+          <Alert color="red" icon={<IconAlertTriangle size={18} />}>
+            A organização cancelou esta atividade.
+          </Alert>
+        )}
       </Stack>
 
-      {atividade.editadaPorAdminEm && (
-        <Alert color="orange" variant="light" icon={<IconAlertTriangle size={18} />}>
-          Esta atividade foi editada pela administração da plataforma em{" "}
-          {new Date(atividade.editadaPorAdminEm).toLocaleDateString("pt-BR")}. Confira
-          data, horário e local antes de ir.
-        </Alert>
-      )}
-
-      {atividade.situacao === "cancelada" && (
-        <Alert color="red" variant="light" icon={<IconAlertTriangle size={18} />}>
-          Esta atividade foi cancelada pela organização.
-        </Alert>
-      )}
-
-      <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-        <Grid gutter="lg">
-          <Grid.Col span={{ base: 12, sm: 6 }}>
-            <Dado icon={IconCalendar} rotulo="Data">
-              {formatDateLong(atividade.data)}
-            </Dado>
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, sm: 6 }}>
-            <Dado icon={IconClock} rotulo="Horário">
-              {atividade.horaInicio} às {atividade.horaFim}
-            </Dado>
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, sm: 6 }}>
-            <Dado icon={IconMapPin} rotulo="Local">
-              {[atividade.local, atividade.cidade, atividade.estado]
-                .filter(Boolean).join(", ")}
-            </Dado>
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, sm: 6 }}>
-            <Dado icon={IconUsers} rotulo="Inscrições">
-              {atividade.vagasOcupadas}{" "}
-              {atividade.vagasOcupadas === 1 ? "pessoa inscrita" : "pessoas inscritas"}
-              {" · "}
-              {atividade.lotada
-                ? "vagas esgotadas"
-                : `${atividade.vagasRestantes} ${
-                    atividade.vagasRestantes === 1 ? "vaga" : "vagas"} restantes`}
-            </Dado>
-          </Grid.Col>
-        </Grid>
-
-        <Divider my="lg" />
-
-        <Stack gap="xs">
-          <Text fw={700}>Sobre a atividade</Text>
-          <Text style={{ whiteSpace: "pre-wrap" }}>{atividade.descricao}</Text>
-        </Stack>
-
-        <Divider my="lg" />
-
-        <Group gap="sm" wrap="wrap">
-          <BotaoInscricao atividade={atividade} aoMudar={buscar} />
-          {atividade.local && (
-            <Button component="a" href={mapa} target="_blank" rel="noreferrer"
-                    variant="light" leftSection={<IconMapPin size={16} />}>
-              Como chegar
-            </Button>
-          )}
-          <Button variant="subtle" leftSection={<IconShare size={16} />}
-                  onClick={compartilhar}>
-            Compartilhar
-          </Button>
-        </Group>
-
-        {encerrada && (
-          <Text size="xs" c="dimmed" mt="sm">
-            As inscrições para esta atividade estão encerradas.
-          </Text>
-        )}
-      </Card>
-    </Stack>
+      <Grid gutter={{ base: "lg", md: 40 }}>
+        <Grid.Col span={{ base: 12, md: 4 }} order={{ base: 1, md: 2 }}>
+          <Box style={{ position: "sticky", top: 84 }}>{ficha}</Box>
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 8 }} order={{ base: 2, md: 1 }}>
+          <Title order={2} fz="lg" mb="xs">Sobre a atividade</Title>
+          <Text maw={680} style={{ whiteSpace: "pre-wrap" }}>{atividade.descricao}</Text>
+        </Grid.Col>
+      </Grid>
+    </>
   );
 }

@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Button, Center, Container, Group, Pagination, SimpleGrid, Stack, Text, TextInput,
+  Button, Center, Container, Pagination, SimpleGrid, Stack, Text, TextInput,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { IconBuildingCommunity, IconPlus, IconSearch, IconSearchOff } from "@tabler/icons-react";
 
 import CartaoOng from "../../components/portal/CartaoOng";
-import { cadastroComo } from "../../components/portal/navegacao";
+import { cadastroComo, LARGURA_DO_PORTAL } from "../../components/portal/navegacao";
 import EmptyState from "../../components/ui/EmptyState";
 import Loading from "../../components/ui/Loading";
 import PageHeader from "../../components/ui/PageHeader";
@@ -35,22 +35,22 @@ export default function OngsParceiras() {
   const { dados, carregando } = useListagem("/portal/ongs", params);
 
   return (
-    <Container size="xl" py={{ base: "lg", md: 40 }}>
+    <Container size={LARGURA_DO_PORTAL} py={{ base: 28, md: 48 }}>
       <PageHeader
-        eyebrow="ONGs parceiras"
-        title="Quem faz acontecer"
-        subtitle="Organizações que já publicaram atividades na plataforma. As verificadas pela administração aparecem primeiro."
+        title="ONGs parceiras"
+        subtitle="Organizações que já publicaram atividades na plataforma. As verificadas pela Mais Horas aparecem primeiro."
         action={!autenticado && (
-          <Button color="navy" leftSection={<IconPlus size={16} />}
+          <Button variant="default" leftSection={<IconPlus size={16} />}
                   component={Link} to={cadastroComo("ong")}>
-            Publicar minha ONG aqui
+            Cadastrar minha ONG
           </Button>
         )}
       />
 
       <TextInput
         mb="lg" maw={420}
-        placeholder="Buscar por nome ou cidade"
+        placeholder="Nome ou cidade…"
+        type="search"
         leftSection={<IconSearch size={16} />}
         value={busca}
         onChange={(e) => { setBusca(e.currentTarget.value); setPagina(1); }}
@@ -58,7 +58,7 @@ export default function OngsParceiras() {
       />
 
       {carregando ? (
-        <Loading label="Carregando organizações..." />
+        <Loading label="Carregando organizações…" />
       ) : dados.itens.length === 0 ? (
         <EmptyState
           icon={buscaAdiada ? IconSearchOff : IconBuildingCommunity}
@@ -78,15 +78,13 @@ export default function OngsParceiras() {
           </Text>
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
             {dados.itens.map((ong) => (
-              <CartaoOng key={ong.id} ong={ong} aoClicar={() => navegar(`/ongs/${ong.id}`)} />
+              <CartaoOng key={ong.id} ong={ong} />
             ))}
           </SimpleGrid>
           {dados.paginas > 1 && (
-            <Group justify="center">
-              <Center>
-                <Pagination total={dados.paginas} value={pagina} onChange={setPagina} />
-              </Center>
-            </Group>
+            <Center>
+              <Pagination total={dados.paginas} value={pagina} onChange={setPagina} />
+            </Center>
           )}
         </Stack>
       )}

@@ -20,7 +20,7 @@ export default function RotaPrivada({ children, papel }) {
     if (chegou) limparRetorno();
   }, [chegou, limparRetorno]);
 
-  if (carregando) return <Loading label="Verificando sessão..." />;
+  if (carregando) return <Loading label="Verificando sessão…" />;
 
   if (!autenticado) {
     return <Navigate to="/entrar" state={{ de: local }} replace />;

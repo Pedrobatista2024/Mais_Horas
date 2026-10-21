@@ -1,13 +1,13 @@
 import {
-  AppShell, Avatar, Box, Burger, Button, Container, Divider, Group, Menu,
-  ScrollArea, Stack, Text, ThemeIcon, UnstyledButton,
+  AppShell, Avatar, Box, Burger, Group, Menu, ScrollArea, Stack, Text,
+  UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  IconBuildingCommunity, IconCalendarEvent, IconCertificate, IconChevronRight,
-  IconListSearch, IconServerCog, IconUsers,
-  IconLayoutDashboard, IconLogout, IconPlus, IconSearch, IconTicket, IconUser,
+  IconBuildingCommunity, IconCalendarEvent, IconCertificate, IconChevronDown,
+  IconLayoutDashboard, IconListSearch, IconLogout, IconPlus, IconSearch,
+  IconServerCog, IconTicket, IconUser, IconUsers,
 } from "@tabler/icons-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -21,7 +21,7 @@ import BrandMark from "../ui/BrandMark";
  * O menu só lista telas que existem.
  *
  * Item que leva a "em construção" é pior que item ausente: promete algo e
- * frustra. As demais entram com as fatias seguintes.
+ * frustra.
  */
 const MENU_ESTUDANTE = [
   { rotulo: "Painel", para: "/painel", icone: IconLayoutDashboard, exato: true },
@@ -33,7 +33,7 @@ const MENU_ESTUDANTE = [
 const MENU_ONG = [
   { rotulo: "Painel", para: "/ong", icone: IconLayoutDashboard, exato: true },
   { rotulo: "Minhas atividades", para: "/ong/atividades", icone: IconCalendarEvent,
-    exato: true },
+    exato: true, tambem: /^\/ong\/atividades\/(?!nova)[^/]+/ },
   { rotulo: "Nova atividade", para: "/ong/atividades/nova", icone: IconPlus },
 ];
 
@@ -59,27 +59,7 @@ const ROTULO_PAPEL = {
   superadmin: "Administração",
 };
 
-function ItemDeMenu({ item, ativo, aoClicar }) {
-  return (
-    <UnstyledButton className="mh-nav-button" data-active={ativo || undefined}
-                    onClick={aoClicar}>
-      <Group gap="sm" wrap="nowrap">
-        <ThemeIcon variant={ativo ? "light" : "transparent"} color={ativo ? "brand" : "gray"}
-                   size={34} radius="md">
-          <item.icone size={20} />
-        </ThemeIcon>
-        <Box style={{ flex: 1, minWidth: 0 }}>
-          <Text fw={700} size="sm" truncate>
-            {item.rotulo}
-          </Text>
-        </Box>
-        <IconChevronRight size={16} opacity={ativo ? 0.65 : 0.28} />
-      </Group>
-    </UnstyledButton>
-  );
-}
-
-/** Casca da área logada: topo, menu lateral e o conteúdo da rota. */
+/** Casca da área logada: topo, menu lateral e o trilho de conteúdo. */
 export default function PainelLayout() {
   const { usuario, sair, espelho, sairDoModo } = useAuth();
   const navegar = useNavigate();
@@ -89,11 +69,6 @@ export default function PainelLayout() {
   const papel = usuario?.papel;
   const menu = MENU_POR_PAPEL[papel] || MENU_ESTUDANTE;
   const eOng = papel === "ong";
-
-  function ir(para) {
-    navegar(para);
-    close();
-  }
 
   async function encerrar() {
     // No espelho, "Sair" encerra o modo — não a sessão do admin.
@@ -106,95 +81,95 @@ export default function PainelLayout() {
   }
 
   function estaAtivo(item) {
+    if (item.tambem?.test(local.pathname)) return true;
     if (item.exato) return local.pathname === item.para;
     return local.pathname === item.para || local.pathname.startsWith(`${item.para}/`);
   }
 
   return (
     <AppShell
-      header={{ height: espelho ? 116 : 72 }}
-      navbar={{ width: 292, breakpoint: "md", collapsed: { mobile: !aberto } }}
+      header={{ height: espelho ? 104 : 60 }}
+      navbar={{ width: 248, breakpoint: "md", collapsed: { mobile: !aberto } }}
       padding={0}
-      className="mh-app-shell"
     >
+      <a href="#conteudo" className="mh-pular">Pular para o conteúdo</a>
+
       <AppShell.Header className="mh-topbar">
         {espelho && <TarjaEspelho />}
-        <Group h={72} px={{ base: "md", md: "xl" }} justify="space-between" wrap="nowrap">
+        <Group h={60} px={{ base: "md", md: "lg" }} justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
-            <Burger
-              opened={aberto}
-              onClick={toggle}
-              hiddenFrom="md"
-              size="sm"
-              aria-label={aberto ? "Fechar menu lateral" : "Abrir menu lateral"}
-            />
-            <BrandMark compact onClick={() => ir(painelDe(papel))} />
+            <Burger opened={aberto} onClick={toggle} hiddenFrom="md" size="sm"
+                    aria-label={aberto ? "Fechar menu" : "Abrir menu"} />
+            <BrandMark compact onClick={() => navegar(painelDe(papel))} />
           </Group>
 
-          <Group gap="xs" wrap="nowrap">
-          <Sino />
-          <Menu shadow="md" width={220} position="bottom-end">
-            <Menu.Target>
-              <UnstyledButton aria-label="Abrir menu do usuário">
-                <Group gap="xs" wrap="nowrap">
-                  <Box visibleFrom="sm" style={{ textAlign: "right" }}>
-                    <Text size="sm" fw={700} lh={1.2}>
-                      {usuario?.nome}
-                    </Text>
-                    <Text size="xs" c="dimmed" lh={1.2}>
-                      {ROTULO_PAPEL[papel] || ""}
-                    </Text>
-                  </Box>
-                  <Avatar color={eOng ? "navy" : "brand"} radius="xl" size={38}>
-                    {eOng ? <IconBuildingCommunity size={19} /> : initials(usuario?.nome)}
-                  </Avatar>
-                </Group>
-              </UnstyledButton>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>{ROTULO_PAPEL[papel] || ""}</Menu.Label>
-              <Menu.Item leftSection={<IconUser size={16} />} onClick={() => ir("/perfil")}>
-                {espelho ? "Perfil" : "Meu perfil"}
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item color="red" leftSection={<IconLogout size={16} />}
-                         onClick={encerrar}>
-                {espelho ? "Sair do modo" : "Sair"}
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+          <Group gap={4} wrap="nowrap">
+            <Sino />
+            <Menu width={220} position="bottom-end" shadow="sm">
+              <Menu.Target>
+                <UnstyledButton aria-label="Abrir menu da conta" px={6} py={4}
+                                style={{ borderRadius: 6 }}>
+                  <Group gap={8} wrap="nowrap">
+                    <Avatar color={eOng ? "navy" : "brand"} radius="xl" size={32}>
+                      {eOng ? <IconBuildingCommunity size={17} /> : initials(usuario?.nome)}
+                    </Avatar>
+                    <Box visibleFrom="sm" maw={200}>
+                      <Text size="sm" fw={600} lh={1.25} truncate>{usuario?.nome}</Text>
+                    </Box>
+                    <IconChevronDown size={14} color="var(--mh-tinta-3)" />
+                  </Group>
+                </UnstyledButton>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>{ROTULO_PAPEL[papel] || ""}</Menu.Label>
+                <Menu.Item leftSection={<IconUser size={16} />} component={Link}
+                           to="/perfil" onClick={close}>
+                  {espelho ? "Perfil" : "Meu perfil"}
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item leftSection={<IconLogout size={16} />} onClick={encerrar}>
+                  {espelho ? "Sair do modo" : "Sair"}
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
           </Group>
         </Group>
       </AppShell.Header>
 
-      <AppShell.Navbar className="mh-sidebar">
-        <Stack h="100%" gap="sm" p="md">
-          <Text size="xs" fw={600} c="dimmed" px={8} pt={4}>
-            Menu
-          </Text>
-          <ScrollArea flex={1} type="auto" offsetScrollbars>
-            <Stack gap={6}>
-              {menu.map((item) => (
-                <ItemDeMenu key={item.para} item={item} ativo={estaAtivo(item)}
-                            aoClicar={() => ir(item.para)} />
-              ))}
+      <AppShell.Navbar className="mh-sidebar" data-aberto={aberto || undefined}>
+        <Stack h="100%" gap={0} p="sm" pt="md">
+          <ScrollArea flex={1} type="auto">
+            <Stack gap={2} component="nav" aria-label="Menu principal">
+              {menu.map((item) => {
+                const ativo = estaAtivo(item);
+                return (
+                  <UnstyledButton key={item.para} component={Link} to={item.para}
+                                  className="mh-nav-button" onClick={close}
+                                  data-active={ativo || undefined}
+                                  aria-current={ativo ? "page" : undefined}>
+                    <item.icone size={19} stroke={1.75} aria-hidden="true" />
+                    {item.rotulo}
+                  </UnstyledButton>
+                );
+              })}
             </Stack>
           </ScrollArea>
 
-          <Divider />
-
-          <Button variant="subtle" color="red" fullWidth justify="flex-start"
-                  leftSection={<IconLogout size={18} />} onClick={encerrar}>
-            {espelho ? "Sair do modo" : "Sair"}
-          </Button>
+          <Box pt="sm" mt="sm" style={{ borderTop: "1px solid var(--mh-linha)" }}>
+            <Text size="sm" fw={600} px={12} truncate>{usuario?.nome}</Text>
+            <Text size="xs" c="dimmed" px={12} mb={6}>{ROTULO_PAPEL[papel] || ""}</Text>
+            <UnstyledButton className="mh-nav-button" onClick={encerrar}>
+              <IconLogout size={19} stroke={1.75} aria-hidden="true" />
+              {espelho ? "Sair do modo" : "Sair"}
+            </UnstyledButton>
+          </Box>
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="mh-main">
-        <Container size="xl" px={{ base: "md", sm: "lg", xl: 0 }}
-                   py={{ base: "lg", md: 32 }}>
+      <AppShell.Main>
+        <div id="conteudo" className="mh-pagina" tabIndex={-1}>
           <Outlet />
-        </Container>
+        </div>
       </AppShell.Main>
     </AppShell>
   );

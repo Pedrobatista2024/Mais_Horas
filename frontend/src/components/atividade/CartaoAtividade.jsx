@@ -1,97 +1,88 @@
-import { Badge, Card, Group, Stack, Text, Title, Tooltip } from "@mantine/core";
-import {
-  IconCalendar, IconCheck, IconClock, IconMapPin, IconUsers,
-} from "@tabler/icons-react";
+import { Badge, Box, Group, Stack, Text, Tooltip } from "@mantine/core";
+import { IconRosetteDiscountCheckFilled } from "@tabler/icons-react";
+import { Link } from "react-router-dom";
 
-import { formatDate } from "../../utils/format";
+import { formatHorario } from "../../utils/format";
+import DataBloco from "../ui/DataBloco";
+import Horas from "../ui/Horas";
 import SituacaoBadge from "./SituacaoBadge";
-
-function Linha({ icon: Icon, children }) {
-  return (
-    <Group gap={7} wrap="nowrap" c="dimmed">
-      <Icon size={15} style={{ flexShrink: 0, opacity: 0.75 }} />
-      <Text size="sm" truncate>
-        {children}
-      </Text>
-    </Group>
-  );
-}
+import { textoDeVagas } from "./vagas";
 
 /**
- * Cartão de atividade — usado na vitrine (E2) e em "minhas atividades" (O2).
+ * Atividade na vitrine (E2), onde a pessoa escolhe entre vagas.
  *
- * `rodape` recebe os botões, que mudam conforme o papel de quem olha: o aluno
- * vê "Ver detalhes", a ONG vê o ciclo de vida. O cartão não decide isso.
+ * A data vem na frente, em bloco, porque é por ela que se decide se dá para ir.
+ * A situação só aparece quando foge do normal: na vitrine tudo está publicado,
+ * e um selo "Publicada" em cada cartão não diz nada.
+ *
+ * `para` vira link no título, e o link cobre o cartão inteiro (o `::after` do
+ * título se estica por cima), então o cartão todo é clicável sem virar um
+ * `div` com `onClick`. `rodape` recebe a ação e fica por cima do link.
  */
-export default function CartaoAtividade({ atividade, rodape, aoClicar }) {
+export default function CartaoAtividade({ atividade, para, rodape }) {
   const {
     titulo, descricao, data, horaInicio, horaFim, local, cidade,
-    cargaHoraria, vagasRestantes, vagasMax, lotada, exigeAprovacao, situacao, ong,
+    cargaHoraria, exigeAprovacao, situacao, ong,
   } = atividade;
 
   return (
-    <Card
-      withBorder
-      radius="md"
-      padding="lg"
-      className={aoClicar ? "mh-card-hover" : undefined}
-      style={{ cursor: aoClicar ? "pointer" : "default", height: "100%" }}
-      onClick={aoClicar}
-    >
-      <Stack gap="sm" h="100%">
-        <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
-          <div style={{ minWidth: 0 }}>
-            <Title order={4} lineClamp={2} fz={17}>
-              {titulo}
-            </Title>
-            {ong?.nome && (
-              <Group gap={4} wrap="nowrap" mt={2}>
-                <Text size="xs" c="dimmed" truncate>
-                  {ong.nome}
-                </Text>
-                {ong.verificada && (
-                  <Tooltip label="Organização verificada">
-                    <IconCheck size={13} color="var(--mantine-color-brand-6)" />
-                  </Tooltip>
-                )}
-              </Group>
-            )}
-          </div>
-          <Stack gap={6} align="flex-end" style={{ flexShrink: 0 }}>
-            <SituacaoBadge situacao={situacao} />
-            <Badge color="clay" variant="light" radius="sm">
-              {cargaHoraria}h
-            </Badge>
-          </Stack>
-        </Group>
+    <Box className="mh-bloco mh-cartao-atividade" p="md" h="100%">
+      <Group align="flex-start" gap="md" wrap="nowrap" h="100%">
+        <DataBloco data={data} />
 
-        <Stack gap={5}>
-          <Linha icon={IconCalendar}>{formatDate(data)}</Linha>
-          <Linha icon={IconClock}>
-            {horaInicio} às {horaFim}
-          </Linha>
-          <Linha icon={IconMapPin}>{[local, cidade].filter(Boolean).join(" · ")}</Linha>
-          <Linha icon={IconUsers}>
-            {lotada
-              ? `Vagas esgotadas (${vagasMax})`
-              : `${vagasRestantes} de ${vagasMax} vagas`}
-          </Linha>
+        <Stack gap={8} style={{ flex: 1, minWidth: 0 }} h="100%">
+          <Group justify="space-between" align="flex-start" gap="xs" wrap="nowrap">
+            <Box style={{ minWidth: 0 }}>
+              <Text fw={600} fz="lg" lh={1.3} lineClamp={2}
+                    component={para ? Link : "span"} to={para}
+                    className={para ? "mh-link-titulo" : undefined}>
+                {titulo}
+              </Text>
+              {ong?.nome && (
+                <Group gap={4} wrap="nowrap" mt={2}>
+                  <Text size="sm" c="dimmed" truncate>{ong.nome}</Text>
+                  {ong.verificada && (
+                    <Tooltip label="Organização verificada pela Mais Horas">
+                      <IconRosetteDiscountCheckFilled size={15} aria-label="verificada"
+                                                     color="var(--mh-royal)"
+                                                     style={{ flexShrink: 0 }} />
+                    </Tooltip>
+                  )}
+                </Group>
+              )}
+            </Box>
+            <Horas valor={cargaHoraria} />
+          </Group>
+
+          <Box>
+            <Text size="sm">{formatHorario(horaInicio, horaFim)}</Text>
+            <Text size="sm" c="dimmed" lineClamp={1}>
+              {[local, cidade].filter(Boolean).join(", ")}
+            </Text>
+          </Box>
+
+          {(situacao !== "publicada" || exigeAprovacao) && (
+            <Group gap={6}>
+              {situacao !== "publicada" && <SituacaoBadge situacao={situacao} />}
+              {exigeAprovacao && <Badge color="gray">Com aprovação da ONG</Badge>}
+            </Group>
+          )}
+
+          {descricao && (
+            <Text size="sm" c="dimmed" lineClamp={2}>
+              {descricao}
+            </Text>
+          )}
+
+          <Group justify="space-between" align="center" gap="sm" mt="auto" pt={4}
+                 wrap="wrap">
+            <Text size="sm" c={atividade.lotada ? "red.8" : "dimmed"} className="mh-num">
+              {textoDeVagas(atividade)}
+            </Text>
+            {rodape && <Box className="mh-acima-do-link">{rodape}</Box>}
+          </Group>
         </Stack>
-
-        {exigeAprovacao && (
-          <Badge color="yellow" variant="light" radius="sm" w="fit-content">
-            Aprovação necessária
-          </Badge>
-        )}
-
-        {descricao && (
-          <Text size="sm" c="dimmed" lineClamp={2}>
-            {descricao}
-          </Text>
-        )}
-
-        {rodape && <div style={{ marginTop: "auto", paddingTop: 4 }}>{rodape}</div>}
-      </Stack>
-    </Card>
+      </Group>
+    </Box>
   );
 }

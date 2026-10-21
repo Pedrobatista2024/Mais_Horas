@@ -549,6 +549,42 @@ selo de assinatura digital com a impressão digital da chave.
 - A marca d'água de revogado e a recusa de gerar PDF de registro adulterado continuam
   como estavam.
 
+**Interface refeita (outubro de 2026).** Antes de mexer, as 40 telas foram fotografadas em
+1440px e 375px com dados realistas (`scripts/semear_local.py`) e revisadas por crítica de
+design, heurísticas de interface e contraste medido no navegador. O que se achou e o que
+mudou:
+
+- **Desalinhamento na área logada.** O `PainelLayout` usava `Container size="xl"` com
+  margem zero acima de 1408px: em várias telas o conteúdo encostava no menu e na borda
+  direita, enquanto outras tinham margem própria. Agora há um trilho só (`.mh-pagina`,
+  1120px), definido no layout, e as páginas não escolhem mais a própria largura.
+- **Fonte que não carregava.** O tema declarava Inter, mas nenhum arquivo era importado:
+  cada aparelho mostrava uma fonte. Agora é IBM Plex Sans, empacotada com o build (a mesma
+  da apresentação), e Plex Mono só para código de certificado e de check-in.
+- **Cor com regra.** Âmbar ficou exclusivo da carga horária (`<Horas />`); situações
+  saíram do âmbar. O cinza secundário passou de 3,3:1 para 5,5:1, e os selos claros do
+  Mantine ganharam texto mais escuro: "Acontecendo agora" estava em 2,5:1 e foi a 6:1.
+- **Menos cara de modelo pronto.** Saíram a palavra destacada em cor no título do portal,
+  a etiqueta colorida acima de cada título, a seta colada nos links, a foto de banco de
+  imagens e as fileiras de cartões iguais. No lugar da foto, o topo do portal mostra as
+  próximas vagas de verdade; o certificado de exemplo mostra o que o projeto tem de
+  diferente.
+- **Painéis sem atalho repetido.** Os cartões que repetiam o menu lateral saíram. O painel
+  do aluno ganhou a **caderneta de horas**: cada certificado numa linha, horas à direita e
+  o total com traço duplo, como a ficha de horas que a coordenação já conhece.
+- **Listas em colunas.** A lista da ONG alinha data, atividade, horário, horas e vagas em
+  colunas no computador e vira duas linhas no celular. Situação deixou de ser botão
+  desabilitado ("Aguardando aprovação" virou texto com ícone).
+- **Celular.** Os filtros da vitrine ocupavam a tela inteira antes da primeira vaga; agora
+  só a busca fica à mostra. As seis abas de O2 rolam de lado em vez de quebrar em duas
+  linhas, a tabela de usuários põe papel e situação embaixo do nome, e os campos têm 16px,
+  para o iPhone não dar zoom ao tocar.
+- **Estado na URL.** Filtros da vitrine e a aba de E4 ficam no endereço.
+- **Dois defeitos achados no caminho.** O QR do painel de check-in podia sair em branco por
+  até 30 segundos: token e lista eram pedidos juntos e, quando o token chegava primeiro, a
+  biblioteca desenhava num canvas que ainda não existia. E no celular o QR passava da
+  largura da tela, porque a biblioteca grava a largura em pixels no estilo do canvas.
+
 ---
 
 ## 4. Ordem e o ponto de virada

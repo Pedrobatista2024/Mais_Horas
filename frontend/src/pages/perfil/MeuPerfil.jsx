@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import {
-  Alert, Button, Card, Divider, Group, SimpleGrid, Stack, Text,
-  TextInput, Textarea, Title,
+  Alert, Button, Group, SimpleGrid, Stack, Text, TextInput, Textarea,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconAlertTriangle, IconCheck, IconSchool } from "@tabler/icons-react";
+import { IconAlertTriangle, IconSchool } from "@tabler/icons-react";
 
 import FotoPerfil from "../../components/perfil/FotoPerfil";
 import Loading from "../../components/ui/Loading";
+import PageHeader from "../../components/ui/PageHeader";
+import SecaoDeFormulario from "../../components/ui/SecaoDeFormulario";
 import { useAuth } from "../../context/AuthContext";
 import { api, mensagemDoErro } from "../../services/api";
 import { notifyError, notifySuccess } from "../../utils/notify";
@@ -82,121 +83,126 @@ export default function MeuPerfil() {
     }
   }
 
-  if (carregando) return <Loading label="Carregando perfil..." />;
+  if (carregando) return <Loading label="Carregando perfil…" />;
 
   const faltantes = perfil?.camposFaltantes ?? [];
 
   return (
-    <Stack gap="lg" maw={940} mx="auto" w="100%">
-        <Stack gap={4}>
-          <Text size="xs" c="dimmed">
-            {eOng ? "Perfil da organização" : "Meu perfil"}
-          </Text>
-          <Title order={2} fz={{ base: 26, sm: 32 }}>
-            {eOng ? "Dados da ONG" : "Seus dados"}
-          </Title>
-        </Stack>
+    <>
+      <PageHeader title={eOng ? "Perfil da organização" : "Meu perfil"}
+                  subtitle={eOng
+                    ? "Estes dados aparecem na página pública da sua organização."
+                    : "Nome completo, instituição e curso são o que sai no certificado."} />
 
+      <Stack gap="md" mb="xl">
         {perfil?.vinculoInstitucional && (
-          <Alert icon={<IconSchool size={18} />} color="navy" variant="light"
+          <Alert icon={<IconSchool size={18} />} color="brand"
                  title="Vínculo institucional verificado">
-            Você entrou com a conta <b>{perfil.vinculoInstitucional}</b>. Quem
-            receber seus certificados sabe que sua identidade foi confirmada pela
-            instituição, e não só por nós.
+            Você entrou com a conta <b>{perfil.vinculoInstitucional}</b>. Quem receber seus
+            certificados sabe que a identidade foi confirmada pela instituição, e não só
+            por nós.
           </Alert>
         )}
 
         {!eOng && faltantes.length > 0 && (
-          <Alert icon={<IconAlertTriangle size={18} />} color="clay" variant="light">
+          <Alert icon={<IconAlertTriangle size={18} />} color="orange">
             Para se inscrever em atividades, preencha{" "}
             <b>{faltantes.map((c) => ROTULO_OBRIGATORIO[c] || c).join(", ")}</b>.
           </Alert>
         )}
+      </Stack>
 
-        {!eOng && perfil?.perfilCompleto && (
-          <Alert icon={<IconCheck size={18} />} color="brand" variant="light">
-            Perfil completo. Você já pode se inscrever em atividades.
-          </Alert>
-        )}
-
-        <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
+      <form onSubmit={form.onSubmit(salvar)}>
+        <SecaoDeFormulario titulo={eOng ? "Logo" : "Foto"}
+               texto={eOng ? "Aparece na lista de organizações parceiras."
+                           : "Opcional. Só as ONGs das suas inscrições veem."}>
           <FotoPerfil
             nome={perfil?.nome}
             caminho={eOng ? perfil?.perfil?.logo : perfil?.perfil?.foto}
             rotulo={eOng ? "logo" : "foto"}
             aoAtualizar={aplicar}
           />
+        </SecaoDeFormulario>
 
-          <Divider my="lg" />
+        {eOng ? (
+          <>
+            <SecaoDeFormulario titulo="Organização" texto="Nome e descrição vão para a página pública.">
+              <TextInput label="Nome da organização" placeholder="Instituto Verde Mar"
+                autoComplete="organization" {...form.getInputProps("nome_organizacao")} />
+              <Textarea label="O que a organização faz" minRows={3} autosize
+                placeholder="Em duas ou três frases, para quem vai se inscrever…"
+                {...form.getInputProps("descricao")} />
+              <TextInput label="CNPJ" placeholder="00.000.000/0001-00" maw={260}
+                inputMode="numeric" autoComplete="off" {...form.getInputProps("cnpj")} />
+            </SecaoDeFormulario>
+            <SecaoDeFormulario titulo="Contato e endereço"
+                   texto="Telefone, CNPJ e endereço não aparecem na página pública.">
+              <TextInput label="Telefone" placeholder="(85) 99999-9999" type="tel"
+                autoComplete="tel" maw={260} {...form.getInputProps("telefone")} />
+              <TextInput label="Endereço" placeholder="Rua, número, bairro"
+                autoComplete="street-address" {...form.getInputProps("endereco")} />
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <TextInput label="Cidade" autoComplete="address-level2"
+                  {...form.getInputProps("cidade")} />
+                <TextInput label="Estado" autoComplete="address-level1"
+                  {...form.getInputProps("estado")} />
+              </SimpleGrid>
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <TextInput label="Site" placeholder="https://…" type="url"
+                  autoComplete="url" {...form.getInputProps("site")} />
+                <TextInput label="Instagram" placeholder="@suaong" autoComplete="off"
+                  spellCheck={false} {...form.getInputProps("instagram")} />
+              </SimpleGrid>
+            </SecaoDeFormulario>
+          </>
+        ) : (
+          <>
+            <SecaoDeFormulario titulo="Para o certificado"
+                   texto="Obrigatórios antes da primeira inscrição. Confira a grafia do nome: ele sai igual no certificado.">
+              <TextInput label="Nome completo" withAsterisk autoComplete="name"
+                placeholder="Como no seu documento"
+                {...form.getInputProps("nome_completo")} />
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <TextInput label="Instituição" placeholder="UniC" withAsterisk
+                  autoComplete="organization" {...form.getInputProps("instituicao")} />
+                <TextInput label="Curso" placeholder="Sistemas de Informação" withAsterisk
+                  {...form.getInputProps("curso")} />
+              </SimpleGrid>
+            </SecaoDeFormulario>
+            <SecaoDeFormulario titulo="Contato" texto="Só a ONG das atividades em que você se inscreve vê.">
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <TextInput label="Telefone" placeholder="(85) 99999-9999" type="tel"
+                  autoComplete="tel" {...form.getInputProps("telefone")} />
+                <TextInput label="LinkedIn" placeholder="linkedin.com/in/voce" type="url"
+                  autoComplete="url" {...form.getInputProps("linkedin")} />
+              </SimpleGrid>
+              <SimpleGrid cols={{ base: 1, sm: 3 }}>
+                <TextInput label="Cidade" autoComplete="address-level2"
+                  {...form.getInputProps("cidade")} />
+                <TextInput label="Estado" autoComplete="address-level1"
+                  {...form.getInputProps("estado")} />
+                <TextInput label="Bairro" autoComplete="off"
+                  {...form.getInputProps("bairro")} />
+              </SimpleGrid>
+            </SecaoDeFormulario>
+            <SecaoDeFormulario titulo="Sobre você" texto="Opcional. Ajuda a ONG a conhecer quem vai chegar.">
+              <Textarea label="Sobre mim" minRows={3} autosize
+                placeholder="Curso, interesses, o que gostaria de fazer…"
+                {...form.getInputProps("sobre_mim")} />
+            </SecaoDeFormulario>
+          </>
+        )}
 
-          <form onSubmit={form.onSubmit(salvar)}>
-            <Stack>
-              {eOng ? (
-                <>
-                  <TextInput label="Nome da organização" placeholder="ONG Verde Vida"
-                    {...form.getInputProps("nome_organizacao")} />
-                  <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                    <TextInput label="CNPJ" placeholder="00.000.000/0001-00"
-                      {...form.getInputProps("cnpj")} />
-                    <TextInput label="Telefone" placeholder="(85) 99999-9999"
-                      {...form.getInputProps("telefone")} />
-                  </SimpleGrid>
-                  <Textarea label="Descrição" minRows={3} autosize
-                    placeholder="Conte o que a sua organização faz"
-                    {...form.getInputProps("descricao")} />
-                  <TextInput label="Endereço" placeholder="Rua, número, bairro"
-                    {...form.getInputProps("endereco")} />
-                  <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                    <TextInput label="Cidade" {...form.getInputProps("cidade")} />
-                    <TextInput label="Estado" {...form.getInputProps("estado")} />
-                  </SimpleGrid>
-                  <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                    <TextInput label="Site" placeholder="https://..."
-                      {...form.getInputProps("site")} />
-                    <TextInput label="Instagram" placeholder="@suaong"
-                      {...form.getInputProps("instagram")} />
-                  </SimpleGrid>
-                </>
-              ) : (
-                <>
-                  <TextInput
-                    label="Nome completo"
-                    placeholder="Como aparecerá no seu certificado"
-                    description="É este nome que vai no certificado"
-                    withAsterisk
-                    {...form.getInputProps("nome_completo")}
-                  />
-                  <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                    <TextInput label="Instituição" placeholder="UniC" withAsterisk
-                      {...form.getInputProps("instituicao")} />
-                    <TextInput label="Curso" placeholder="Sistemas de Informação"
-                      withAsterisk {...form.getInputProps("curso")} />
-                  </SimpleGrid>
-                  <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                    <TextInput label="Telefone" placeholder="(85) 99999-9999"
-                      {...form.getInputProps("telefone")} />
-                    <TextInput label="LinkedIn" placeholder="linkedin.com/in/voce"
-                      {...form.getInputProps("linkedin")} />
-                  </SimpleGrid>
-                  <SimpleGrid cols={{ base: 1, sm: 3 }}>
-                    <TextInput label="Cidade" {...form.getInputProps("cidade")} />
-                    <TextInput label="Estado" {...form.getInputProps("estado")} />
-                    <TextInput label="Bairro" {...form.getInputProps("bairro")} />
-                  </SimpleGrid>
-                  <Textarea label="Sobre mim" minRows={3} autosize
-                    placeholder="Fale um pouco sobre você para as ONGs"
-                    {...form.getInputProps("sobre_mim")} />
-                </>
-              )}
-
-              <Group justify="flex-end" mt="sm">
-                <Button type="submit" loading={salvando} disabled={!form.isDirty()}>
-                  Salvar alterações
-                </Button>
-              </Group>
-            </Stack>
-          </form>
-        </Card>
-    </Stack>
+        <Group justify="flex-end" gap="sm" pt="lg"
+               style={{ borderTop: "1px solid var(--mh-linha)" }}>
+          {form.isDirty() && (
+            <Text size="sm" c="dimmed">Alterações não salvas</Text>
+          )}
+          <Button type="submit" loading={salvando} disabled={!form.isDirty()}>
+            Salvar alterações
+          </Button>
+        </Group>
+      </form>
+    </>
   );
 }

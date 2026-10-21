@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
-  Anchor, Badge, Button, Card, Center, Code, Group, Pagination, SimpleGrid,
+  Box, Anchor, Badge, Button, Center, Code, Group, Pagination, SimpleGrid,
   Stack, Switch, Table, Text, TextInput,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
@@ -97,11 +97,10 @@ export default function Auditoria() {
   return (
     <Stack gap="lg">
       <PageHeader
-        eyebrow="Administração"
         title="Auditoria"
         subtitle="Tudo o que acontece no sistema, em ordem do mais recente. Somente leitura."
         action={
-          <Button variant="light" leftSection={<IconDownload size={16} />}
+          <Button variant="default" leftSection={<IconDownload size={16} />}
                   loading={baixando} disabled={!dados.total} onClick={exportar}>
             Exportar CSV
           </Button>
@@ -110,18 +109,18 @@ export default function Auditoria() {
 
       {alvoId && (
         <Group gap="xs">
-          <Badge variant="light">Filtrado por um usuário</Badge>
+          <Badge>Filtrado por um usuário</Badge>
           <Anchor component={Link} to="/admin/auditoria" size="sm">remover</Anchor>
         </Group>
       )}
 
-      <Card withBorder radius="md" p="md">
+      <Box>
         <Stack gap="sm">
           <SimpleGrid cols={{ base: 1, sm: 3 }}>
             <TextInput label="Ação" placeholder="conta.suspensa ou sessao."
                        description="Termine com ponto para a família inteira"
                        value={acao} onChange={(e) => mudar(setAcao)(e.currentTarget.value)} />
-            <DatePickerInput type="range" label="Período" placeholder="De — até"
+            <DatePickerInput type="range" label="Período" placeholder="Início e fim"
                              valueFormat="DD/MM/YYYY" clearable
                              value={periodo} onChange={mudar(setPeriodo)} />
             <TextInput label="IP" placeholder="200.1.2.3"
@@ -140,15 +139,15 @@ export default function Auditoria() {
             </Button>
           </Group>
         </Stack>
-      </Card>
+      </Box>
 
       {carregando ? (
-        <Loading label="Consultando a trilha..." />
+        <Loading label="Consultando a trilha…" />
       ) : dados.itens.length === 0 ? (
         <EmptyState icon={IconListSearch} title="Nenhum registro neste recorte"
                     description="Tente ampliar o período ou limpar os filtros." />
       ) : (
-        <Card withBorder radius="md" p={0}>
+        <Box className="mh-bloco" style={{ overflow: "hidden" }}>
           <Table.ScrollContainer minWidth={760}>
             <Table verticalSpacing="xs" highlightOnHover>
               <Table.Thead>
@@ -222,7 +221,7 @@ export default function Auditoria() {
               </Table.Tbody>
             </Table>
           </Table.ScrollContainer>
-        </Card>
+        </Box>
       )}
 
       <Group justify="space-between">

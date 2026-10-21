@@ -86,14 +86,16 @@ async def visao_geral(sessao: AsyncSession) -> dict:
     if paradas:
         alertas.append({
             "tipo": "atividades_paradas", "gravidade": "alta", "quantidade": paradas,
-            "mensagem": f"{paradas} atividade(s) aguardando validação há mais de 7 dias",
+            "mensagem": (f"{paradas} atividade aguardando validação há mais de 7 dias"
+                         if paradas == 1 else
+                         f"{paradas} atividades aguardando validação há mais de 7 dias"),
             "link": "/admin/atividades?paradas=1"})
     if adulteracoes:
         alertas.append({
             "tipo": "certificado_adulterado", "gravidade": "critica",
             "quantidade": adulteracoes,
             "mensagem": "Certificado com assinatura inválida foi consultado nos "
-                        "últimos 7 dias — indício de escrita direta no banco",
+                        "últimos 7 dias. É indício de escrita direta no banco",
             "link": "/admin/certificados?assinatura=nao_confere"})
     if falhas >= LIMIAR_FALHAS_DE_LOGIN:
         alertas.append({
@@ -104,7 +106,8 @@ async def visao_geral(sessao: AsyncSession) -> dict:
     if ongs_sem_cnpj:
         alertas.append({
             "tipo": "ong_sem_cnpj", "gravidade": "baixa", "quantidade": ongs_sem_cnpj,
-            "mensagem": f"{ongs_sem_cnpj} organização(ões) ativa(s) sem CNPJ",
+            "mensagem": ("1 organização ativa sem CNPJ" if ongs_sem_cnpj == 1
+                         else f"{ongs_sem_cnpj} organizações ativas sem CNPJ"),
             "link": "/admin/ongs"})
 
     try:

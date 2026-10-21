@@ -106,7 +106,7 @@ export default function Sino() {
 
   return (
     <Popover opened={aberto} onChange={setAberto} position="bottom-end"
-             width={340} shadow="md" radius="md" withinPortal>
+             width="min(360px, calc(100vw - 24px))" shadow="md" radius="md" withinPortal>
       <Popover.Target>
         <Indicator label={naoLidas > 9 ? "9+" : naoLidas} size={18}
                    disabled={naoLidas === 0} color="red" offset={4}>

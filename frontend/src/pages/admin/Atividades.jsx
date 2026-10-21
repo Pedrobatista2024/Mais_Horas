@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  Alert, Badge, Button, Card, Center, Group, Menu, Modal, NumberInput, Pagination,
+  Box, Alert, Badge, Button, Center, Group, Menu, Modal, NumberInput, Pagination,
   Radio, Select, SimpleGrid, Stack, Switch, Table, Text, TextInput,
 } from "@mantine/core";
 import { TimeInput } from "@mantine/dates";
@@ -70,7 +70,7 @@ function EditarAtividade({ atividade, aoFechar, aoSalvar }) {
   return (
     <Modal opened onClose={aoFechar} title="Editar como administração" centered size="lg">
       <Stack gap="sm">
-        <Alert color="orange" variant="light" icon={<IconAlertTriangle size={18} />}>
+        <Alert color="orange" icon={<IconAlertTriangle size={18} />}>
           A atividade vai exibir “editada pela administração” para a organização e
           para os inscritos. Com gente inscrita, mudar data ou local afeta quem já
           se programou.
@@ -150,10 +150,10 @@ export default function Atividades() {
 
   return (
     <Stack gap="lg">
-      <PageHeader eyebrow="Administração" title="Atividades"
+      <PageHeader title="Atividades"
                   subtitle="De todas as organizações. Correções ficam visíveis e registradas." />
 
-      <Card withBorder radius="md" p="md">
+      <Box>
         <Group align="flex-end" wrap="wrap" gap="sm">
           <TextInput label="Buscar" placeholder="Título, local ou cidade"
                      w={{ base: "100%", sm: 280 }}
@@ -164,16 +164,16 @@ export default function Atividades() {
                   data={Object.entries(SITUACOES).map(([value, s]) => ({ value, label: s.rotulo }))} />
           <Switch label="Paradas há mais de 7 dias" checked={paradas} mb={6}
                   onChange={(e) => { setParadas(e.currentTarget.checked); setPagina(1); }} />
-          {ongId && <Badge variant="light" mb={8}>Filtrado por organização</Badge>}
+          {ongId && <Badge mb={8}>Filtrado por organização</Badge>}
         </Group>
-      </Card>
+      </Box>
 
       {carregando ? (
-        <Loading label="Carregando atividades..." />
+        <Loading label="Carregando atividades…" />
       ) : dados.itens.length === 0 ? (
         <EmptyState icon={IconCalendarEvent} title="Nenhuma atividade neste recorte" />
       ) : (
-        <Card withBorder radius="md" p={0}>
+        <Box className="mh-bloco" style={{ overflow: "hidden" }}>
           <Table.ScrollContainer minWidth={760}>
             <Table verticalSpacing="sm" highlightOnHover>
               <Table.Thead>
@@ -196,7 +196,7 @@ export default function Atividades() {
                         <Text size="sm" fw={600}>{a.titulo}</Text>
                         <Text size="xs" c="dimmed">{a.local}{a.cidade ? ` · ${a.cidade}` : ""}</Text>
                         {a.editadaPorAdminEm && (
-                          <Badge size="xs" color="orange" variant="light">editada pela administração</Badge>
+                          <Badge size="xs" color="orange">Editada pela administração</Badge>
                         )}
                       </Table.Td>
                       <Table.Td><Text size="sm">{a.ong.nome}</Text></Table.Td>
@@ -247,7 +247,7 @@ export default function Atividades() {
               </Table.Tbody>
             </Table>
           </Table.ScrollContainer>
-        </Card>
+        </Box>
       )}
 
       {dados.paginas > 1 && (

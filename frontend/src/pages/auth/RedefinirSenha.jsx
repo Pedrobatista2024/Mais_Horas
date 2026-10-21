@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Alert, Anchor, Button, PasswordInput, Stack, Text } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconAlertTriangle, IconLock } from "@tabler/icons-react";
+import { IconAlertTriangle } from "@tabler/icons-react";
 
 import AuthLayout from "../../components/layout/AuthLayout";
 import { api, mensagemDoErro } from "../../services/api";
@@ -61,14 +61,12 @@ export default function RedefinirSenha() {
           <PasswordInput
             label="Nova senha"
             placeholder={`Mínimo ${SENHA_MINIMA} caracteres`}
-            leftSection={<IconLock size={16} />}
             autoComplete="new-password"
             {...form.getInputProps("senha")}
           />
           <PasswordInput
             label="Confirme a nova senha"
             placeholder="Repita a senha"
-            leftSection={<IconLock size={16} />}
             autoComplete="new-password"
             {...form.getInputProps("confirmacao")}
           />

@@ -4,7 +4,6 @@ import {
   Anchor, Button, PasswordInput, Progress, SegmentedControl, Stack, Text, TextInput,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconLock, IconMail, IconUser } from "@tabler/icons-react";
 
 import BotoesExternos from "../../components/auth/BotoesExternos";
 import AuthLayout from "../../components/layout/AuthLayout";
@@ -58,7 +57,7 @@ export default function CriarConta() {
     try {
       const { data } = await api.post("/auth/cadastro", valores);
       entrar(data);
-      notifySuccess("Conta criada. Bem-vindo(a) ao Mais Horas!");
+      notifySuccess("Conta criada.");
       // O destino pedido só vale para quem se cadastrou como estudante: é de
       // uma vaga que ele veio.
       const destino = data.usuario.papel === "estudante" && volta ? volta
@@ -92,14 +91,12 @@ export default function CriarConta() {
           <TextInput
             label={form.values.papel === "ong" ? "Nome da organização" : "Seu nome"}
             placeholder={form.values.papel === "ong" ? "ONG Verde Vida" : "Maria Silva"}
-            leftSection={<IconUser size={16} />}
             autoComplete="name"
             {...form.getInputProps("nome")}
           />
           <TextInput
             label="E-mail"
             placeholder="voce@email.com"
-            leftSection={<IconMail size={16} />}
             autoComplete="email"
             {...form.getInputProps("email")}
           />
@@ -107,7 +104,6 @@ export default function CriarConta() {
             <PasswordInput
               label="Senha"
               placeholder={`Mínimo ${SENHA_MINIMA} caracteres`}
-              leftSection={<IconLock size={16} />}
               autoComplete="new-password"
               {...form.getInputProps("senha")}
             />

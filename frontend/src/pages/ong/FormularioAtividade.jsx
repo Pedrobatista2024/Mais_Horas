@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Alert, Button, Card, Divider, Group, NumberInput, SimpleGrid, Stack, Switch,
-  Text, TextInput, Textarea, Title,
+  Alert, Button, Group, NumberInput, SimpleGrid, Stack, Switch, TextInput,
+  Textarea,
 } from "@mantine/core";
 import { DatePickerInput, TimeInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
-import { IconAlertTriangle, IconArrowLeft, IconLock } from "@tabler/icons-react";
+import { IconAlertTriangle, IconLock } from "@tabler/icons-react";
 
 import ConfirmarAcao from "../../components/ui/ConfirmarAcao";
 import Loading from "../../components/ui/Loading";
+import PageHeader from "../../components/ui/PageHeader";
+import SecaoDeFormulario from "../../components/ui/SecaoDeFormulario";
 import { api, mensagemDoErro } from "../../services/api";
 import { notifyError, notifySuccess } from "../../utils/notify";
 
@@ -196,149 +198,136 @@ export default function FormularioAtividade() {
     }
   }
 
-  if (carregando) return <Loading label="Carregando atividade..." />;
+  if (carregando) return <Loading label="Carregando atividade…" />;
+
+  const voltarPara = editando ? `/ong/atividades/${id}` : "/ong/atividades";
 
   return (
-    <Stack gap="lg" maw={1040} mx="auto" w="100%">
-      <Button variant="subtle" size="compact-sm" w="fit-content"
-              leftSection={<IconArrowLeft size={15} />}
-              onClick={() => navegar("/ong/atividades")}>
-        Voltar às minhas atividades
-      </Button>
+    <>
+      <PageHeader
+        voltar={{ para: voltarPara,
+                  rotulo: editando ? atividade?.titulo ?? "Atividade" : "Minhas atividades" }}
+        title={editando ? "Editar atividade" : "Nova atividade"}
+        subtitle={editando
+          ? "Quem já viu a vaga na vitrine passa a ver as informações novas."
+          : "Ela começa como rascunho e só aparece na vitrine depois de publicada."}
+      />
 
-      <Stack gap={4}>
-        <Text size="xs" c="dimmed">
-          Organização
-        </Text>
-        <Title order={1} fz={{ base: 26, sm: 32 }}>
-          {editando ? "Editar atividade" : "Nova atividade"}
-        </Title>
-        <Text c="dimmed" size="sm">
-          {editando
-            ? "As alterações valem para quem já viu a vaga na vitrine."
-            : "Ela nasce como rascunho — só aparece na vitrine depois de publicada."}
-        </Text>
+      <Stack gap="md" mb="lg">
+        {encerrada && (
+          <Alert color="red" icon={<IconAlertTriangle size={18} />}>
+            A atividade está {atividade.situacao} e não pode mais ser editada.
+          </Alert>
+        )}
+
+        {travado && !encerrada && (
+          <Alert color="gray" icon={<IconLock size={18} />} title="Só as vagas podem mudar">
+            {inscritos === 1 ? "Já há 1 pessoa inscrita" : `Já há ${inscritos} pessoas inscritas`}.
+            Mudar data, local ou carga horária mudaria as condições em que elas se
+            inscreveram.
+          </Alert>
+        )}
       </Stack>
 
-      {encerrada && (
-        <Alert color="red" variant="light" icon={<IconAlertTriangle size={18} />}>
-          Atividade {atividade.situacao} não pode mais ser editada.
-        </Alert>
-      )}
+      <form onSubmit={form.onSubmit((v) => salvar(v, false))}>
+        <SecaoDeFormulario titulo="O que é"
+                           texto="O título aparece na vitrine; a descrição, na página da vaga.">
+          <TextInput label="Título" placeholder="Mutirão de limpeza da praia"
+                     withAsterisk maxLength={40} autoComplete="off"
+                     {...campo("titulo")} />
+          <Textarea label="Descrição"
+                    placeholder="O que será feito, o que levar, como chegar…"
+                    withAsterisk minRows={4} autosize maxLength={1500}
+                    {...campo("descricao")} />
+        </SecaoDeFormulario>
 
-      {travado && !encerrada && (
-        <Alert color="clay" variant="light" icon={<IconLock size={18} />}
-               title="Edição limitada">
-          Já há {inscritos} pessoa(s) inscrita(s). Só o número de vagas pode mudar —
-          alterar data, local ou carga mudaria as condições sob as quais elas se
-          inscreveram.
-        </Alert>
-      )}
+        <SecaoDeFormulario titulo="Onde"
+                           texto="Um ponto de referência ajuda quem nunca foi ao lugar.">
+          <TextInput label="Local" placeholder="Praia do Futuro, em frente ao posto 6"
+                     withAsterisk maxLength={50} autoComplete="off"
+                     {...campo("local")} />
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <TextInput label="Cidade" placeholder="Fortaleza" autoComplete="address-level2"
+                       {...campo("cidade")} />
+            <TextInput label="Estado" placeholder="CE" autoComplete="address-level1"
+                       {...campo("estado")} />
+          </SimpleGrid>
+        </SecaoDeFormulario>
 
-      <Card withBorder radius="md" p={{ base: "lg", sm: "xl" }}>
-        <form onSubmit={form.onSubmit((v) => salvar(v, false))}>
-          <Stack gap="md">
-            <TextInput label="Título" placeholder="Mutirão de limpeza da praia"
-                       withAsterisk maxLength={40}
-                       {...campo("titulo")} />
-
-            <Textarea label="Descrição"
-                      placeholder="O que será feito, o que levar, o que esperar"
-                      withAsterisk minRows={4} autosize maxLength={1500}
-                      {...campo("descricao")} />
-
-            <Divider label="Onde" labelPosition="left" />
-
-            <TextInput label="Local" placeholder="Praia do Futuro, posto 6"
-                       withAsterisk maxLength={50}
-                       {...campo("local")} />
-            <SimpleGrid cols={{ base: 1, sm: 2 }}>
-              <TextInput label="Cidade" placeholder="Fortaleza"
-                         {...campo("cidade")} />
-              <TextInput label="Estado" placeholder="CE"
-                         {...campo("estado")} />
-            </SimpleGrid>
-
-            <Divider label="Quando" labelPosition="left" />
-
-            <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>
-              <DatePickerInput
-                label="Data" placeholder="Escolha o dia" withAsterisk
-                valueFormat="DD/MM/YYYY" minDate={new Date()}
-                {...campo("data")}
-              />
-              <TimeInput label="Início" withAsterisk
-                         {...campo("hora_inicio")} />
-              <TimeInput label="Término" withAsterisk
-                         {...campo("hora_fim")} />
-              {/* Fica na mesma linha do horário: é dele que a carga é sugerida. */}
-              <NumberInput
-                label="Carga horária"
-                description={
-                  cargaManual
-                    ? "Ajuste se houver intervalo que não conta"
-                    : `Sugerida pelo horário${sugestao ? `: ${sugestao}h` : ""}`
-                }
-                min={1} max={24}
-                {...campo("carga_horaria")}
-                onChange={(v) => {
-                  setCargaManual(true);
-                  form.setFieldValue("carga_horaria", v);
-                }}
-              />
-            </SimpleGrid>
-
-            <Divider label="Vagas" labelPosition="left" />
-
-            <SimpleGrid cols={{ base: 1, sm: 2 }}>
-              <NumberInput label="Mínimo de participantes" min={1}
-                           {...campo("vagas_min")} />
-              <NumberInput label="Máximo de vagas" min={1}
-                           {...campo("vagas_max")} />
-            </SimpleGrid>
-
-            <Switch
-              label="Exigir aprovação para cada inscrição"
-              description="Ligado, as inscrições ficam pendentes até você aprovar"
-              {...trava("exige_aprovacao")}
-              {...form.getInputProps("exige_aprovacao", { type: "checkbox" })}
+        <SecaoDeFormulario titulo="Quando"
+                           texto="A carga horária é sugerida pelo horário. Ajuste se houver intervalo que não conta.">
+          <SimpleGrid cols={{ base: 1, xs: 3 }}>
+            <DatePickerInput
+              label="Data" placeholder="Escolha o dia" withAsterisk
+              valueFormat="DD/MM/YYYY" minDate={new Date()}
+              {...campo("data")}
             />
+            <TimeInput label="Início" withAsterisk {...campo("hora_inicio")} />
+            <TimeInput label="Término" withAsterisk {...campo("hora_fim")} />
+          </SimpleGrid>
+          <NumberInput
+            label="Carga horária (horas)"
+            maw={220}
+            description={
+              cargaManual
+                ? "Ajustada por você"
+                : `Sugerida pelo horário${sugestao ? `: ${sugestao} h` : ""}`
+            }
+            min={1} max={24}
+            {...campo("carga_horaria")}
+            onChange={(v) => {
+              setCargaManual(true);
+              form.setFieldValue("carga_horaria", v);
+            }}
+          />
+        </SecaoDeFormulario>
 
-            <Divider my="xs" />
+        <SecaoDeFormulario titulo="Vagas"
+                           texto="Com aprovação, cada inscrição espera você aceitar antes de ocupar a vaga.">
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <NumberInput label="Mínimo de participantes" min={1} {...campo("vagas_min")} />
+            <NumberInput label="Máximo de vagas" min={1} {...campo("vagas_max")} />
+          </SimpleGrid>
+          <Switch
+            label="Aprovar cada inscrição"
+            description="Ligado, a inscrição fica pendente até você aceitar."
+            {...trava("exige_aprovacao")}
+            {...form.getInputProps("exige_aprovacao", { type: "checkbox" })}
+          />
+        </SecaoDeFormulario>
 
-            <Group justify="space-between" wrap="wrap" gap="sm">
-              <Button variant="subtle" color="gray"
-                      onClick={() => (editando
-                        ? navegar(`/ong/atividades/${id}`)
-                        : setDescartando(true))}>
-                {editando ? "Voltar sem salvar" : "Descartar"}
+        <Group justify="space-between" wrap="wrap" gap="sm" pt="lg"
+               style={{ borderTop: "1px solid var(--mh-linha)" }}>
+          <Button variant="subtle" color="gray"
+                  onClick={() => (editando
+                    ? navegar(`/ong/atividades/${id}`)
+                    : setDescartando(true))}>
+            {editando ? "Voltar sem salvar" : "Descartar"}
+          </Button>
+
+          <Group gap="sm" wrap="wrap">
+            <Button type="submit" variant="default" loading={salvando} disabled={encerrada}>
+              {editando ? "Salvar alterações" : "Salvar rascunho"}
+            </Button>
+            {(!editando || atividade?.situacao === "rascunho") && (
+              <Button loading={salvando} disabled={encerrada}
+                      onClick={() => form.onSubmit((v) => salvar(v, true))()}>
+                Publicar
               </Button>
-
-              <Group gap="sm" wrap="wrap">
-                <Button type="submit" variant="light" loading={salvando}
-                        disabled={encerrada}>
-                  {editando ? "Salvar alterações" : "Salvar rascunho"}
-                </Button>
-                {(!editando || atividade?.situacao === "rascunho") && (
-                  <Button loading={salvando} disabled={encerrada}
-                          onClick={() => form.onSubmit((v) => salvar(v, true))()}>
-                    Publicar
-                  </Button>
-                )}
-              </Group>
-            </Group>
-          </Stack>
-        </form>
-      </Card>
+            )}
+          </Group>
+        </Group>
+      </form>
 
       <ConfirmarAcao
         aberto={descartando}
         aoFechar={() => setDescartando(false)}
         titulo="Descartar atividade"
-        mensagem="O que você preencheu será perdido."
+        mensagem="O que você preencheu vai ser perdido."
         rotuloConfirmar="Descartar"
+        rotuloVoltar="Continuar editando"
         aoConfirmar={() => navegar("/ong/atividades")}
       />
-    </Stack>
+    </>
   );
 }
