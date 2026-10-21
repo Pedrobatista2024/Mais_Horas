@@ -13,3 +13,10 @@ e sem metadados EXIF.
 
 São fotos ilustrativas: não mostram atividades nem organizações da plataforma. Quando
 houver fotos de ações reais (com autorização de quem aparece), elas devem substituir estas.
+
+## Telas do app (`telas/`)
+
+`vitrine.webp`, `presenca.webp` e `certificados.webp` são capturas do próprio sistema,
+rodando localmente com os dados de `scripts/semear_local.py`, em 390×844 (2x). Mostram a
+conta de demonstração "Larissa Monteiro", que não é uma pessoa real. Se a interface mudar,
+capture de novo para os celulares do portal continuarem iguais ao app.

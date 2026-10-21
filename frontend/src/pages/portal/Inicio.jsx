@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom";
 import {
-  Anchor, Box, Button, Center, Container, Grid, Group, SimpleGrid, Stack, Text,
-  ThemeIcon, Title,
+  Anchor, Box, Button, Center, Container, Grid, Group, SimpleGrid, Stack, Text, Title,
 } from "@mantine/core";
 import {
-  IconCertificate, IconCheck, IconQrcode, IconSearch, IconUserCheck,
+  IconCertificate, IconQrcode, IconSearch, IconUserCheck,
 } from "@tabler/icons-react";
 
 import AberturaComFoto from "../../components/portal/AberturaComFoto";
@@ -49,45 +48,18 @@ const PERGUNTAS = [
     resposta: "Cancele a inscrição antes do início da atividade. Assim a vaga fica livre para outra pessoa." },
 ];
 
-/** Tela de celular: a presença registrada, como o aluno vê depois do QR. */
-function TelaDePresenca() {
-  return (
-    <Stack gap={0} align="center" pt={36}>
-      <ThemeIcon variant="light" color="green" size={64} radius="xl">
-        <IconCheck size={34} stroke={2} />
-      </ThemeIcon>
-      <Text fw={600} mt="md">Presença registrada</Text>
-      <Text size="xs" c="dimmed" ta="center" mt={4}>Mutirão no mangue do Cocó</Text>
-      <Text fw={600} size="sm" mt={4} className="mh-num">às 8h12</Text>
-      <Box w="100%" mt={28} py={8} ta="center" style={{ borderRadius: 6, background: "var(--mh-royal)" }}>
-        <Text size="xs" fw={600} c="white">Ver minhas inscrições</Text>
-      </Box>
-    </Stack>
-  );
-}
-
-/** Tela de celular: a caderneta de horas do painel. */
-function TelaDeCaderneta() {
-  const linhas = [["Plantio no Cocó", 4], ["Catalogação", 4], ["Contação de histórias", 2]];
-  return (
-    <Box pt={8}>
-      <Text fw={600} size="sm">Olá, Larissa</Text>
-      <Text fw={600} size="xs" mt="md" mb={6}>Caderneta de horas</Text>
-      {linhas.map(([nome, horas]) => (
-        <Group key={nome} justify="space-between" py={7}
-               style={{ borderBottom: "1px solid var(--mh-linha)" }}>
-          <Text size="xs">{nome}</Text>
-          <Text size="xs" fw={500} className="mh-num">{horas} h</Text>
-        </Group>
-      ))}
-      <Group justify="space-between" pt={8} mt={2}
-             style={{ borderTop: "3px double var(--mh-tinta)" }}>
-        <Text size="xs" fw={600}>Total</Text>
-        <span className="mh-horas">10 h</span>
-      </Group>
-    </Box>
-  );
-}
+/** As três telas do caminho do aluno, capturadas do app rodando. */
+const TELAS = [
+  { tela: "/portal/telas/vitrine.webp", hora: "16:02", legenda: "Encontre a vaga",
+    texto: "Data, local e horas de cada atividade.",
+    alt: "Tela Buscar atividades do app, com vagas e a carga horária de cada uma" },
+  { tela: "/portal/telas/presenca.webp", hora: "16:19", legenda: "Registre a presença",
+    texto: "Pelo QR Code, no local da atividade.",
+    alt: "Tela do app mostrando Presença registrada depois do check-in" },
+  { tela: "/portal/telas/certificados.webp", hora: "16:24", legenda: "Some suas horas",
+    texto: "Certificados em PDF e o total validado.",
+    alt: "Tela Certificados do app, com dois certificados e o total de 8 horas validadas" },
+];
 
 /**
  * T1 — Início do portal.
@@ -257,34 +229,26 @@ export default function Inicio() {
         </Container>
       </Box>
 
-      <Secao fundo="azul">
-        <Grid gutter={{ base: 40, md: 64 }} align="center">
-          <Grid.Col span={{ base: 12, md: 5 }}>
-            <Title order={2} className="mh-serif" fz={{ base: 30, md: 42 }}>
-              Do QR Code na atividade à caderneta no celular
-            </Title>
-            <Text fz="lg" c="dimmed" mt="md" maw={460}>
-              A presença é registrada no local, a ONG confirma e o certificado entra na
-              conta do aluno. As horas se somam sozinhas.
-            </Text>
-            <Anchor component={Link} to="/como-funciona" fw={600} mt="lg" display="inline-block">
-              Ver o passo a passo
-            </Anchor>
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 7 }}>
-            <Group justify="center" gap={28} wrap="nowrap" style={{ overflow: "hidden" }}
-                   py="md">
-              <CelularDeExemplo rotulo="Tela de presença registrada">
-                <TelaDePresenca />
-              </CelularDeExemplo>
-              <Box visibleFrom="sm">
-                <CelularDeExemplo rotulo="Tela da caderneta de horas" deslocamento={36}>
-                  <TelaDeCaderneta />
-                </CelularDeExemplo>
+      <Secao fundo="azul" centro titulo="Do QR Code na atividade às horas no celular"
+             subtitulo="As telas abaixo são do próprio app: o aluno encontra a vaga, registra a presença no local e acompanha as horas validadas."
+             acao={<Center><Anchor component={Link} to="/como-funciona" fw={600}>
+                     Ver o passo a passo
+                   </Anchor></Center>}>
+        <div className="mh-vitrine-celulares">
+          {TELAS.map(({ tela, hora, legenda, texto, alt }, i) => (
+            <Stack key={tela} gap="md" align="center">
+              <CelularDeExemplo tela={tela} alt={alt} hora={hora}
+                                largura={i === 1 ? 270 : 248} />
+              <Box ta="center" maw={240}>
+                <Text fw={600} fz="lg">
+                  <Text span c="var(--mh-royal)" className="mh-serif" mr={6}>{i + 1}</Text>
+                  {legenda}
+                </Text>
+                <Text c="dimmed" size="sm" mt={2}>{texto}</Text>
               </Box>
-            </Group>
-          </Grid.Col>
-        </Grid>
+            </Stack>
+          ))}
+        </div>
       </Secao>
 
       {horas > 0 && (
