@@ -54,6 +54,9 @@ export default function ParaOngs() {
     <PaginaDePublico
       papel="ong"
       tituloDaAba="Para ONGs"
+      foto="/portal/reforco.jpg"
+      altFoto="Voluntária ajudando um menino numa atividade de reforço escolar"
+      posicaoFoto="65% 35%"
       titulo="Voluntários certos, sem planilha e sem lista de papel"
       subtitulo="Divulgue suas ações para estudantes que precisam de horas de extensão, valide a presença pelo celular e emita certificados em segundos."
       rotuloCadastro="Cadastrar minha ONG"

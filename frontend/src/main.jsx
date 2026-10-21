@@ -8,6 +8,9 @@ import "@fontsource/ibm-plex-sans/latin-600.css";
 import "@fontsource/ibm-plex-sans/latin-700.css";
 import "@fontsource/ibm-plex-mono/latin-400.css";
 import "@fontsource/ibm-plex-mono/latin-500.css";
+// Fraunces só nos títulos do portal: a voz de apresentação do site público.
+import "@fontsource/fraunces/latin-600.css";
+import "@fontsource/fraunces/latin-700.css";
 
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";

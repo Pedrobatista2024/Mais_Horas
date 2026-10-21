@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import {
-  Badge, Box, Button, Code, Container, Grid, Group, Stack, Text, Title,
+  Badge, Box, Button, Code, Grid, Group, Stack, Text, Title,
 } from "@mantine/core";
 
+import AberturaComFoto from "../../components/portal/AberturaComFoto";
 import ChamadaFinal from "../../components/portal/ChamadaFinal";
 import Secao from "../../components/portal/Secao";
-import { cadastroComo, LARGURA_DO_PORTAL } from "../../components/portal/navegacao";
+import { cadastroComo } from "../../components/portal/navegacao";
 import { useAuth } from "../../context/AuthContext";
 import { useConsultaPublica } from "../../hooks/useConsultaPublica";
 import { useTitulo } from "../../hooks/useTitulo";
@@ -48,38 +49,40 @@ export default function ComoFunciona() {
 
   return (
     <>
-      <Box component="section" className="mh-secao"
-           style={{ borderBottom: "1px solid var(--mh-linha)" }}>
-        <Container size={LARGURA_DO_PORTAL}>
-          <Stack gap="lg" maw={760}>
-            <Title order={1} className="mh-display" fz={{ base: 34, sm: 46 }}>
-              Do anúncio ao certificado conferido
-            </Title>
-            <Text c="dimmed" fz={{ base: "md", md: "xl" }} maw={640}>
-              Cada etapa deixa registro. É isso que permite à instituição aceitar o
-              certificado sem precisar ligar para a ONG.
-            </Text>
-            <Group gap="sm">
-              {!autenticado && (
-                <Button size="md" component={Link} to={cadastroComo("estudante")}>
-                  Criar conta
-                </Button>
-              )}
-              <Button size="md" variant="default" component={Link}
-                      to={exemplo ? `/verificar/${exemplo}` : "/verificar"}>
-                {exemplo ? "Ver uma verificação de exemplo" : "Verificar um certificado"}
+      <AberturaComFoto foto="/portal/mutirao.jpg" fotoMenor="/portal/mutirao-1200.jpg"
+                       alt="Grupo de voluntários de camiseta azul limpando uma praia"
+                       posicao="60% 45%" baixa>
+        <Stack gap="lg" maw={640}>
+          <Title order={1} className="mh-serif" c="white" fz={{ base: 36, sm: 48, lg: 56 }}>
+            Do anúncio ao certificado conferido
+          </Title>
+          <Text c="rgba(255,255,255,0.88)" fz={{ base: "md", md: "xl" }} maw={560}>
+            Cada etapa deixa registro. É isso que permite à instituição aceitar o
+            certificado sem precisar ligar para a ONG.
+          </Text>
+          <Group gap="sm">
+            {!autenticado && (
+              <Button variant="white" component={Link} to={cadastroComo("estudante")}
+                      className="mh-botao-portal">
+                Criar conta
               </Button>
-            </Group>
-          </Stack>
-        </Container>
-      </Box>
+            )}
+            <Button variant="outline" color="#ffffff" component={Link}
+                    to={exemplo ? `/verificar/${exemplo}` : "/verificar"}
+                    className="mh-botao-portal">
+              {exemplo ? "Ver uma verificação de exemplo" : "Verificar um certificado"}
+            </Button>
+          </Group>
+        </Stack>
+      </AberturaComFoto>
 
       <Secao titulo="Seis etapas, do começo ao fim">
         <Box component="ol" p={0} m={0} maw={760} style={{ listStyle: "none" }}>
           {JORNADA.map(({ titulo, texto }, i) => (
             <Group key={titulo} component="li" gap="lg" wrap="nowrap" align="flex-start"
                    py="md" style={{ borderTop: i ? "1px solid var(--mh-linha)" : 0 }}>
-              <Text className="mh-passo-numero" w={36} fz={28} aria-hidden="true">
+              <Text className="mh-serif" c="var(--mh-royal)" fz={44} lh={1} w={44}
+                    aria-hidden="true">
                 {i + 1}
               </Text>
               <Box>

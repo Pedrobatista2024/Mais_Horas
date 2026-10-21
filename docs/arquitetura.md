@@ -88,7 +88,9 @@ frontend/src/
   components/
     layout/            PainelLayout (área logada), PortalLayout (portal),
                        AuthLayout, PublicPage (verificação)
-    portal/            Secao, Passo, CartaoOng, NumerosDeImpacto, ChamadaFinal,
+    portal/            Secao (fundo branco/azul/noite), AberturaComFoto, BuscaDeVagas,
+                       Comparativo, CelularDeExemplo, PerguntasFrequentes,
+                       Passo, CartaoOng, NumerosDeImpacto, ChamadaFinal,
                        PaginaDePublico, ConteudoDoPortal, ExemplarCertificado,
                        navegacao.js (links e LARGURA_DO_PORTAL), impacto.js
     atividade/         CartaoAtividade (vitrine), LinhaAtividade (lista da ONG),

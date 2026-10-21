@@ -724,63 +724,103 @@ select {
   aspect-ratio: 1 / 1;
 }
 
-/* ===== Abertura do portal ===== */
+/* ==========================================================================
+   Portal de apresentação
+   Fotos grandes de gente, títulos em Fraunces, seções que alternam branco,
+   azul-claro e azul-noite, e cartões brancos de canto bem arredondado.
+   ========================================================================== */
 
-.mh-hero-abertura {
+:root {
+  --mh-serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --mh-azul-claro: #edf1fc;
+  --mh-noite: #0b1a4d;
+}
+
+.mh-serif {
+  font-family: var(--mh-serif);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+/* Faixa de aviso acima do topo: as vagas abertas do momento. */
+.mh-faixa-aviso {
+  background: #dfe7fd;
+  color: var(--mh-royal-escuro);
+  font-size: 0.875rem;
+}
+
+.mh-faixa-aviso a {
+  color: var(--mh-royal);
+  font-weight: 600;
+}
+
+/* --- Abertura com foto de fundo --- */
+
+.mh-abertura {
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(1200px 520px at 85% 10%, rgba(42, 79, 198, 0.55), transparent 60%),
-    var(--mh-royal-escuro);
+  background: var(--mh-noite);
+  color: #fff;
 }
 
-.mh-hero-vitrine {
-  position: relative;
-  padding-bottom: 8px;
-}
-
-.mh-hero-foto {
-  display: block;
+.mh-abertura-foto {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: auto;
-  aspect-ratio: 5 / 4;
+  height: 100%;
   object-fit: cover;
-  object-position: 38% 35%;
-  border-radius: 16px;
-  box-shadow: 0 30px 60px -20px rgba(4, 12, 40, 0.6);
+  object-position: 68% 55%;
 }
 
-/* O cartão de vagas flutua sobre o canto de baixo da foto, à direita: a cena
-   principal (a caixa passando de mão em mão) fica à esquerda e não é coberta. */
-.mh-hero-cartao {
-  position: relative;
-  width: calc(100% - 24px);
-  margin: -48px auto 0;
-  border-radius: 12px;
-  box-shadow: 0 24px 48px -12px rgba(4, 12, 40, 0.5);
-  animation: mh-sobe 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 250ms both;
+/* Véu azul por cima da foto: escuro onde está o texto, transparente onde
+   está a cena. No celular o texto ocupa a largura toda, e o véu desce. */
+.mh-abertura-veu {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 20, 64, 0.55) 0%, rgba(8, 20, 64, 0.94) 62%);
 }
 
 @media (min-width: 62em) {
-  .mh-hero-cartao {
-    position: absolute;
-    right: 0;
-    bottom: -48px;
-    width: min(360px, 72%);
-    margin: 0;
-  }
-
-  .mh-hero-vitrine {
-    margin-bottom: 40px;
+  .mh-abertura-veu {
+    background: linear-gradient(90deg, rgba(8, 20, 64, 0.94) 0%, rgba(8, 20, 64, 0.78) 34%,
+                rgba(8, 20, 64, 0.2) 66%, rgba(8, 20, 64, 0.05) 100%);
   }
 }
 
-/* Só em tela larga o cartão passa da borda da foto: em 1024px ele encostava
-   na borda da janela. */
-@media (min-width: 75em) {
-  .mh-hero-cartao {
-    right: -24px;
+/* Só padding vertical: o horizontal é do Container, e um "padding: 56px 0"
+   aqui zerava a margem lateral no celular. */
+.mh-abertura-conteudo {
+  position: relative;
+  z-index: 1;
+  padding-top: 56px;
+  padding-bottom: 48px;
+}
+
+@media (min-width: 62em) {
+  .mh-abertura-conteudo {
+    display: flex;
+    align-items: center;
+    min-height: 620px;
+    padding-top: 72px;
+    padding-bottom: 72px;
   }
+
+  .mh-abertura[data-baixa="true"] .mh-abertura-conteudo {
+    min-height: 460px;
+  }
+}
+
+/* Cartão branco que flutua sobre a foto (busca de vagas, chamada). */
+.mh-cartao-flutuante {
+  background: #fff;
+  color: var(--mh-tinta);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 30px 60px -24px rgba(4, 12, 40, 0.6);
+  animation: mh-sobe 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms both;
 }
 
 @keyframes mh-sobe {
@@ -795,22 +835,249 @@ select {
   }
 }
 
-/* Os números ficam separados por um fio claro, sem cartão. */
-.mh-hero-numero {
-  padding-right: 24px;
-  margin-right: 24px;
-  border-right: 1px solid rgba(255, 255, 255, 0.18);
+/* --- Seções com cor --- */
+
+.mh-secao-azul {
+  background: var(--mh-azul-claro);
 }
 
-.mh-hero-numero:last-child {
-  padding-right: 0;
-  margin-right: 0;
-  border-right: 0;
+.mh-secao-noite {
+  background: var(--mh-noite);
+  color: #fff;
 }
 
-@media (max-width: 35.99em) {
-  .mh-hero-numero {
-    padding-right: 14px;
-    margin-right: 14px;
+/* --- Foto com canto arredondado e legenda por cima --- */
+
+.mh-foto-moldura {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.mh-foto-moldura img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mh-foto-legenda {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 48px 24px 20px;
+  background: linear-gradient(180deg, transparent, rgba(8, 20, 64, 0.82));
+  color: #fff;
+}
+
+/* --- Cartões de recurso --- */
+
+.mh-recurso {
+  height: 100%;
+  padding: 24px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #dfe5f4;
+}
+
+.mh-recurso-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--mh-azul-claro);
+  color: var(--mh-royal);
+}
+
+/* No celular os cartões viram uma fileira que desliza de lado. */
+@media (max-width: 47.99em) {
+  .mh-desliza {
+    display: flex !important;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+
+  .mh-desliza::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mh-desliza > * {
+    flex: 0 0 80%;
+    scroll-snap-align: start;
+  }
+}
+
+/* --- Comparativo --- */
+
+.mh-comparativo {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9375rem;
+}
+
+.mh-comparativo th,
+.mh-comparativo td {
+  padding: 16px 20px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #dfe5f4;
+}
+
+.mh-comparativo thead th {
+  font-weight: 600;
+  border-bottom: 0;
+}
+
+.mh-comparativo .mh-col-nossa {
+  background: #fff;
+  font-weight: 600;
+  color: var(--mh-tinta);
+}
+
+.mh-comparativo thead .mh-col-nossa {
+  border-radius: 16px 16px 0 0;
+}
+
+.mh-comparativo tbody tr:last-child .mh-col-nossa {
+  border-radius: 0 0 16px 16px;
+  border-bottom: 0;
+}
+
+.mh-comparativo .mh-col-outra {
+  color: var(--mh-tinta-2);
+}
+
+@media (max-width: 47.99em) {
+  .mh-comparativo th,
+  .mh-comparativo td {
+    padding: 12px 10px;
+    font-size: 0.875rem;
+  }
+}
+
+/* --- Faixa com foto e cartão por cima --- */
+
+.mh-faixa-foto {
+  position: relative;
+  overflow: hidden;
+  background: var(--mh-noite);
+}
+
+.mh-faixa-foto > img {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+
+@media (min-width: 62em) {
+  .mh-faixa-foto > img {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+  }
+
+  .mh-faixa-foto-conteudo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 560px;
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+}
+
+@media (max-width: 61.99em) {
+  .mh-faixa-foto-conteudo {
+    padding-bottom: 40px;
+  }
+
+  .mh-faixa-foto .mh-cartao-flutuante {
+    margin-top: -56px;
+    position: relative;
+  }
+}
+
+/* --- Celular de exemplo --- */
+
+.mh-celular {
+  width: 248px;
+  flex-shrink: 0;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border: 9px solid #0d1530;
+  border-radius: 38px;
+  background: #fff;
+  box-shadow: 0 40px 70px -30px rgba(4, 12, 40, 0.55);
+}
+
+.mh-celular-barra {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 6px;
+}
+
+.mh-celular-barra::before {
+  content: "";
+  width: 72px;
+  height: 18px;
+  border-radius: 12px;
+  background: #0d1530;
+}
+
+/* --- Perguntas frequentes em cartões --- */
+
+.mh-faq .mantine-Accordion-item {
+  margin-bottom: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.mh-faq .mantine-Accordion-control {
+  border-radius: 12px;
+  padding: 6px 8px 6px 20px;
+}
+
+/* --- Botão grande do portal --- */
+
+.mh-botao-portal {
+  height: 52px;
+  padding: 0 24px;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+/* Texto só para leitor de tela. */
+.mh-pular-visual {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Moldura azul-clara do comparativo: a coluna branca da Mais Horas aparece
+   como um cartão dentro dela. */
+.mh-comparativo-moldura {
+  padding: 24px;
+  border-radius: 24px;
+  background: var(--mh-azul-claro);
+  overflow-x: auto;
+}
+
+@media (max-width: 47.99em) {
+  .mh-comparativo-moldura {
+    padding: 8px;
+    border-radius: 16px;
   }
 }

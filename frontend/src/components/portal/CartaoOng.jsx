@@ -16,7 +16,7 @@ export default function CartaoOng({ ong }) {
   ].filter(Boolean);
 
   return (
-    <Box className="mh-bloco mh-cartao-atividade" p="md" h="100%">
+    <Box className="mh-recurso mh-cartao-atividade" h="100%">
       <Group gap="sm" wrap="nowrap" align="flex-start">
         <Avatar src={resolveImage(ong.logo)} size={44} radius="sm" color="navy"
                 alt={`Logo de ${ong.nome}`}>

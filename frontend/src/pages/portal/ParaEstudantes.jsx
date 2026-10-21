@@ -53,6 +53,9 @@ export default function ParaEstudantes() {
     <PaginaDePublico
       papel="estudante"
       tituloDaAba="Para estudantes"
+      foto="/portal/historias.jpg"
+      altFoto="Crianças sentadas no chão ouvindo uma história"
+      posicaoFoto="60% 40%"
       titulo="Horas de extensão sem correr atrás de assinatura"
       subtitulo="Encontre voluntariado perto de você, participe e tenha um certificado que a sua instituição consegue conferir sozinha."
       rotuloCadastro="Criar conta de estudante"

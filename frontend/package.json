@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/fraunces": "^5.1.0",
     "@fontsource/ibm-plex-mono": "^5.1.1",
     "@fontsource/ibm-plex-sans": "^5.1.1",
     "@mantine/core": "^8.3.5",

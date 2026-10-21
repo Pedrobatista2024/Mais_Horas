@@ -1,94 +1,87 @@
 import { Link } from "react-router-dom";
-import {
-  Accordion, Box, Button, Container, Group, SimpleGrid, Stack, Text, Title,
-} from "@mantine/core";
+import { Box, Button, Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 
 import { useAuth } from "../../context/AuthContext";
 import { useTitulo } from "../../hooks/useTitulo";
+import AberturaComFoto from "./AberturaComFoto";
 import ChamadaFinal from "./ChamadaFinal";
+import PerguntasFrequentes from "./PerguntasFrequentes";
 import Secao from "./Secao";
-import { cadastroComo, LARGURA_DO_PORTAL } from "./navegacao";
+import { cadastroComo } from "./navegacao";
 
 /**
- * Esqueleto de T3 (estudantes) e T4 (ONGs): o que muda para quem usa, como
- * começar, dúvidas e o cadastro com o perfil já escolhido.
- *
- * O topo é branco, e não outra faixa azul: o azul fica para a página inicial,
- * e cada página de público abre direto no que interessa a ela.
+ * Esqueleto de T3 (estudantes) e T4 (ONGs): abertura com foto, o que muda para
+ * quem usa, como começar, dúvidas e o fechamento com o cadastro já no perfil
+ * certo. As seções alternam azul-claro e branco, como a página inicial.
  */
 export default function PaginaDePublico({
   papel, titulo, subtitulo, rotuloCadastro, acaoExtra, vantagens, passos, duvidas,
-  chamada, tituloDaAba,
+  chamada, tituloDaAba, foto, altFoto, posicaoFoto,
 }) {
   const { autenticado } = useAuth();
   useTitulo(tituloDaAba);
 
   return (
     <>
-      <Box component="section" className="mh-secao"
-           style={{ borderBottom: "1px solid var(--mh-linha)" }}>
-        <Container size={LARGURA_DO_PORTAL}>
-          <Stack gap="lg" maw={760}>
-            <Title order={1} className="mh-display" fz={{ base: 34, sm: 46 }}>
-              {titulo}
-            </Title>
-            <Text c="dimmed" fz={{ base: "md", md: "xl" }} maw={640}>{subtitulo}</Text>
-            <Group gap="sm">
-              {!autenticado && (
-                <Button size="md" component={Link} to={cadastroComo(papel)}>
-                  {rotuloCadastro}
-                </Button>
-              )}
-              {acaoExtra && (
-                <Button size="md" variant="default" component={Link} to={acaoExtra.para}>
-                  {acaoExtra.rotulo}
-                </Button>
-              )}
-            </Group>
-          </Stack>
-        </Container>
-      </Box>
+      <AberturaComFoto foto={foto} alt={altFoto} posicao={posicaoFoto} baixa>
+        <Stack gap="lg" maw={640}>
+          <Title order={1} className="mh-serif" c="white" fz={{ base: 36, sm: 48, lg: 56 }}>
+            {titulo}
+          </Title>
+          <Text c="rgba(255,255,255,0.88)" fz={{ base: "md", md: "xl" }} maw={560}>
+            {subtitulo}
+          </Text>
+          <Group gap="sm">
+            {!autenticado && (
+              <Button variant="white" component={Link} to={cadastroComo(papel)}
+                      className="mh-botao-portal">
+                {rotuloCadastro}
+              </Button>
+            )}
+            {acaoExtra && (
+              <Button variant="outline" color="#ffffff" component={Link} to={acaoExtra.para}
+                      className="mh-botao-portal">
+                {acaoExtra.rotulo}
+              </Button>
+            )}
+          </Group>
+        </Stack>
+      </AberturaComFoto>
 
-      <Secao titulo="O que muda para você">
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing={32} verticalSpacing={36}>
+      <Secao fundo="azul" titulo="O que muda para você">
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md" className="mh-desliza">
           {vantagens.map(({ icone: Icone, titulo: t, texto }) => (
-            <Box key={t}>
-              <Icone size={22} stroke={1.6} color="var(--mh-royal)" aria-hidden="true" />
-              <Text fw={600} fz="lg" mt="xs" mb={4}>{t}</Text>
-              <Text c="dimmed">{texto}</Text>
+            <Box key={t} className="mh-recurso">
+              <span className="mh-recurso-icone"><Icone size={22} stroke={1.75} /></span>
+              <Text fw={600} fz="lg" mt="md">{t}</Text>
+              <Text c="dimmed" mt={6}>{texto}</Text>
             </Box>
           ))}
         </SimpleGrid>
       </Secao>
 
-      <Secao nevoa titulo="Como começar">
-        <Box component="ol" p={0} m={0} maw={760} style={{ listStyle: "none" }}>
+      <Secao titulo="Como começar">
+        <Box component="ol" p={0} m={0} maw={820} style={{ listStyle: "none" }}>
           {passos.map((passo, i) => (
-            <Group key={passo.titulo} component="li" gap="lg" wrap="nowrap" align="flex-start"
-                   py="md" style={{ borderTop: i ? "1px solid var(--mh-linha-forte)" : 0 }}>
-              <Text className="mh-passo-numero" w={36} fz={28} aria-hidden="true">
+            <Group key={passo.titulo} component="li" gap="xl" wrap="nowrap" align="flex-start"
+                   py="lg" style={{ borderTop: i ? "1px solid var(--mh-linha)" : 0 }}>
+              <Text className="mh-serif" c="var(--mh-royal)" fz={44} lh={1} w={44}
+                    aria-hidden="true">
                 {i + 1}
               </Text>
               <Box>
-                <Text fw={600} fz="lg">{passo.titulo}</Text>
-                <Text c="dimmed">{passo.texto}</Text>
+                <Text fw={600} fz="xl">{passo.titulo}</Text>
+                <Text c="dimmed" fz="lg" mt={4}>{passo.texto}</Text>
               </Box>
             </Group>
           ))}
         </Box>
       </Secao>
 
-      <Secao titulo="Perguntas frequentes">
-        <Accordion maw={760} chevronPosition="right">
-          {duvidas.map(({ pergunta, resposta }) => (
-            <Accordion.Item key={pergunta} value={pergunta}>
-              <Accordion.Control><Text fw={500}>{pergunta}</Text></Accordion.Control>
-              <Accordion.Panel>
-                <Text c="dimmed">{resposta}</Text>
-              </Accordion.Panel>
-            </Accordion.Item>
-          ))}
-        </Accordion>
+      <Secao fundo="azul" centro titulo="Perguntas frequentes">
+        <Box maw={1000} mx="auto">
+          <PerguntasFrequentes itens={duvidas} />
+        </Box>
       </Secao>
 
       <ChamadaFinal papel={papel} rotulo={rotuloCadastro} {...chamada} />

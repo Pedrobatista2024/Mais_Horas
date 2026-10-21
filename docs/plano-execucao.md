@@ -566,10 +566,14 @@ mudou:
   Mantine ganharam texto mais escuro: "Acontecendo agora" estava em 2,5:1 e foi a 6:1.
 - **Menos cara de modelo pronto.** Saíram a palavra destacada em cor no título do portal,
   a etiqueta colorida acima de cada título, a seta colada nos links e as fileiras de
-  cartões iguais. O topo do portal virou uma abertura de apresentação: título grande, os
-  números da plataforma, a foto de voluntariado maior e, flutuando sobre ela, as próximas
-  vagas de verdade. O certificado de exemplo, mais abaixo, mostra o que o projeto tem de
-  diferente.
+  cartões iguais.
+- **Portal de apresentação, com a Cora como referência de direção.** Foto de gente
+  ocupando a abertura, com a busca de vagas num cartão branco por cima; títulos em
+  Fraunces; seções que alternam branco, azul-claro e azul-noite; comparativo "declaração em
+  papel x Mais Horas"; celulares mostrando as telas do app; o total de horas certificadas
+  em âmbar, grande, na seção escura; perguntas frequentes em cartões. As quatro fotos são
+  do Unsplash, com licença livre (`frontend/public/portal/LEIA-ME.md`), e são ilustrativas:
+  devem dar lugar a fotos de ações reais quando houver.
 - **Painéis sem atalho repetido.** Os cartões que repetiam o menu lateral saíram. O painel
   do aluno ganhou a **caderneta de horas**: cada certificado numa linha, horas à direita e
   o total com traço duplo, como a ficha de horas que a coordenação já conhece.

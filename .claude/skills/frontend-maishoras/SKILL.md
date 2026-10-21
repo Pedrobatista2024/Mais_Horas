@@ -25,6 +25,21 @@ Stack: **React 19 + Vite + Mantine v8** (`@mantine/core`, `/hooks`, `/form`, `/d
    Passo numerado só onde a ordem importa; cartão só para objeto que se escolhe (vaga,
    ONG); lista de trabalho é linha.
 
+## Portal público: linguagem de apresentação
+
+O portal (páginas públicas) fala diferente da área logada:
+
+- Abertura com foto de gente ocupando a largura (`portal/AberturaComFoto`), véu azul do
+  lado do texto e, quando faz sentido, um cartão branco flutuando (`.mh-cartao-flutuante`).
+- Títulos em Fraunces (`className="mh-serif"`); o corpo continua em IBM Plex.
+- Seções alternam fundo com `<Secao fundo="azul" | "noite">`; cartões de canto 16–20px
+  (`.mh-recurso`), botão grande `.mh-botao-portal`.
+- Peças prontas: `BuscaDeVagas`, `Comparativo`, `CelularDeExemplo`, `PerguntasFrequentes`,
+  `ChamadaFinal` (azul-noite).
+- Fotos em `public/portal/`, com origem e licença em `LEIA-ME.md`. Foto nova: registre lá.
+
+A área logada continua ferramenta: sem Fraunces, sem foto, cantos de 8px.
+
 ## O que não fazer (cara de modelo pronto)
 
 - Palavra do título destacada em outra cor.

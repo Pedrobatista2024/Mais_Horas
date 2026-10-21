@@ -6,9 +6,8 @@ import { painelDe } from "../../routes/destinos";
 import { cadastroComo, LARGURA_DO_PORTAL } from "./navegacao";
 
 /**
- * O fim de uma página do portal: uma frase e o próximo passo. Era uma faixa
- * azul com botão âmbar e seta, repetida no fim de cada página; virou um
- * fechamento discreto, separado por um fio.
+ * O fechamento de uma página do portal, em azul-noite: uma frase em Fraunces e
+ * o próximo passo. É a última seção antes do rodapé.
  */
 export default function ChamadaFinal({
   titulo = "Pronto para a primeira atividade?",
@@ -19,21 +18,28 @@ export default function ChamadaFinal({
   const { autenticado, usuario } = useAuth();
 
   return (
-    <Box className="mh-secao" style={{ borderTop: "1px solid var(--mh-linha)" }}>
+    <Box component="section" className="mh-secao mh-secao-noite">
       <Container size={LARGURA_DO_PORTAL}>
-        <Group justify="space-between" align="center" wrap="wrap" gap="lg">
-          <Box maw={640}>
-            <Title order={2} fz={{ base: 24, md: 28 }}>{titulo}</Title>
-            <Text c="dimmed" fz="lg" mt={6}>{texto}</Text>
+        <Group justify="space-between" align="center" wrap="wrap" gap="xl">
+          <Box maw={660}>
+            <Title order={2} className="mh-serif" c="white" fz={{ base: 30, md: 44 }}>
+              {titulo}
+            </Title>
+            <Text c="rgba(255,255,255,0.78)" fz="lg" mt="sm">{texto}</Text>
           </Box>
           {autenticado ? (
-            <Button size="md" component={Link} to={painelDe(usuario?.papel)}>
+            <Button variant="white" component={Link} to={painelDe(usuario?.papel)}
+                    className="mh-botao-portal">
               Ir para o painel
             </Button>
           ) : (
             <Group gap="sm">
-              <Button size="md" component={Link} to={cadastroComo(papel)}>{rotulo}</Button>
-              <Button size="md" variant="default" component={Link} to="/entrar">
+              <Button variant="white" component={Link} to={cadastroComo(papel)}
+                      className="mh-botao-portal">
+                {rotulo}
+              </Button>
+              <Button variant="outline" color="#ffffff" component={Link} to="/entrar"
+                      className="mh-botao-portal">
                 Já tenho conta
               </Button>
             </Group>
