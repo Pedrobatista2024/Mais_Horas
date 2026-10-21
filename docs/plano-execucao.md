@@ -565,9 +565,10 @@ mudou:
   saíram do âmbar. O cinza secundário passou de 3,3:1 para 5,5:1, e os selos claros do
   Mantine ganharam texto mais escuro: "Acontecendo agora" estava em 2,5:1 e foi a 6:1.
 - **Menos cara de modelo pronto.** Saíram a palavra destacada em cor no título do portal,
-  a etiqueta colorida acima de cada título, a seta colada nos links, a foto de banco de
-  imagens e as fileiras de cartões iguais. No lugar da foto, o topo do portal mostra as
-  próximas vagas de verdade; o certificado de exemplo mostra o que o projeto tem de
+  a etiqueta colorida acima de cada título, a seta colada nos links e as fileiras de
+  cartões iguais. O topo do portal virou uma abertura de apresentação: título grande, os
+  números da plataforma, a foto de voluntariado maior e, flutuando sobre ela, as próximas
+  vagas de verdade. O certificado de exemplo, mais abaixo, mostra o que o projeto tem de
   diferente.
 - **Painéis sem atalho repetido.** Os cartões que repetiam o menu lateral saíram. O painel
   do aluno ganhou a **caderneta de horas**: cada certificado numa linha, horas à direita e

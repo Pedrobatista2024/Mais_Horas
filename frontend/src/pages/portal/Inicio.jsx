@@ -16,10 +16,10 @@ import Horas from "../../components/ui/Horas";
 import { useConsultaPublica } from "../../hooks/useConsultaPublica";
 import { useTitulo } from "../../hooks/useTitulo";
 
-/** As próximas vagas, no lugar da foto de banco de imagens que ficava no topo. */
+/** As próximas vagas, num cartão que flutua sobre a foto do topo. */
 function ProximasVagas({ vagas, total }) {
   return (
-    <Box bg="white" c="var(--mh-tinta)" style={{ borderRadius: 8 }}>
+    <Box bg="white" c="var(--mh-tinta)" className="mh-hero-cartao">
       <Group justify="space-between" px="md" pt="md" pb="xs">
         <Text fw={600}>Próximas vagas</Text>
         <Text size="sm" c="dimmed" className="mh-num">
@@ -51,11 +51,19 @@ function ProximasVagas({ vagas, total }) {
   );
 }
 
+/** Os números do topo, grandes e em branco, como num slide de abertura. */
+const NUMEROS_DO_TOPO = [
+  { chave: "horasCertificadas", rotulo: ["hora certificada", "horas certificadas"] },
+  { chave: "ongs", rotulo: ["organização", "organizações"] },
+  { chave: "estudantes", rotulo: ["estudante", "estudantes"] },
+];
+
 /**
  * T1 — Início do portal.
  *
- * O topo mostra as vagas de verdade, vindas da API, e não uma foto genérica:
- * para o estudante, é a resposta para "tem onde fazer horas?". Mais abaixo, o
+ * O topo é a apresentação do sistema: título grande, a foto de gente fazendo
+ * voluntariado e, flutuando sobre ela, as próximas vagas de verdade, vindas
+ * da API. Embaixo do texto, os números da plataforma. Mais abaixo, o
  * certificado de exemplo mostra o que o projeto tem de diferente.
  *
  * Todo número desta página vem da API. Sem movimento na plataforma, as seções
@@ -64,42 +72,63 @@ function ProximasVagas({ vagas, total }) {
 export default function Inicio() {
   useTitulo("Vagas de voluntariado para horas de extensão");
   const resumo = useConsultaPublica("/portal/resumo");
-  const vagas = useConsultaPublica("/atividades?tamanho=4");
+  const vagas = useConsultaPublica("/atividades?tamanho=3");
   const parceiras = useConsultaPublica("/portal/ongs?tamanho=6");
 
   const temVagas = vagas?.itens?.length > 0;
+  const numerosDoTopo = NUMEROS_DO_TOPO.filter((n) => (resumo?.[n.chave] ?? 0) > 0);
 
   return (
     <>
-      <Box className="mh-hero">
-        <Container size={LARGURA_DO_PORTAL} py={{ base: 48, md: 88 }}>
-          <Grid gutter={{ base: 40, md: 64 }} align="center">
-            <Grid.Col span={{ base: 12, md: 7 }}>
+      <Box className="mh-hero mh-hero-abertura">
+        <Container size={LARGURA_DO_PORTAL} py={{ base: 40, md: 96 }}>
+          <Grid gutter={{ base: 32, md: 56 }} align="center">
+            <Grid.Col span={{ base: 12, md: 6 }}>
               <Stack gap="lg">
                 <Title order={1} className="mh-display" c="white"
-                       fz={{ base: 34, sm: 44, md: 52 }} maw={640}>
+                       fz={{ base: 36, sm: 48, lg: 60 }} maw={620}>
                   Faça suas horas de extensão onde alguém precisa de ajuda
                 </Title>
-                <Text c="rgba(255,255,255,0.86)" fz={{ base: "md", md: "lg" }} maw={560}>
+                <Text c="rgba(255,255,255,0.86)" fz={{ base: "md", md: "lg" }} maw={520}>
                   As ONGs publicam as vagas e você se inscreve. No dia, a presença é
                   registrada por QR Code, e o certificado sai assinado. A coordenação do
                   curso confere pelo próprio QR.
                 </Text>
                 <Group gap="sm" mt="xs">
-                  <Button size="md" variant="white" component={Link} to="/vagas">
+                  <Button size="lg" variant="white" component={Link} to="/vagas">
                     Ver vagas abertas
                   </Button>
-                  <Button size="md" variant="outline" color="#ffffff" component={Link}
+                  <Button size="lg" variant="outline" color="#ffffff" component={Link}
                           to="/para-ongs">
                     Sou de uma ONG
                   </Button>
                 </Group>
+                {numerosDoTopo.length > 0 && (
+                  <Group gap={0} mt="md" className="mh-hero-numeros" wrap="nowrap">
+                    {numerosDoTopo.map(({ chave, rotulo }) => (
+                      <Box key={chave} className="mh-hero-numero">
+                        <Text c="white" fw={600} fz={{ base: 26, md: 34 }} lh={1}
+                              className="mh-num">
+                          {resumo[chave].toLocaleString("pt-BR")}
+                        </Text>
+                        <Text c="rgba(255,255,255,0.72)" size="sm" mt={6}>
+                          {rotulo[resumo[chave] === 1 ? 0 : 1]}
+                        </Text>
+                      </Box>
+                    ))}
+                  </Group>
+                )}
               </Stack>
             </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 5 }}>
-              {temVagas
-                ? <ProximasVagas vagas={vagas.itens} total={vagas.total} />
-                : <ExemplarCertificado />}
+            <Grid.Col span={{ base: 12, md: 6 }}>
+              <Box className="mh-hero-vitrine">
+                <img src="/hero-voluntariado.jpg" className="mh-hero-foto"
+                     width={900} height={600} fetchPriority="high"
+                     alt="Voluntárias carregando caixas de alimentos de um caminhão" />
+                {temVagas
+                  ? <ProximasVagas vagas={vagas.itens.slice(0, 3)} total={vagas.total} />
+                  : <Box className="mh-hero-cartao"><ExemplarCertificado /></Box>}
+              </Box>
             </Grid.Col>
           </Grid>
         </Container>

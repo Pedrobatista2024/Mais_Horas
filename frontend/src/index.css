@@ -723,3 +723,94 @@ select {
   height: auto !important;
   aspect-ratio: 1 / 1;
 }
+
+/* ===== Abertura do portal ===== */
+
+.mh-hero-abertura {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(1200px 520px at 85% 10%, rgba(42, 79, 198, 0.55), transparent 60%),
+    var(--mh-royal-escuro);
+}
+
+.mh-hero-vitrine {
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.mh-hero-foto {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  object-position: 38% 35%;
+  border-radius: 16px;
+  box-shadow: 0 30px 60px -20px rgba(4, 12, 40, 0.6);
+}
+
+/* O cartão de vagas flutua sobre o canto de baixo da foto, à direita: a cena
+   principal (a caixa passando de mão em mão) fica à esquerda e não é coberta. */
+.mh-hero-cartao {
+  position: relative;
+  width: calc(100% - 24px);
+  margin: -48px auto 0;
+  border-radius: 12px;
+  box-shadow: 0 24px 48px -12px rgba(4, 12, 40, 0.5);
+  animation: mh-sobe 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 250ms both;
+}
+
+@media (min-width: 62em) {
+  .mh-hero-cartao {
+    position: absolute;
+    right: 0;
+    bottom: -48px;
+    width: min(360px, 72%);
+    margin: 0;
+  }
+
+  .mh-hero-vitrine {
+    margin-bottom: 40px;
+  }
+}
+
+/* Só em tela larga o cartão passa da borda da foto: em 1024px ele encostava
+   na borda da janela. */
+@media (min-width: 75em) {
+  .mh-hero-cartao {
+    right: -24px;
+  }
+}
+
+@keyframes mh-sobe {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Os números ficam separados por um fio claro, sem cartão. */
+.mh-hero-numero {
+  padding-right: 24px;
+  margin-right: 24px;
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.mh-hero-numero:last-child {
+  padding-right: 0;
+  margin-right: 0;
+  border-right: 0;
+}
+
+@media (max-width: 35.99em) {
+  .mh-hero-numero {
+    padding-right: 14px;
+    margin-right: 14px;
+  }
+}
