@@ -23,7 +23,7 @@ from fastapi import Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import auditoria, security
+from app.core import auditoria, metricas, security
 from app.core.config import config
 from app.core.errors import ErroDeNegocio
 from app.db.models import (
@@ -319,6 +319,7 @@ async def verificar(sessao: AsyncSession, codigo: str, *,
                     request: Request | None = None) -> dict:
     cert = await _buscar_por_codigo(sessao, codigo)
     resposta = _desfecho(cert, codigo)
+    metricas.VERIFICACOES.labels(resposta["desfecho"]).inc()
 
     # Só a adulteração vai para a trilha. As verificações comuns são públicas e
     # frequentes, e registrá-las todas afogaria o que importa: a prova de que

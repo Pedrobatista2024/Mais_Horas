@@ -8,6 +8,20 @@
 		reverse_proxy citinova-api:8000
 	}
 
+	# Monitoramento (deploy/monitoramento): o Grafana tem login próprio, e o
+	# relatório em PDF só sai para quem tem sessão aberta nele. Se o
+	# monitoramento estiver desligado, só estes caminhos respondem 502.
+	handle /monitoramento/relatorios/* {
+		forward_auth monitoramento-grafana:3000 {
+			uri /monitoramento/api/user
+		}
+		reverse_proxy monitoramento-relatorios:8000
+	}
+
+	handle /monitoramento* {
+		reverse_proxy monitoramento-grafana:3000
+	}
+
 	@api path /api/* /uploads/* /saude
 	handle @api {
 		# Sem trusted_proxies, o Caddy descarta o X-Forwarded-For que vier do

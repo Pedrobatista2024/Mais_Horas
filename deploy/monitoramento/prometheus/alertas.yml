@@ -1,0 +1,172 @@
+# Alertas do Mais Horas, em dois níveis (docs/monitoramento.md):
+#
+#   atencao  algo saiu do normal e vale olhar hoje;
+#   critico  usuário afetado ou ataque em curso: olhar agora.
+#
+# O rótulo `titulo` é o texto que os painéis e o relatório mostram, e `area`
+# agrupa: disponibilidade, desempenho, seguranca, banco, servidor.
+groups:
+  - name: disponibilidade
+    rules:
+      - alert: ApiSemResposta
+        expr: up{job="api"} == 0
+        for: 1m
+        labels: {nivel: critico, area: disponibilidade, titulo: "A API não responde à coleta"}
+        annotations:
+          descricao: "O Prometheus não alcança api:3000 há mais de 1 minuto. O site abre, mas nada que dependa da API funciona."
+
+      - alert: SiteForaDoAr
+        expr: probe_success{job="disponibilidade"} == 0
+        for: 2m
+        labels: {nivel: critico, area: disponibilidade, titulo: "Página fora do ar pela internet"}
+        annotations:
+          descricao: "{{ $labels.instance }} não respondeu com 2xx por HTTPS nos últimos 2 minutos."
+
+      - alert: CertificadoHttpsVencendo
+        expr: (probe_ssl_earliest_cert_expiry{job="disponibilidade"} - time()) / 86400 < 14
+        for: 1h
+        labels: {nivel: atencao, area: disponibilidade, titulo: "Certificado HTTPS vence em menos de 14 dias"}
+        annotations:
+          descricao: "O Caddy renova sozinho; se chegou aqui, a renovação está falhando."
+
+      - alert: BancoSemResposta
+        expr: pg_up == 0
+        for: 1m
+        labels: {nivel: critico, area: banco, titulo: "Postgres não responde"}
+        annotations:
+          descricao: "O exportador não consegue consultar o banco mais_horas."
+
+  - name: desempenho
+    rules:
+      - alert: ErrosDoServidor
+        expr: |
+          sum(rate(maishoras_http_requisicoes_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(maishoras_http_requisicoes_total[5m])), 0.001) > 0.02
+        for: 5m
+        labels: {nivel: atencao, area: desempenho, titulo: "Mais de 2% das respostas são erro 5xx"}
+        annotations:
+          descricao: "Taxa de erro do servidor em {{ $value | humanizePercentage }} nos últimos 5 minutos."
+
+      - alert: ErrosDoServidorGraves
+        expr: |
+          sum(rate(maishoras_http_requisicoes_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(maishoras_http_requisicoes_total[5m])), 0.001) > 0.10
+        for: 3m
+        labels: {nivel: critico, area: desempenho, titulo: "Mais de 10% das respostas são erro 5xx"}
+        annotations:
+          descricao: "Taxa de erro do servidor em {{ $value | humanizePercentage }}."
+
+      - alert: ApiLenta
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(maishoras_http_duracao_segundos_bucket{rota!="nao_encontrada"}[5m]))) > 1
+        for: 10m
+        labels: {nivel: atencao, area: desempenho, titulo: "95% das respostas acima de 1 s"}
+        annotations:
+          descricao: "O percentil 95 do tempo de resposta está em {{ $value | humanizeDuration }}."
+
+      - alert: ApiMuitoLenta
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(maishoras_http_duracao_segundos_bucket{rota!="nao_encontrada"}[5m]))) > 2.5
+        for: 5m
+        labels: {nivel: critico, area: desempenho, titulo: "95% das respostas acima de 2,5 s"}
+        annotations:
+          descricao: "O percentil 95 do tempo de resposta está em {{ $value | humanizeDuration }}."
+
+  - name: seguranca
+    rules:
+      - alert: ForcaBruta
+        expr: increase(maishoras_limite_excedido_total{balde="auth"}[5m]) > 0
+        labels: {nivel: critico, area: seguranca, titulo: "Possível força bruta: login bloqueado por excesso de tentativas"}
+        annotations:
+          descricao: "Algum IP passou de 20 tentativas de login em 15 minutos e está sendo barrado. Veja o painel Segurança."
+
+      - alert: MuitasFalhasDeLogin
+        expr: sum(increase(maishoras_eventos_total{acao="sessao.falha"}[10m])) > 15
+        labels: {nivel: atencao, area: seguranca, titulo: "Muitas falhas de login em 10 minutos"}
+        annotations:
+          descricao: "{{ $value | humanize }} logins recusados em 10 minutos. Pode ser erro de digitação em massa ou tentativa espalhada entre IPs."
+
+      - alert: ReusoDeTokenDeSessao
+        expr: increase(maishoras_eventos_total{acao="sessao.reuso_detectado"}[10m]) > 0
+        labels: {nivel: critico, area: seguranca, titulo: "Token de sessão reapresentado: possível roubo de sessão"}
+        annotations:
+          descricao: "Um refresh token já usado voltou depois da janela de 15 s. A família de sessões foi revogada."
+
+      - alert: VarreduraDeCertificados
+        expr: increase(maishoras_limite_excedido_total{balde="verificacao"}[5m]) > 0
+        labels: {nivel: atencao, area: seguranca, titulo: "Varredura de códigos de certificado"}
+        annotations:
+          descricao: "Algum IP passou de 60 verificações por minuto e está sendo barrado."
+
+      - alert: CertificadoAdulterado
+        expr: increase(maishoras_certificado_verificacoes_total{desfecho="adulterado"}[1h]) > 0
+        labels: {nivel: critico, area: seguranca, titulo: "Verificação encontrou certificado adulterado"}
+        annotations:
+          descricao: "A assinatura de um certificado não confere com o registro: alguém alterou o banco."
+
+      - alert: MuitosQrInvalidos
+        expr: increase(maishoras_eventos_total{acao="checkin.token_invalido"}[15m]) > 5
+        labels: {nivel: atencao, area: seguranca, titulo: "Muitos QR Codes inválidos no check-in"}
+        annotations:
+          descricao: "Mais de 5 check-ins com código vencido ou de outra atividade em 15 minutos. Pode ser print do QR circulando."
+
+  - name: banco
+    rules:
+      - alert: ConexoesDoBancoAltas
+        expr: sum(pg_stat_activity_count{datname="mais_horas"}) / on() pg_settings_max_connections > 0.8
+        for: 5m
+        labels: {nivel: atencao, area: banco, titulo: "Conexões do banco acima de 80% do limite"}
+        annotations:
+          descricao: "{{ $value | humanizePercentage }} do max_connections em uso."
+
+      - alert: TravamentoNoBanco
+        expr: increase(pg_stat_database_deadlocks{datname="mais_horas"}[10m]) > 0
+        labels: {nivel: atencao, area: banco, titulo: "Deadlock no banco"}
+        annotations:
+          descricao: "Duas transações se travaram e o Postgres cancelou uma delas."
+
+      - alert: CacheDoBancoBaixo
+        expr: |
+          rate(pg_stat_database_blks_hit{datname="mais_horas"}[15m])
+            / clamp_min(rate(pg_stat_database_blks_hit{datname="mais_horas"}[15m]) + rate(pg_stat_database_blks_read{datname="mais_horas"}[15m]), 0.001) < 0.9
+        for: 15m
+        labels: {nivel: atencao, area: banco, titulo: "Menos de 90% das leituras vêm do cache"}
+        annotations:
+          descricao: "O banco está indo ao disco com frequência: falta memória ou há consulta varrendo tabela."
+
+  - name: servidor
+    rules:
+      - alert: CpuAlta
+        expr: 100 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 85
+        for: 10m
+        labels: {nivel: atencao, area: servidor, titulo: "CPU acima de 85%"}
+        annotations:
+          descricao: "CPU média em {{ $value | humanize }}% nos últimos 10 minutos."
+
+      - alert: MemoriaAlta
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.85
+        for: 10m
+        labels: {nivel: atencao, area: servidor, titulo: "Memória acima de 85%"}
+        annotations:
+          descricao: "{{ $value | humanizePercentage }} da memória em uso."
+
+      - alert: MemoriaCritica
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.95
+        for: 5m
+        labels: {nivel: critico, area: servidor, titulo: "Memória acima de 95%"}
+        annotations:
+          descricao: "O sistema está perto de matar processos por falta de memória."
+
+      - alert: DiscoEnchendo
+        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.8
+        for: 30m
+        labels: {nivel: atencao, area: servidor, titulo: "Disco acima de 80%"}
+        annotations:
+          descricao: "{{ $value | humanizePercentage }} do disco em uso. Backups e imagens antigas são os suspeitos de sempre."
+
+      - alert: DiscoCritico
+        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.92
+        for: 10m
+        labels: {nivel: critico, area: servidor, titulo: "Disco acima de 92%"}
+        annotations:
+          descricao: "Com o disco cheio o Postgres para de gravar."

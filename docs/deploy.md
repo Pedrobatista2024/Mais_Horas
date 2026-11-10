@@ -17,6 +17,7 @@ Tudo mora em [`deploy/`](../deploy):
 | `atualizar.sh` | `git pull` + rebuild, para publicar na mão |
 | `backup.sh` | `pg_dump` diário em `~/backups`, guardando 14 dias |
 | `.env.exemplo` | Modelo do `deploy/.env` (este nunca vai para o git) |
+| `monitoramento/` | Prometheus, Grafana, exportadores e relatório em PDF, num projeto Docker à parte ([monitoramento.md](monitoramento.md)) |
 
 O Caddy também encaminha apenas `/citinova/*` para a API isolada da CITINOVA,
 quando ela está presente na rede Docker `mais-horas_default` sob o nome
@@ -101,6 +102,21 @@ sudo docker compose exec -T banco pg_restore -U maishoras -d mais_horas --clean 
 
 Leve os backups para fora da VM de vez em quando (`scp`): backup no mesmo disco não
 protege contra perder a máquina.
+
+### Monitoramento
+
+Projeto Docker separado, em `deploy/monitoramento/`. O Caddy entrega o Grafana em
+`/monitoramento` e o relatório em PDF em `/monitoramento/relatorios/`; com o monitoramento
+desligado, só esses caminhos respondem `502`. Primeira vez, depois do deploy da aplicação:
+
+```bash
+cd ~/Mais_Horas/deploy/monitoramento && ./preparar.sh
+```
+
+O pipeline publica a aplicação, mas não o monitoramento: mudou painel, alerta ou
+relatório, rode `sudo docker compose up -d --build` dentro de `deploy/monitoramento`.
+Painéis, níveis, simulador de demonstração e a limpeza dos dados dele estão em
+[monitoramento.md](monitoramento.md).
 
 ### Configurar a entrada pelo Google
 

@@ -122,6 +122,8 @@ existem na base só pela diferença da resposta.
 
 - **Rate limit**: 20 tentativas por IP a cada 15 minutos em `/auth/cadastro` e `/auth/entrar`.
   Considera `X-Forwarded-For`, senão no Render todo mundo compartilharia o IP do proxy.
+  Cada bloqueio vira métrica, e o painel **Segurança e acessos** mostra recusas, bloqueios
+  e reuso de token, com os IPs e contas mais visados ([monitoramento.md](monitoramento.md)).
 - **Escopo do cookie**: `path=/api/v1/auth`, então o refresh não acompanha as demais chamadas.
 - **CORS**: em produção a API **se recusa a subir** sem `CORS_ORIGIN` definido.
   `allow_credentials` fica ligado porque o cookie precisa atravessar origens.

@@ -713,6 +713,7 @@ hora torna a busca inútil.
 | `auditoria.exportada` | Alguém baixou o CSV |
 | `usuario.consultado` | Alguém abriu o detalhe de uma conta (RN-32) |
 | `sistema.tokens_limpos` | Limpeza de tokens vencidos |
+| `sistema.demonstracao_removida` | Limpeza dos dados de demonstração do monitoramento, pela linha de comando |
 | `ong.verificada` / `ong.verificacao_removida` | Selo |
 
 ---

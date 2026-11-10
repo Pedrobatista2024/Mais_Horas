@@ -27,7 +27,8 @@ Três camadas de acesso:
 backend/
   app/
     main.py            boot: checagem de env, headers, CORS, rotas, handlers de erro
-    cli.py             comandos de servidor: gerar chave, gerar segredos, criar admin
+    cli.py             comandos de servidor: gerar chave, gerar segredos, criar admin,
+                       remover os dados de demonstração do monitoramento
     core/
       config.py        configuração lida do ambiente (pydantic-settings)
       security.py      senha (Argon2id), JWT, token do QR, assinatura do certificado
@@ -35,6 +36,7 @@ backend/
       auditoria.py     registrar() — catálogo fechado de ações, sem commit próprio
       errors.py        ErroDeNegocio + handlers centrais ({ codigo, mensagem, detalhes })
       rate_limit.py    limite por IP em login, cadastro e verificação pública
+      metricas.py      métricas do Prometheus e o middleware que mede cada rota
       email.py         envio do link de redefinição (modo console em desenvolvimento)
     db/
       session.py       engine e sessão async (SQLAlchemy 2.0 + asyncpg)

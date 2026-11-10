@@ -1,0 +1,49 @@
+# O que o Prometheus coleta e de onde (docs/monitoramento.md).
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - alertas.yml
+
+scrape_configs:
+  # A API do Mais Horas, pela rede interna. /metrics não passa pelo Caddy.
+  - job_name: api
+    static_configs:
+      - targets: ["api:3000"]
+
+  - job_name: servidor
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  - job_name: containers
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  - job_name: banco
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # De fora para dentro: o mesmo caminho que um aluno faz pela internet.
+  - job_name: disponibilidade
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - https://maishoras.northcentralus.cloudapp.azure.com/saude
+          - https://maishoras.northcentralus.cloudapp.azure.com/
+          - https://maishoras.northcentralus.cloudapp.azure.com/api/v1/portal/resumo
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115

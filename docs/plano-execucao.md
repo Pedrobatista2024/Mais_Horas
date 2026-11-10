@@ -596,6 +596,31 @@ mudou:
   biblioteca desenhava num canvas que ainda não existia. E no celular o QR passava da
   largura da tela, porque a biblioteca grava a largura em pixels no estilo do canvas.
 
+**Monitoramento (novembro de 2026).** Prometheus, Grafana e exportadores num projeto
+Docker à parte, na mesma VM ([monitoramento.md](monitoramento.md)). Decisões:
+
+- **Prometheus e Grafana, não Zabbix.** O que mais importa está dentro da aplicação
+  (login recusado, rota lenta, QR inválido), e é a própria API que expõe esses números. O
+  Zabbix mede máquina e rede, pede servidor, banco e frontend próprios, e pesaria mais na
+  VM de 4 GB.
+- **Eventos de negócio saem da auditoria.** `auditoria.registrar()` conta cada ação: login,
+  check-in e certificado viram métrica sem espalhar contador pelo código, e o catálogo
+  fechado limita o número de séries.
+- **A rota é o molde, nunca o caminho**, para um id na URL não virar série nova.
+- **`/metrics` só na rede interna**: o Caddy não repassa e a rota recusa `X-Forwarded-For`.
+- **O Grafana lê o banco com um papel só de leitura**, sem a coluna de senha, para
+  mostrar de onde vêm os logins recusados.
+- **Relatório em PDF próprio**, porque o do Grafana é pago. Mesmos níveis dos painéis e
+  dos alertas, com comparação contra o período anterior.
+- **Demonstração pela API, nunca pelo banco.** O simulador cria contas, atividades,
+  check-ins e ataques pelas rotas de verdade, com e-mail e IPs marcados (faixas da RFC
+  5737); `python -m app.cli remover-demonstracao` apaga tudo, inclusive as linhas da
+  trilha, e registra que apagou. É a única exceção à trilha que não se apaga.
+- **Um defeito achado no caminho.** Na primeira rodada local o painel acusou "sessão
+  roubada" de um aluno simulado: dois cenários usavam a mesma sessão ao mesmo tempo e um
+  reapresentou o refresh que o outro já tinha trocado. A API acertou; o simulador passou a
+  dar uma tarefa por vez a cada pessoa.
+
 ---
 
 ## 4. Ordem e o ponto de virada

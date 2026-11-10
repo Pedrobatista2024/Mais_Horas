@@ -1,0 +1,32 @@
+# Fontes de dados do Grafana. Os uid são fixos: os painéis apontam para eles.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s
+      httpMethod: POST
+
+  # Leitura direta do banco do Mais Horas, com um papel que só lê o necessário
+  # (a trilha de auditoria e as tabelas de uso). Nunca a senha dos usuários.
+  - name: Mais Horas (banco)
+    uid: mais-horas-banco
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: banco:5432
+    user: painel
+    editable: false
+    jsonData:
+      database: mais_horas
+      sslmode: disable
+      postgresVersion: 1600
+      maxOpenConns: 2
+      maxIdleConns: 1
+    secureJsonData:
+      password: ${POSTGRES_PAINEL_SENHA}

@@ -45,6 +45,7 @@ cd backend && .venv/Scripts/python ../scripts/semear_local.py  # base local com 
 cd frontend && npm run dev                    # SPA em :5173
 cd frontend && npm run build                  # precisa passar limpo antes de finalizar
 cd frontend && npx eslint src                 # precisa passar sem erros
+python deploy/monitoramento/grafana/gerar_paineis.py  # regenera os painéis do Grafana
 ```
 
 O backend usa venv em `backend/.venv`. Ative antes, ou chame o Python de lá direto.
@@ -114,6 +115,10 @@ rota -> Depends(usuario_atual) -> Depends(exigir_papel) -> Pydantic -> service -
    comandos num prepared statement.
 
 11. **Não adicione `print` de debug.**
+
+12. **Métrica nova mora em `app/core/metricas.py`**, e rótulo nunca leva id, e-mail ou
+   caminho cru: cada valor diferente vira uma série no Prometheus. Evento de negócio já
+   vira métrica sozinho ao passar por `auditoria.registrar()`.
 
 ## Frontend — padrões obrigatórios
 
@@ -223,6 +228,7 @@ Ao mudar algo estrutural, atualize o doc correspondente:
 | Env, build, deploy | [docs/deploy.md](docs/deploy.md) |
 | Estratégia de certificado ou presença | [docs/desafio-tecnico.md](docs/desafio-tecnico.md) |
 | Como demonstrar que a validação funciona | [docs/como-provar.md](docs/como-provar.md) |
+| Métrica, painel, alerta, relatório ou simulador | [docs/monitoramento.md](docs/monitoramento.md) |
 
 `docs/historico/` guarda a documentação do sistema anterior (requisitos, API e
 refatoração do backend Node/Express). Serve como registro; quem manda hoje é
@@ -236,3 +242,4 @@ refatoração do backend Node/Express). Serve como registro; quem manda hoje é
 - E-mail em modo console; não há envio real configurado. É a dívida que mais pesa para o
   piloto: quem esquece a senha depende de alguém ler o log do servidor.
 - Backup do banco só no disco da própria VM: perder a máquina é perder o backup junto.
+- Monitoramento na mesma VM e alertas só na tela: se a máquina cair, ninguém é avisado.

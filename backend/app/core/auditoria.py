@@ -17,6 +17,7 @@ from typing import Any
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import metricas
 from app.db.models import RegistroAuditoria
 
 
@@ -44,8 +45,10 @@ ACOES = {
     "admin.criado", "admin.entrou_como", "admin.saiu_do_modo",
     "admin.navegou_como", "auditoria.consultada", "auditoria.exportada",
     "usuario.consultado", "ong.verificada", "ong.verificacao_removida",
-    "sistema.tokens_limpos",
+    "sistema.tokens_limpos", "sistema.demonstracao_removida",
 }
+
+metricas.iniciar_eventos(ACOES)
 
 
 def contexto(request: Request | None) -> tuple[str | None, str | None]:
@@ -91,6 +94,11 @@ async def registrar(
     espelho = getattr(getattr(request, "state", None), "espelho", None)
     if espelho is not None and em_nome_de_id is None:
         em_nome_de_id = espelho.alvo.id
+
+    # Conta a ação para o monitoramento. Se a transação de quem chamou for
+    # revertida, a linha some e o contador fica: ele mede tentativas, a trilha
+    # mede o que aconteceu.
+    metricas.contar_evento(acao)
 
     sessao.add(RegistroAuditoria(
         ator_id=ator_id,

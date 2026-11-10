@@ -10,13 +10,15 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import config
-from app.core.errors import registrar_handlers
+from app.core.errors import ErroDeNegocio, registrar_handlers
+from app.core.metricas import MedirRequisicoes
 from app.db.session import engine
 from app.routers import (
     admin, atividades, auth, certificados, checkin, inscricoes, notificacoes,
@@ -118,6 +120,10 @@ else:
 
 registrar_handlers(app)
 
+# Por último: o middleware adicionado por último é o mais externo, e é de fora
+# que dá para medir o tempo inteiro da requisição, CORS incluído.
+app.add_middleware(MedirRequisicoes)
+
 # Uploads servidos estaticamente. Em produção o disco é efêmero — ver
 # docs/deploy.md.
 pasta_uploads = Path(config.upload_dir)
@@ -128,6 +134,20 @@ app.mount("/uploads", StaticFiles(directory=pasta_uploads), name="uploads")
 @app.get("/saude", tags=["servico"])
 async def saude() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/metrics", include_in_schema=False)
+async def metricas(request: Request) -> Response:
+    """
+    Coleta do Prometheus, pela rede interna do Docker.
+
+    Quem chega com `X-Forwarded-For` passou por um proxy, e o Prometheus não
+    passa: a resposta é a mesma de uma rota que não existe.
+    """
+    if "x-forwarded-for" in request.headers:
+        raise ErroDeNegocio("nao_encontrado", "Recurso não encontrado",
+                            status.HTTP_404_NOT_FOUND)
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 # ===== Rotas de negócio =====

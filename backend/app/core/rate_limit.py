@@ -17,6 +17,7 @@ from collections import defaultdict
 
 from fastapi import Request, status
 
+from app.core import metricas
 from app.core.config import config
 from app.core.errors import ErroDeNegocio
 
@@ -62,6 +63,7 @@ def _contar(balde: str, request: Request, maximo: int, janela: float,
     _tentativas[chave] = recentes
 
     if len(recentes) > maximo:
+        metricas.LIMITE_EXCEDIDO.labels(balde).inc()
         raise ErroDeNegocio("muitas_tentativas", mensagem,
                             status.HTTP_429_TOO_MANY_REQUESTS)
 
