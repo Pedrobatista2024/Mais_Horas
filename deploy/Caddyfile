@@ -5,6 +5,10 @@
 
 	# A CITINOVA usa apenas esta rota; o restante do Mais Horas nao muda.
 	handle_path /citinova/* {
+		# Telemetria do totem: o corte de tamanho acontece aqui, antes da API.
+		request_body {
+			max_size 64KB
+		}
 		reverse_proxy citinova-api:8000
 	}
 
