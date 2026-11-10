@@ -620,6 +620,11 @@ Docker à parte, na mesma VM ([monitoramento.md](monitoramento.md)). Decisões:
   roubada" de um aluno simulado: dois cenários usavam a mesma sessão ao mesmo tempo e um
   reapresentou o refresh que o outro já tinha trocado. A API acertou; o simulador passou a
   dar uma tarefa por vez a cada pessoa.
+- **Uma senha no relatório.** O primeiro PDF de produção listou, entre as consultas mais
+  pesadas, o `ALTER ROLE ... PASSWORD` do `preparar.sh`, com a senha do papel
+  `monitoramento`: o `pg_stat_statements` guarda o texto dos comandos. As senhas dos dois
+  papéis foram trocadas, as estatísticas zeradas, e o banco deixou de registrar comando
+  administrativo (`track_utility=off`).
 
 ---
 

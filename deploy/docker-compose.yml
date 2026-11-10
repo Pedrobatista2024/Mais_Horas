@@ -9,8 +9,11 @@ services:
     restart: unless-stopped
     # pg_stat_statements guarda tempo e contagem de cada consulta: é o que o
     # painel "Banco de dados" do monitoramento usa para achar lentidão.
+    # track_utility=off: comando administrativo não é registrado, porque o
+    # texto de um ALTER ROLE ... PASSWORD levaria a senha em claro para o painel.
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements",
-              "-c", "pg_stat_statements.track=top"]
+              "-c", "pg_stat_statements.track=top",
+              "-c", "pg_stat_statements.track_utility=off"]
     environment:
       POSTGRES_USER: maishoras
       POSTGRES_PASSWORD: ${POSTGRES_SENHA:?defina POSTGRES_SENHA no .env}

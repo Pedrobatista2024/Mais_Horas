@@ -159,6 +159,14 @@ O banco da aplicação sobe com `pg_stat_statements` (`deploy/docker-compose.yml
 guarda tempo e contagem de cada consulta. É a fonte da tabela "Consultas que mais consomem
 tempo", que aponta o que deixa o sistema lento.
 
+**Comando administrativo não é registrado** (`pg_stat_statements.track_utility=off`). O
+`pg_stat_statements` guarda o texto do comando, e um `ALTER ROLE ... PASSWORD` levaria a
+senha em claro para o painel. Foi exatamente o que aconteceu na primeira instalação: o
+relatório mostrou a senha do papel `monitoramento`, as senhas dos dois papéis foram
+trocadas e as estatísticas, zeradas. Agora há três barreiras: o banco não registra
+comando administrativo, o `preparar.sh` desliga o registro na própria sessão e o painel e o
+relatório ignoram `CREATE`, `ALTER`, `GRANT` e afins.
+
 ## Operar
 
 Primeira vez, na VM, depois do deploy da aplicação:

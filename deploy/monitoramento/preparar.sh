@@ -35,9 +35,15 @@ set -a; source .env; set +a
 # `painel`, para o Grafana e os relatórios, que só lê a trilha de auditoria e
 # as tabelas de uso (de usuarios, só colunas que não são senha). As senhas
 # entram como variável do psql, nunca coladas no SQL.
+#
+# O pg_stat_statements grava o texto de cada comando, e o ALTER ROLE leva a
+# senha em claro: a sessão desliga o registro antes, senão a senha iria parar
+# no painel do banco.
 sudo docker compose -f ../docker-compose.yml exec -T banco \
   psql -v ON_ERROR_STOP=1 -q -U maishoras -d mais_horas \
        -v senha_monitor="$POSTGRES_MONITOR_SENHA" -v senha_painel="$POSTGRES_PAINEL_SENHA" <<'SQL'
+SET pg_stat_statements.track = 'none';
+SET pg_stat_statements.track_utility = off;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 SELECT 'CREATE ROLE monitoramento' WHERE NOT EXISTS (
   SELECT 1 FROM pg_roles WHERE rolname = 'monitoramento')\gexec

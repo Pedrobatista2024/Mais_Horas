@@ -191,6 +191,7 @@ async def _do_banco(dados: Dados) -> None:
             FROM pg_stat_statements s JOIN pg_database d ON d.oid = s.dbid
             WHERE d.datname = 'mais_horas'
               AND pg_get_userbyid(s.userid) NOT IN ('monitoramento', 'painel')
+              AND s.query !~* '^\\s*(create|alter|grant|revoke|comment|set|show|vacuum)'
             ORDER BY s.total_exec_time DESC LIMIT 6""")]
     except Exception as erro:
         dados.erro_banco = f"Consulta ao banco falhou: {erro.__class__.__name__}."
