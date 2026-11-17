@@ -68,7 +68,7 @@
       "type": "link",
       "icon": "bolt",
       "url": "/monitoramento/demonstracao/",
-      "targetBlank": false,
+      "targetBlank": true,
       "tooltip": "Liga o movimento simulado por alguns minutos"
     }
   ],
@@ -635,7 +635,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**[Ligar a demonstração](/monitoramento/demonstracao/)** por 5 ou 15 minutos: gente se\ncadastrando, entrando, se inscrevendo e conferindo certificados, e um ataque simulado a\ncada minuto (força bruta, varredura de certificados, lista de e-mails, sessão roubada).\n\nTudo passa pela API de verdade, com contas em `@demonstracao.mais-horas.org` e IPs\nreservados para documentação. Sai com `python -m app.cli remover-demonstracao`.\n\nOs alertas disparados aparecem em **[Saúde do Mais Horas](/monitoramento/d/visao-geral)**\ne os IPs atacantes em **[Segurança e acessos](/monitoramento/d/seguranca)**."
+        "content": "<a href=\"/monitoramento/demonstracao/\" target=\"_blank\"><b>Ligar a demonstração</b></a>\n(abre em outra aba) por 5 ou 15 minutos: gente se\ncadastrando, entrando, se inscrevendo e conferindo certificados, e um ataque simulado a\ncada minuto (força bruta, varredura de certificados, lista de e-mails, sessão roubada).\n\nTudo passa pela API de verdade, com contas em `@demonstracao.mais-horas.org` e IPs\nreservados para documentação. Sai com `python -m app.cli remover-demonstracao`.\n\nOs alertas disparados aparecem em **[Saúde do Mais Horas](/monitoramento/d/visao-geral)**\ne os IPs atacantes em **[Segurança e acessos](/monitoramento/d/seguranca)**."
       },
       "id": 8
     },

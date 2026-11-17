@@ -238,8 +238,11 @@ def painel(uid: str, titulo: str, descricao: str, paineis: list, *, desde: str =
             {"title": "Relatório em PDF", "type": "link", "icon": "doc",
              "url": "/monitoramento/relatorios/", "targetBlank": True,
              "tooltip": "Gera o relatório com comparativo entre períodos"},
+            # Em aba nova de propósito: o Grafana trata todo endereço que começa
+            # com /monitoramento/ como tela dele e, na mesma aba, mostraria
+            # "Page not found" no lugar da página do simulador (e do relatório).
             {"title": "Demonstração ao vivo", "type": "link", "icon": "bolt",
-             "url": "/monitoramento/demonstracao/", "targetBlank": False,
+             "url": "/monitoramento/demonstracao/", "targetBlank": True,
              "tooltip": "Liga o movimento simulado por alguns minutos"},
         ],
         "panels": paineis,
@@ -766,7 +769,8 @@ def ao_vivo() -> dict:
                   expr=f"rate(maishoras_http_requisicoes_total{agora})") + ")", "{{classe}}")],
               unidade="reqps", empilhar=True, cores=CLASSES),
         texto("Como usar", (16, 4, 8, 9), """
-**[Ligar a demonstração](/monitoramento/demonstracao/)** por 5 ou 15 minutos: gente se
+<a href="/monitoramento/demonstracao/" target="_blank"><b>Ligar a demonstração</b></a>
+(abre em outra aba) por 5 ou 15 minutos: gente se
 cadastrando, entrando, se inscrevendo e conferindo certificados, e um ataque simulado a
 cada minuto (força bruta, varredura de certificados, lista de e-mails, sessão roubada).
 

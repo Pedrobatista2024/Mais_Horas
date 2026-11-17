@@ -68,7 +68,7 @@
       "type": "link",
       "icon": "bolt",
       "url": "/monitoramento/demonstracao/",
-      "targetBlank": false,
+      "targetBlank": true,
       "tooltip": "Liga o movimento simulado por alguns minutos"
     }
   ],
