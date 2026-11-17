@@ -620,6 +620,10 @@ Docker à parte, na mesma VM ([monitoramento.md](monitoramento.md)). Decisões:
   roubada" de um aluno simulado: dois cenários usavam a mesma sessão ao mesmo tempo e um
   reapresentou o refresh que o outro já tinha trocado. A API acertou; o simulador passou a
   dar uma tarefa por vez a cada pessoa.
+- **Modo apresentação.** Um botão (`/monitoramento/demonstracao/`, atrás do login do
+  Grafana) liga por 5 ou 15 minutos um movimento forte, com gente nova se cadastrando e um
+  incidente por minuto, e o painel **Ao vivo** atualiza a cada 5 s. Para isso a API e a
+  máquina passaram a ser coletadas a cada 5 s, e não 15.
 - **Uma senha no relatório.** O primeiro PDF de produção listou, entre as consultas mais
   pesadas, o `ALTER ROLE ... PASSWORD` do `preparar.sh`, com a senha do papel
   `monitoramento`: o `pg_stat_statements` guarda o texto dos comandos. As senhas dos dois

@@ -8,13 +8,23 @@ rule_files:
 
 scrape_configs:
   # A API do Mais Horas, pela rede interna. /metrics não passa pelo Caddy.
+  # A cada 5 s, para o painel "Ao vivo" se mexer diante de quem assiste.
   - job_name: api
+    scrape_interval: 5s
     static_configs:
       - targets: ["api:3000"]
 
   - job_name: servidor
+    scrape_interval: 5s
     static_configs:
       - targets: ["node-exporter:9100"]
+
+  # O simulador de demonstração: diz se o modo apresentação está ligado. Fica
+  # "fora" quando o simulador não roda, o que é o normal sem demonstração.
+  - job_name: simulador
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["simulador:8000"]
 
   - job_name: containers
     scrape_interval: 30s

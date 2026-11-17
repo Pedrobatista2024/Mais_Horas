@@ -22,15 +22,15 @@ separado: dá para subir, derrubar e apagar o monitoramento sem tocar no site.
 
 | Peça | O que faz |
 |---|---|
-| **Prometheus** | O banco de séries temporais: coleta tudo a cada 15 s e guarda 90 dias (até 5 GB). Avalia os alertas |
-| **Grafana** | Os seis painéis, em `https://<domínio>/monitoramento`, com login próprio |
+| **Prometheus** | O banco de séries temporais: coleta a API e a máquina a cada 5 s, o resto a cada 15 ou 30 s, e guarda 90 dias (até 5 GB). Avalia os alertas |
+| **Grafana** | Os sete painéis, em `https://<domínio>/monitoramento`, com login próprio |
 | **API do Mais Horas** | Expõe `/metrics` na rede interna: tempo e status de cada rota, eventos da auditoria, bloqueios por excesso de tentativas, verificações de certificado, conexões do pool |
 | **node-exporter** | A máquina: CPU, memória, disco, rede |
 | **cAdvisor** | Cada container: quem está gastando CPU e memória |
 | **postgres-exporter** | O banco: conexões, transações, cache, travas, deadlocks e as consultas mais pesadas (`pg_stat_statements`) |
 | **blackbox** | Visão de fora: abre o site pela internet, por HTTPS, a cada 30 s, e mede a validade do certificado |
 | **relatórios** | Gera o PDF com comparativo entre períodos, que o Grafana gratuito não faz |
-| **simulador** | Uso simulado para demonstração. Só sobe com `--profile demonstracao` |
+| **simulador** | Uso simulado para demonstração, com o botão do modo apresentação. Só sobe com `--profile demonstracao` |
 
 ## Por que Prometheus e Grafana, e não Zabbix
 
@@ -49,11 +49,15 @@ Todos ficam na pasta **Mais Horas** do Grafana, e o primeiro abre sozinho.
 | Painel | Para responder |
 |---|---|
 | **Saúde do Mais Horas** | Está no ar? Está rápido? Tem alerta disparado? (a tela inicial) |
+| **Ao vivo** | Os últimos 15 minutos, atualizando a cada 5 s: para projetar numa apresentação |
 | **API: desempenho e erros** | Qual rota é mais chamada, qual é mais lenta, qual está falhando |
 | **Segurança e acessos** | Logins aceitos e recusados, força bruta, IPs e contas mais visadas, sessão roubada, QR inválido |
 | **Banco de dados** | Conexões, transações, cache, travas, consultas que mais pesam, tamanho das tabelas |
 | **Servidor e containers** | CPU, memória, disco, rede e o consumo de cada container |
 | **Uso da plataforma** | Contas, inscrições, check-ins e certificados ao longo do tempo |
+
+Os painéis atualizam a cada 10 s; o **Ao vivo**, a cada 5 s, com taxas dos últimos 30 s,
+para um pico aparecer no gráfico quase na hora.
 
 Os painéis são gerados por `deploy/monitoramento/grafana/gerar_paineis.py`. O Grafana não
 aceita edição pela tela: para mudar um painel, mude o gerador, rode-o e faça o deploy.
@@ -238,6 +242,32 @@ numa vaga de demonstração perde essa inscrição junto com a vaga.
 
 O histórico do Prometheus continua: ele mede o que aconteceu no servidor, e aquilo
 aconteceu.
+
+### Demonstração ao vivo (o botão)
+
+Para mostrar o monitoramento funcionando diante de uma turma, o movimento normal do
+simulador é calmo demais: uma ação a cada poucos segundos. O **modo apresentação**
+multiplica isso por alguns minutos.
+
+1. Entre no Grafana e clique em **Demonstração ao vivo**, no topo de qualquer painel (ou
+   abra `/monitoramento/demonstracao/`).
+2. Clique em **Iniciar 5 min** ou **Iniciar 15 min**. A página leva direto ao painel
+   **Ao vivo**, que atualiza a cada 5 s.
+3. Ligado, o mesmo botão soma tempo; **Parar agora** desliga na hora. Sozinho, o modo
+   desliga quando o tempo acaba, e nunca passa de 30 minutos.
+
+Enquanto está ligado, o simulador começa cerca de três cenários por segundo (visitantes,
+alunos, ONGs, robôs, coordenação conferindo certificado) e cria gente nova: contas do tipo
+`nome.sobrenome.3f9a@demonstracao.mais-horas.org` que se cadastram e já se inscrevem. A
+cada minuto entra um incidente, sempre na mesma ordem: força bruta, varredura de
+certificados, lista de e-mails, sessão roubada. Num teste local, cinco minutos deram
+cerca de 20 requisições por segundo, 60 contas novas e os alertas de força bruta e de
+falhas de login disparados.
+
+O botão é protegido duas vezes: o Caddy só deixa chegar quem tem sessão aberta no Grafana
+(`forward_auth`), e o pedido precisa vir do próprio site (`Origin`), então um link em
+outra página não consegue ligar o tráfego. Tudo o que o modo cria sai com o mesmo
+`remover-demonstracao`.
 
 ## Limitações
 

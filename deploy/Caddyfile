@@ -22,6 +22,14 @@
 		reverse_proxy monitoramento-relatorios:8000
 	}
 
+	# O botão do modo apresentação, também só para quem entrou no Grafana.
+	handle /monitoramento/demonstracao/* {
+		forward_auth monitoramento-grafana:3000 {
+			uri /monitoramento/api/user
+		}
+		reverse_proxy monitoramento-simulador:8000
+	}
+
 	handle /monitoramento* {
 		reverse_proxy monitoramento-grafana:3000
 	}

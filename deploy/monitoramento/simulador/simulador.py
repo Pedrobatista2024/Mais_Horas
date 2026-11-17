@@ -16,6 +16,11 @@ certificados são de verdade. O que é simulado é quem está do outro lado.
 - Incidentes: força bruta numa conta, lista de e-mails sendo testada, varredura
   de códigos de certificado e reuso de token de sessão.
 
+O **modo apresentação** (botão em /monitoramento/demonstracao, ver controle.py)
+multiplica o movimento por alguns minutos: cerca de três cenários por segundo,
+gente nova se cadastrando e um incidente a cada minuto, para os gráficos do
+painel "Ao vivo" se mexerem diante de quem assiste.
+
 Cada pessoa tem um IP fixo das faixas reservadas para documentação (RFC 5737:
 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24), enviado em X-Forwarded-For. O
 simulador fala direto com api:3000, pela rede interna, então é o mesmo
@@ -30,6 +35,7 @@ import asyncio
 import logging
 import os
 import random
+import time
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -37,6 +43,7 @@ from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import httpx
+from prometheus_client import Counter
 
 API = os.environ.get("API_URL", "http://api:3000").rstrip("/") + "/api/v1"
 SENHA = os.environ["SENHA_DEMONSTRACAO"]
@@ -50,6 +57,12 @@ log = logging.getLogger("simulador")
 # Uma linha por requisição afogaria o log; as métricas já contam cada uma.
 logging.getLogger("httpx").setLevel(logging.WARNING)
 aleatorio = random.Random()
+
+CENARIOS = Counter("simulador_cenarios_total", "Cenários que o simulador começou.",
+                   ["cenario"])
+# Teto do modo apresentação: é o site de produção, e o botão não pode virar um
+# jeito de derrubá-lo.
+MINUTOS_MAXIMOS = 30
 
 NAVEGADORES = [
     "Mozilla/5.0 (Linux; Android 14; SM-A546E) AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -293,6 +306,10 @@ class Simulador:
     # cenários com a mesma sessão trocariam o refresh token um do outro, e a
     # API (com razão) leria isso como token roubado.
     ocupadas: set[str] = field(default_factory=set)
+    # Base criada e pronta para o modo apresentação.
+    pronto: bool = False
+    apresentacao_ate: datetime | None = None
+    tarefas_da_apresentacao: list[asyncio.Task] = field(default_factory=list)
 
     @asynccontextmanager
     async def usar(self, pessoa: Pessoa):
@@ -313,6 +330,7 @@ class Simulador:
             await self.api.garantir_conta(pessoa)
             await asyncio.sleep(0.3)
         await self.manter_vitrine()
+        self.pronto = True
         log.info("base pronta: %d ONGs, %d estudantes", len(self.ongs), len(self.alunos))
 
     async def sessao(self, pessoa: Pessoa) -> bool:
@@ -546,8 +564,6 @@ class Simulador:
 
     async def coordenacao(self) -> None:
         """Alguém da faculdade conferindo certificados pelo código."""
-        if not self.codigos:
-            return
         ip = f"192.0.2.{aleatorio.randint(100, 140)}"
         for codigo in aleatorio.sample(self.codigos, k=min(3, len(self.codigos))):
             await self.api.pedir("GET", f"/certificados/verificar/{codigo}", ip=ip,
@@ -556,8 +572,8 @@ class Simulador:
                 await self.api.pedir("GET", f"/certificados/verificar/{codigo}/pdf", ip=ip,
                                      navegador=NAVEGADORES[3])
             await asyncio.sleep(aleatorio.uniform(5, 20))
-        if aleatorio.random() < 0.3:
-            # Código digitado errado.
+        if not self.codigos or aleatorio.random() < 0.3:
+            # Código digitado errado (ou ainda não há certificado para conferir).
             await self.api.pedir("GET", f"/certificados/verificar/{uuid.uuid4().hex[:16]}",
                                  ip=ip, navegador=NAVEGADORES[3])
 
@@ -631,14 +647,93 @@ class Simulador:
             await self.api.http.get(API.replace("/api/v1", "") + caminho, headers={
                 "X-Forwarded-For": ip, "User-Agent": aleatorio.choice(ROBOS)})
 
+    def _comecar(self, cenarios: list) -> None:
+        funcoes, pesos = zip(*cenarios)
+        cenario = aleatorio.choices(funcoes, pesos)[0]
+        CENARIOS.labels(cenario.__name__).inc()
+        asyncio.create_task(self._proteger(cenario()))
+
     async def trafego(self) -> None:
         cenarios = [(self.visitante, 45), (self.aluno, 30), (self.ong, 10),
                     (self.coordenacao, 8), (self.robo, 7)]
-        funcoes, pesos = zip(*cenarios)
         while True:
             fator = movimento(agora().hour) * INTENSIDADE
             await asyncio.sleep(aleatorio.expovariate(fator / 12))
-            asyncio.create_task(self._proteger(aleatorio.choices(funcoes, pesos)[0]()))
+            self._comecar(cenarios)
+
+    async def novato(self) -> None:
+        """Alguém que acabou de conhecer o Mais Horas: cria conta e já se inscreve."""
+        primeiro, sobrenome = aleatorio.choice(PRIMEIROS), aleatorio.choice(SOBRENOMES)
+        email = (f"{_sem_acento(primeiro)}.{_sem_acento(sobrenome)}."
+                 f"{uuid.uuid4().hex[:4]}@{DOMINIO}")
+        pessoa = Pessoa(email, f"{primeiro} {sobrenome}", email, "estudante",
+                        f"198.51.100.{aleatorio.randint(60, 99)}", aleatorio.choice(NAVEGADORES),
+                        {"nome_completo": f"{primeiro} {sobrenome}",
+                         "instituicao": aleatorio.choice(INSTITUICOES),
+                         "curso": aleatorio.choice(CURSOS), "cidade": "Fortaleza",
+                         "estado": "CE"})
+        if not await self.api.garantir_conta(pessoa):
+            return
+        await self.api.pedir("GET", "/painel/estudante", quem=pessoa)
+        vitrine = await self.api.pedir("GET", "/atividades", quem=pessoa,
+                                       params={"comVaga": "true"})
+        if vitrine.status_code == 200 and vitrine.json()["itens"]:
+            escolhida = aleatorio.choice(vitrine.json()["itens"])
+            await asyncio.sleep(aleatorio.uniform(2, 6))
+            await self.api.pedir("GET", f"/atividades/{escolhida['id']}", quem=pessoa)
+            await self.api.pedir("POST", "/inscricoes", quem=pessoa,
+                                 json={"atividadeId": escolhida["id"]})
+        await self.api.sair(pessoa)
+
+    # ---------- modo apresentação ----------
+
+    def restante(self) -> float:
+        if self.apresentacao_ate is None:
+            return 0.0
+        return max(0.0, (self.apresentacao_ate - agora()).total_seconds())
+
+    def iniciar_apresentacao(self, minutos: int) -> None:
+        """Liga por `minutos`; já ligado, soma ao que falta, até o teto."""
+        ja_ligada = self.restante() > 0
+        total = min(self.restante() + minutos * 60, MINUTOS_MAXIMOS * 60)
+        self.apresentacao_ate = agora() + timedelta(seconds=total)
+        if not ja_ligada:
+            self.tarefas_da_apresentacao = [
+                asyncio.create_task(self._proteger(self.rajada())),
+                asyncio.create_task(self._proteger(self.incidentes_da_apresentacao())),
+            ]
+        log.info("modo apresentação ligado: %d minutos pela frente", total // 60)
+
+    def parar_apresentacao(self) -> None:
+        self.apresentacao_ate = None
+        for tarefa in self.tarefas_da_apresentacao:
+            tarefa.cancel()
+        self.tarefas_da_apresentacao = []
+        log.info("modo apresentação desligado")
+
+    async def rajada(self) -> None:
+        """Cerca de três cenários por segundo enquanto o modo estiver ligado."""
+        cenarios = [(self.visitante, 45), (self.aluno, 18), (self.coordenacao, 12),
+                    (self.robo, 12), (self.novato, 7), (self.ong, 6)]
+        while self.restante() > 0:
+            await asyncio.sleep(aleatorio.expovariate(3.0))
+            self._comecar(cenarios)
+        self.apresentacao_ate = None
+        log.info("modo apresentação encerrado")
+
+    async def incidentes_da_apresentacao(self) -> None:
+        """Um incidente por minuto, na mesma ordem a cada ciclo de cinco minutos."""
+        roteiro = [(40, self.forca_bruta), (100, self.varredura),
+                   (160, lambda: self.lista_de_emails(pausa=(1, 3))),
+                   (220, self.sessao_roubada)]
+        while self.restante() > 0:
+            inicio = time.monotonic()
+            for momento, incidente in roteiro:
+                await asyncio.sleep(max(0.0, momento - (time.monotonic() - inicio)))
+                if self.restante() <= 0:
+                    return
+                asyncio.create_task(self._proteger(incidente()))
+            await asyncio.sleep(max(0.0, 300 - (time.monotonic() - inicio)))
 
     # ---------- incidentes ----------
 
@@ -651,7 +746,7 @@ class Simulador:
                                  json={"email": alvo.email, "senha": f"senha{tentativa:03d}"})
             await asyncio.sleep(aleatorio.uniform(0.8, 2.5))
 
-    async def lista_de_emails(self) -> None:
+    async def lista_de_emails(self, pausa: tuple[float, float] = (8, 25)) -> None:
         ip = f"203.0.113.{aleatorio.randint(61, 100)}"
         log.info("incidente: lista de e-mails testada a partir de %s", ip)
         emails = [p.email for p in aleatorio.sample(list(self.alunos.values()), k=12)]
@@ -661,7 +756,7 @@ class Simulador:
             await self.api.pedir("POST", "/auth/entrar", ip=ip, navegador=ROBOS[2],
                                  json={"email": email, "senha": aleatorio.choice(
                                      ["123456", "senha123", "mudar@123", "fortaleza2026"])})
-            await asyncio.sleep(aleatorio.uniform(8, 25))
+            await asyncio.sleep(aleatorio.uniform(*pausa))
 
     async def varredura(self) -> None:
         ip = f"203.0.113.{aleatorio.randint(101, 140)}"
@@ -710,23 +805,35 @@ class Simulador:
             log.warning("cenário falhou: %s: %s", erro.__class__.__name__, erro)
 
 
-async def main() -> None:
+def novo_cliente() -> httpx.AsyncClient:
+    limites = httpx.Limits(max_connections=30, max_keepalive_connections=10)
+    return httpx.AsyncClient(timeout=30, limits=limites)
+
+
+def criar(http: httpx.AsyncClient) -> Simulador:
     ongs, alunos = _montar_pessoas()
-    limites = httpx.Limits(max_connections=20, max_keepalive_connections=10)
-    async with httpx.AsyncClient(timeout=30, limits=limites) as http:
-        api = Api(http)
-        while True:
-            try:
-                if (await http.get(API.replace("/api/v1", "") + "/saude")).status_code == 200:
-                    break
-            except httpx.HTTPError:
-                pass
-            log.info("esperando a API responder")
-            await asyncio.sleep(10)
-        simulador = Simulador(api, ongs, alunos)
-        await simulador.preparar()
-        await asyncio.gather(simulador.trafego(), simulador.ciclo_do_dia(),
-                             simulador.manutencao(), simulador.incidentes())
+    return Simulador(Api(http), ongs, alunos)
+
+
+async def rodar(simulador: Simulador) -> None:
+    """Espera a API, cria a base e mantém o movimento do dia a dia."""
+    http = simulador.api.http
+    while True:
+        try:
+            if (await http.get(API.replace("/api/v1", "") + "/saude")).status_code == 200:
+                break
+        except httpx.HTTPError:
+            pass
+        log.info("esperando a API responder")
+        await asyncio.sleep(10)
+    await simulador.preparar()
+    await asyncio.gather(simulador.trafego(), simulador.ciclo_do_dia(),
+                         simulador.manutencao(), simulador.incidentes())
+
+
+async def main() -> None:
+    async with novo_cliente() as http:
+        await rodar(criar(http))
 
 
 if __name__ == "__main__":

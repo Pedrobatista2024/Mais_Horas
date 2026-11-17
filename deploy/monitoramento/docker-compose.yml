@@ -133,7 +133,8 @@ services:
     mem_limit: 256m
 
   # Uso simulado para demonstração: só sobe com --profile demonstracao.
-  # Tudo o que ele cria sai com `python -m app.cli remover-demonstracao`.
+  # Tudo o que ele cria sai com `python -m app.cli remover-demonstracao`. O
+  # botão do modo apresentação fica em /monitoramento/demonstracao/.
   simulador:
     build: ./simulador
     profiles: [demonstracao]
@@ -142,8 +143,11 @@ services:
       API_URL: http://api:3000
       SENHA_DEMONSTRACAO: ${SENHA_DEMONSTRACAO:?defina SENHA_DEMONSTRACAO no .env}
       INTENSIDADE: ${INTENSIDADE_DEMONSTRACAO:-1}
-    networks: [aplicacao]
-    mem_limit: 128m
+      DOMINIO: ${DOMINIO}
+    networks:
+      aplicacao:
+        aliases: [monitoramento-simulador]
+    mem_limit: 192m
 
 networks:
   monitoramento: {}

@@ -211,16 +211,22 @@ def mapa(*pares: tuple[str, str, str]) -> list:
                                           for i, (valor, texto, cor) in enumerate(pares)}}]
 
 
+def texto(titulo: str, pos, conteudo: str) -> dict:
+    x, y, w, h = pos
+    return {"type": "text", "title": titulo, "gridPos": {"x": x, "y": y, "w": w, "h": h},
+            "options": {"mode": "markdown", "content": conteudo.strip()}}
+
+
 def painel(uid: str, titulo: str, descricao: str, paineis: list, *, desde: str = "now-24h",
-           etiquetas: tuple[str, ...] = ()) -> dict:
+           etiquetas: tuple[str, ...] = (), atualizar: str = "10s") -> dict:
     for i, p in enumerate(paineis, start=1):
         p["id"] = i
     return {
         "uid": uid, "title": titulo, "description": descricao,
         "tags": ["mais-horas", *etiquetas], "timezone": "America/Fortaleza",
         "schemaVersion": 39, "version": 1, "editable": False, "graphTooltip": 1,
-        "refresh": "30s", "time": {"from": desde, "to": "now"},
-        "timepicker": {"refresh_intervals": ["30s", "1m", "5m", "15m"]},
+        "refresh": atualizar, "time": {"from": desde, "to": "now"},
+        "timepicker": {"refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]},
         "templating": {"list": []},
         "annotations": {"list": [{
             "builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"},
@@ -232,6 +238,9 @@ def painel(uid: str, titulo: str, descricao: str, paineis: list, *, desde: str =
             {"title": "Relatório em PDF", "type": "link", "icon": "doc",
              "url": "/monitoramento/relatorios/", "targetBlank": True,
              "tooltip": "Gera o relatório com comparativo entre períodos"},
+            {"title": "Demonstração ao vivo", "type": "link", "icon": "bolt",
+             "url": "/monitoramento/demonstracao/", "targetBlank": False,
+             "tooltip": "Liga o movimento simulado por alguns minutos"},
         ],
         "panels": paineis,
     }
@@ -720,14 +729,106 @@ def uso() -> dict:
             colunas={"Data": {"largura": 110}, "Inscritos": {"largura": 90},
                      "Vagas": {"largura": 80}}),
         serie("Ações por minuto (trilha de auditoria)", (14, 20, 10, 9), [prom(
-            'topk(8, sum by (acao) (rate(maishoras_eventos_total[5m]))) * 60', "{{acao}}")],
+            'topk(8, sum by (acao) (rate(maishoras_eventos_total[5m])) > 0) * 60', "{{acao}}")],
               unidade="suffix: /min"),
     ], etiquetas=("uso",), desde="now-7d")
 
 
+def ao_vivo() -> dict:
+    """
+    Para projetar numa apresentação: atualiza a cada 5 s e as taxas olham só os
+    últimos 30 s (a API e a máquina são coletadas a cada 5 s), então um pico
+    aparece no gráfico quase na hora em que acontece.
+    """
+    agora = "[30s]"
+    ligado = mapa(("1", "Ligado", VERDE), ("0", "Desligado", "#5c6882"))
+    return painel("ao-vivo", "Ao vivo",
+                  "Os últimos 15 minutos do Mais Horas, atualizando a cada 5 segundos.", [
+        numero("Modo apresentação", (0, 0, 4, 4),
+               [prom("max(simulador_apresentacao_ativa) or vector(0)")], mapeamentos=ligado,
+               limiares=fixo("#5c6882"),
+               descricao="Liga em Demonstração ao vivo, no topo da página."),
+        numero("Desliga em", (4, 0, 4, 4),
+               [prom("round(max(simulador_apresentacao_restante_segundos)) or vector(0)")],
+               unidade="dthms", limiares=fixo(AZUL)),
+        numero("Requisições por segundo", (8, 0, 4, 4),
+               [prom(f"sum(rate(maishoras_http_requisicoes_total{agora}))")], unidade="reqps",
+               decimais=1, grafico=True, limiares=fixo(AZUL)),
+        numero("Requisições em 15 min", (12, 0, 4, 4),
+               [prom("sum(increase(maishoras_http_requisicoes_total[$__range]))")],
+               decimais=0, limiares=fixo(AZUL)),
+        numero("Contas criadas em 15 min", (16, 0, 4, 4), [prom(evento("conta.criada"))],
+               decimais=0, limiares=fixo(VERDE)),
+        numero("Logins recusados em 15 min", (20, 0, 4, 4), [prom(evento("sessao.falha"))],
+               decimais=0, limiares=niveis(20, 60)),
+        serie("Requisições por segundo, por tipo de resposta", (0, 4, 16, 9),
+              [prom("sum by (classe) (" + POR_CLASSE.format(
+                  expr=f"rate(maishoras_http_requisicoes_total{agora})") + ")", "{{classe}}")],
+              unidade="reqps", empilhar=True, cores=CLASSES),
+        texto("Como usar", (16, 4, 8, 9), """
+**[Ligar a demonstração](/monitoramento/demonstracao/)** por 5 ou 15 minutos: gente se
+cadastrando, entrando, se inscrevendo e conferindo certificados, e um ataque simulado a
+cada minuto (força bruta, varredura de certificados, lista de e-mails, sessão roubada).
+
+Tudo passa pela API de verdade, com contas em `@demonstracao.mais-horas.org` e IPs
+reservados para documentação. Sai com `python -m app.cli remover-demonstracao`.
+
+Os alertas disparados aparecem em **[Saúde do Mais Horas](/monitoramento/d/visao-geral)**
+e os IPs atacantes em **[Segurança e acessos](/monitoramento/d/seguranca)**.
+"""),
+        serie("Logins por minuto", (0, 13, 12, 8), [
+            prom(f'sum(rate(maishoras_eventos_total{{acao="sessao.iniciada"}}{agora})) * 60',
+                 "aceitos"),
+            prom(f'sum(rate(maishoras_eventos_total{{acao="sessao.falha"}}{agora})) * 60',
+                 "recusados"),
+            prom(f'sum(rate(maishoras_limite_excedido_total{{balde="auth"}}{agora})) * 60',
+                 "bloqueados"),
+        ], unidade="suffix: /min",
+            cores={"aceitos": VERDE, "recusados": AMARELO, "bloqueados": VERMELHO}),
+        serie("Tempo de resposta", (12, 13, 12, 8), [
+            prom("histogram_quantile(0.50, sum by (le) (rate(maishoras_http_duracao_segundos_"
+                 f'bucket{{rota!="nao_encontrada"}}{agora})))', "mediana"),
+            prom("histogram_quantile(0.95, sum by (le) (rate(maishoras_http_duracao_segundos_"
+                 f'bucket{{rota!="nao_encontrada"}}{agora})))', "p95"),
+        ], unidade="s", limiares=niveis(0.5, 1), cores={"mediana": VERDE, "p95": AMARELO}),
+        serie("O que está acontecendo (ações por minuto)", (0, 21, 12, 8), [prom(
+            f"topk(8, sum by (acao) (rate(maishoras_eventos_total{agora})) > 0) * 60", "{{acao}}")],
+              unidade="suffix: /min",
+              descricao="Cada ação gravada na trilha de auditoria: cadastro, login, inscrição, "
+                        "check-in, certificado."),
+        serie("CPU e memória do servidor", (12, 21, 12, 8), [
+            prom(f'100 - avg(rate(node_cpu_seconds_total{{mode="idle"}}{agora})) * 100', "CPU"),
+            prom(MEMORIA, "memória"),
+        ], unidade="percent", limiares=niveis(70, 85),
+            cores={"CPU": AZUL, "memória": AMARELO}),
+        tabela("Últimos logins recusados", (0, 29, 12, 9), [sql("""
+            SELECT to_char(r.ocorrido_em AT TIME ZONE 'America/Fortaleza', 'HH24:MI:SS')
+                       AS "Hora", host(r.ip) AS "IP",
+                   COALESCE(u.email, 'e-mail não cadastrado') AS "Conta"
+            FROM registros_auditoria r
+            LEFT JOIN usuarios u ON u.id = r.entidade_id
+            WHERE r.acao = 'sessao.falha' AND $__timeFilter(r.ocorrido_em)
+            ORDER BY r.ocorrido_em DESC LIMIT 15""")], fonte=BANCO,
+            colunas={"Hora": {"largura": 100}, "IP": {"largura": 140}},
+            vazio="Nenhum login recusado nos últimos 15 minutos"),
+        serie("Eventos de segurança por minuto", (12, 29, 12, 9), [
+            prom(f'sum(rate(maishoras_limite_excedido_total{{balde="auth"}}{agora})) * 60',
+                 "força bruta barrada"),
+            prom(f'sum(rate(maishoras_limite_excedido_total{{balde="verificacao"}}{agora})) * 60',
+                 "varredura barrada"),
+            prom(f'sum(rate(maishoras_eventos_total{{acao="sessao.reuso_detectado"}}{agora})) * 60',
+                 "sessão roubada"),
+            prom(f'sum(rate(maishoras_eventos_total{{acao="checkin.token_invalido"}}{agora})) * 60',
+                 "QR inválido"),
+        ], unidade="suffix: /min", cores={"força bruta barrada": VERMELHO,
+                                          "varredura barrada": ROXO, "sessão roubada": "#c2255c",
+                                          "QR inválido": AMARELO}),
+    ], etiquetas=("ao-vivo",), desde="now-15m", atualizar="5s")
+
+
 def main() -> None:
     PASTA.mkdir(exist_ok=True)
-    for gerar in (visao_geral, api, seguranca, banco, servidor, uso):
+    for gerar in (ao_vivo, visao_geral, api, seguranca, banco, servidor, uso):
         dados = gerar()
         destino = PASTA / f"{dados['uid']}.json"
         destino.write_text(json.dumps(dados, ensure_ascii=False, indent=2) + "\n",

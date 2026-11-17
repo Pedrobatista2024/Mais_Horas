@@ -106,7 +106,8 @@ protege contra perder a máquina.
 ### Monitoramento
 
 Projeto Docker separado, em `deploy/monitoramento/`. O Caddy entrega o Grafana em
-`/monitoramento` e o relatório em PDF em `/monitoramento/relatorios/`; com o monitoramento
+`/monitoramento`, o relatório em PDF em `/monitoramento/relatorios/` e o botão do modo
+apresentação em `/monitoramento/demonstracao/`; com o monitoramento
 desligado, só esses caminhos respondem `502`. Primeira vez, depois do deploy da aplicação:
 
 ```bash
